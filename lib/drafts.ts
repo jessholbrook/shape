@@ -1,10 +1,11 @@
 import type { ProviderId } from "./providers";
 import type { ToneValues } from "./tone";
+import type { PersonaValues } from "./persona";
 
 const DRAFTS_KEY = "shape:drafts:log";
 const MAX_DRAFTS = 100;
 
-export type DraftKind = "diff" | "tone";
+export type DraftKind = "diff" | "tone" | "persona";
 
 export type DiffDraftConfig = {
   provider: ProviderId;
@@ -93,7 +94,21 @@ export type ToneDraft = {
   updatedAt: number;
 };
 
-export type Draft = DiffDraft | ToneDraft;
+export type PersonaDraft = {
+  id: string;
+  kind: "persona";
+  title: string;
+  provider: ProviderId;
+  model: string;
+  temperature: number;
+  persona: PersonaValues;
+  lastUserMessage: string;
+  lastOutput?: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type Draft = DiffDraft | ToneDraft | PersonaDraft;
 
 function read(): Draft[] {
   if (typeof window === "undefined") return [];
@@ -133,7 +148,8 @@ export function getDraft(id: string): Draft | null {
 
 export type DraftInput =
   | (Omit<DiffDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
-  | (Omit<ToneDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
+  | (Omit<ToneDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
+  | (Omit<PersonaDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
 
 /**
  * Save a draft. If `data.id` matches an existing draft, it's updated in place;

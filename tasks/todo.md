@@ -156,9 +156,37 @@ Notes were the trickier UX call. Three states (no-note, editing, has-note) witho
 - Notes don't appear in the Notebook summary text itself; just the count. Could show the first note as a preview if the use case warrants.
 - The diff algorithm is O(n·m) memory — fine for prose completions; could hit issues at 10k-token long outputs. Add a length guard if/when we extend Diff to long-form content.
 
+## Persona Workshop (this session)
+
+- [x] `lib/persona.ts` — `PersonaValues` (name, role, backstory, beliefs, voice, won't-discuss, strengths), `PERSONA_FIELDS` metadata (label + hint + rows + required), `composePersonaPrompt` that turns values into a structured system prompt skipping empty optional sections, `DEFAULT_PERSONA` seed
+- [x] `lib/drafts.ts` — added `PersonaDraft` to the `Draft` union (provider/model/temperature + persona values + lastUserMessage/lastOutput); extended `DraftInput`
+- [x] `components/play/persona-form.tsx` — structured form, each field labeled with a one-line hint about its purpose for character design
+- [x] `app/play/persona/{page,persona-workshop}.tsx` — single-page playground (form on left, composed system prompt on right, shared run row + output panel below); draft save + `?draft=` hydration
+- [x] `app/play/page.tsx` — Persona Workshop card flipped from "soon" to "open" with `/play/persona` href
+- [x] `app/notebook/notebook.tsx` — `Personas` section, `Persona` pill, summary line shows `Model — Name, Role`
+- [x] Browser-verified: form fields seeded with Iris; editing name to "Maya" updates composed prompt live; save persists `persona` object → URL rewrites with draft id → reopen via /notebook hydrates all fields and "Editing draft" indicator; /play index shows all 3 playgrounds as Open and Refusal Lab as Soon; all 8 routes 200
+
+### Review
+
+Persona Workshop completes Module 3 in the curriculum sketch. Same pattern as Tone Dial — structured inputs compose into a system prompt that's visible side-by-side — but tuned for character design instead of style. The labeled hints under each field ("Backstory: where they come from. Shapes vocabulary and frame of reference.") teach the lesson by making explicit why each input matters, not just what to fill in.
+
+Two design calls worth flagging:
+- **Single-turn for now.** A persona naturally wants follow-up questions, but the Diff Mode multi-turn pattern is heavier than Tone Dial-style single-shot. Defer chat-style multi-turn until we know if users actually want it for personas vs. a series of independent test asks.
+- **Required fields = name + role only.** Everything else is optional. `composePersonaPrompt` skips empty sections so the model isn't told about blank slots. Users can land on a minimal "You are X, [role]" prompt and grow it organically.
+
+`PersonaDraft` mirrors `ToneDraft` shape, so the Supabase publish flow will need essentially zero new code for it.
+
+### Known follow-ups (non-blocking)
+
+- Multi-turn chat with the persona (Diff Mode-style turns array, single config).
+- Persona library — preset cards (interviewer, editor, debugger, mentor) you can clone and modify.
+- "Persona Card" artifact polish for public pages: large name/role hero, body for traits, embedded chat.
+- Roleplay guardrail toggle (refuse to break character vs. allow breaking).
+- Strength tags as chips rather than free-text once we know what people write.
+
 ## Next session
 
 Pick one:
-1. **Saveable artifacts (Diff Logs + Behavior Specs)** — Supabase setup + auth + `/p/<user>/<slug>` public pages + PDF export. The draft schemas are now stable enough to lift directly.
-2. **Persona Workshop playground** — third playground; character design (backstory, beliefs, blind spots) → Persona Card.
-3. **Notebook polish + JSON export** — "Duplicate draft" action, soft-delete with undo, "Export as JSON" per draft. Smaller-scope; sets up portable artifacts.
+1. **Saveable artifacts (Supabase backend)** — Now that all three v0.2 playgrounds produce stable draft shapes (Diff Log, Behavior Spec, Persona Card), publish flow + `/p/<user>/<slug>` public pages + PDF export lands the portfolio loop. Multi-session.
+2. **Refusal Lab playground** — fourth playground; v0.3 spec. Boundary design, over- vs under-refusal scorecard.
+3. **Notebook polish + JSON export** — "Duplicate draft", soft-delete with undo, "Export as JSON" per draft. Smaller-scope; sets up portable artifacts before Supabase.

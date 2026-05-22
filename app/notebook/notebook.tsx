@@ -25,12 +25,21 @@ export function Notebook() {
 
   const diffDrafts = drafts.filter((d) => d.kind === "diff");
   const toneDrafts = drafts.filter((d) => d.kind === "tone");
+  const personaDrafts = drafts.filter((d) => d.kind === "persona");
 
   return (
     <div className="flex flex-col gap-12">
       {diffDrafts.length > 0 && (
         <Section title="Diff sessions" count={diffDrafts.length}>
           {diffDrafts.map((d) => (
+            <DraftRow key={d.id} draft={d} />
+          ))}
+        </Section>
+      )}
+
+      {personaDrafts.length > 0 && (
+        <Section title="Personas" count={personaDrafts.length}>
+          {personaDrafts.map((d) => (
             <DraftRow key={d.id} draft={d} />
           ))}
         </Section>
@@ -75,7 +84,15 @@ function DraftRow({ draft }: { draft: Draft }) {
   const href =
     draft.kind === "diff"
       ? `/play/diff?draft=${draft.id}`
-      : `/play/tone?draft=${draft.id}`;
+      : draft.kind === "tone"
+      ? `/play/tone?draft=${draft.id}`
+      : `/play/persona?draft=${draft.id}`;
+  const pill =
+    draft.kind === "diff"
+      ? "Diff"
+      : draft.kind === "tone"
+      ? "Tone"
+      : "Persona";
 
   return (
     <div className="group bg-surface border border-line rounded-[14px] p-5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-shadow">
@@ -83,7 +100,7 @@ function DraftRow({ draft }: { draft: Draft }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-highlight-ink bg-highlight-soft rounded-full px-2 py-0.5">
-              {draft.kind === "diff" ? "Diff" : "Tone"}
+              {pill}
             </span>
             <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
               {formatRelative(draft.updatedAt)}
@@ -154,6 +171,31 @@ function DraftSummary({ draft }: { draft: Draft }) {
               {lastMessage.length > 70 ? "…" : ""}
               &quot;
             </span>
+          </>
+        )}
+      </p>
+    );
+  }
+
+  if (draft.kind === "persona") {
+    const modelName =
+      PROVIDERS[draft.provider].models.find((m) => m.id === draft.model)
+        ?.name ?? draft.model;
+    const name = draft.persona.name.trim();
+    const role = draft.persona.role.trim();
+    return (
+      <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
+        {modelName}
+        {(name || role) && (
+          <>
+            {" — "}
+            {name && <span className="text-ink">{name}</span>}
+            {name && role && <span className="text-ink-quiet">, </span>}
+            {role && (
+              <span className="italic">
+                {role.length > 80 ? role.slice(0, 77) + "…" : role}
+              </span>
+            )}
           </>
         )}
       </p>
