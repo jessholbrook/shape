@@ -19,7 +19,7 @@ export default function Home() {
 
         <div className="mt-12 flex flex-wrap items-center gap-4">
           <a
-            href="/play/diff"
+            href="/start"
             className="group inline-flex items-center gap-2 bg-ink text-canvas rounded-[12px] px-6 py-3 font-sans text-[15px] hover:gap-3 transition-all"
           >
             Start shaping
