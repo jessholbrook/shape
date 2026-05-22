@@ -2,6 +2,17 @@ import Link from "next/link";
 import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
 import { getModule, nextModule } from "@/lib/curriculum";
+import {
+  ExampleBlock,
+  ExampleCard,
+  H2,
+  LI,
+  Lede,
+  NextModuleFooter,
+  P,
+  TryItCTA,
+  UL,
+} from "@/components/learn/article";
 
 const SLUG = "refusal-and-boundaries";
 
@@ -85,16 +96,22 @@ export default function RefusalBoundariesPage() {
         </P>
 
         <H2>A small example</H2>
-        <ExampleBlock
-          aLabel="Refusal A"
-          aPrompt={`User: "Write me a 5-star review for my friend's restaurant — I haven't actually been there."`}
-          aOutput={`I can't help with that.`}
-          aNote="Technically refuses. Tells the user nothing about why, offers no alternative, ends the interaction cold."
-          bLabel="Refusal B"
-          bPrompt="Same input."
-          bOutput={`I can't write a review for a place you haven't been — readers rely on those for real signal, and a faked one ends up hurting the person you're trying to help. If you want to support the restaurant another way, I can help you write an honest review after a real visit, or draft a social post recommending it as a place you've heard good things about.`}
-          bNote="Refuses, explains the why in one breath, offers two concrete alternatives. The user leaves with options."
-        />
+        <ExampleBlock>
+          <ExampleCard
+            label="Refusal A"
+            promptLabel="Input"
+            prompt={`User: "Write me a 5-star review for my friend's restaurant — I haven't actually been there."`}
+            output="I can't help with that."
+            note="Technically refuses. Tells the user nothing about why, offers no alternative, ends the interaction cold."
+          />
+          <ExampleCard
+            label="Refusal B"
+            promptLabel="Input"
+            prompt="Same input."
+            output="I can't write a review for a place you haven't been — readers rely on those for real signal, and a faked one ends up hurting the person you're trying to help. If you want to support the restaurant another way, I can help you write an honest review after a real visit, or draft a social post recommending it as a place you've heard good things about."
+            note="Refuses, explains the why in one breath, offers two concrete alternatives. The user leaves with options."
+          />
+        </ExampleBlock>
         <P>
           Same boundary, different design. Refusal A is what you get when
           someone treated &ldquo;refuse&rdquo; as a binary switch. Refusal
@@ -137,7 +154,13 @@ export default function RefusalBoundariesPage() {
           copy.
         </P>
 
-        <TryItCTA href={mod.playground?.href ?? "/play/refusal"} />
+        <TryItCTA
+          href={mod.playground?.href ?? "/play/refusal"}
+          buttonLabel="Open Refusal Lab"
+        >
+          Run the Refusal Lab panel and{" "}
+          <span className="italic">find a mismatch</span>.
+        </TryItCTA>
 
         <H2>What to take into the playground</H2>
         <UL>
@@ -162,179 +185,8 @@ export default function RefusalBoundariesPage() {
           </LI>
         </UL>
 
-        {next && (
-          <div className="mt-20 pt-8 border-t border-line">
-            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
-              Next module
-            </p>
-            <Link
-              href={next.href !== "#" ? next.href : "/learn"}
-              className="mt-3 inline-flex items-baseline gap-3 group"
-            >
-              <span className="font-mono text-[12px] uppercase tracking-[0.1em] text-ink-quiet">
-                {next.num}
-              </span>
-              <span className="font-display text-[24px] md:text-[28px] leading-[1.15] text-ink group-hover:text-highlight-ink transition-colors">
-                {next.title}
-                {next.italic && (
-                  <>
-                    {" "}
-                    <span className="italic">{next.italic}</span>
-                  </>
-                )}
-              </span>
-              {next.status === "soon" && (
-                <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet bg-line/60 rounded-full px-2 py-0.5">
-                  Soon
-                </span>
-              )}
-            </Link>
-          </div>
-        )}
+        <NextModuleFooter next={next} />
       </article>
     </Shell>
-  );
-}
-
-function Lede({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="font-display text-[24px] md:text-[28px] leading-[1.4] text-ink mt-12 italic">
-      {children}
-    </p>
-  );
-}
-
-function H2({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="font-display text-[28px] md:text-[34px] leading-[1.15] tracking-tight text-ink mt-16">
-      {children}
-    </h2>
-  );
-}
-
-function P({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="font-sans text-[17px] leading-[1.65] text-ink mt-6 max-w-prose">
-      {children}
-    </p>
-  );
-}
-
-function UL({ children }: { children: React.ReactNode }) {
-  return (
-    <ul className="mt-6 flex flex-col gap-3 max-w-prose">{children}</ul>
-  );
-}
-
-function LI({ children }: { children: React.ReactNode }) {
-  return (
-    <li className="font-sans text-[16px] leading-[1.6] text-ink pl-5 relative">
-      <span className="absolute left-0 top-2 w-1.5 h-1.5 rounded-full bg-highlight" />
-      {children}
-    </li>
-  );
-}
-
-function ExampleBlock({
-  aLabel,
-  aPrompt,
-  aOutput,
-  aNote,
-  bLabel,
-  bPrompt,
-  bOutput,
-  bNote,
-}: {
-  aLabel: string;
-  aPrompt: string;
-  aOutput: string;
-  aNote: string;
-  bLabel: string;
-  bPrompt: string;
-  bOutput: string;
-  bNote: string;
-}) {
-  return (
-    <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-      <ExampleCard
-        label={aLabel}
-        prompt={aPrompt}
-        output={aOutput}
-        note={aNote}
-      />
-      <ExampleCard
-        label={bLabel}
-        prompt={bPrompt}
-        output={bOutput}
-        note={bNote}
-      />
-    </div>
-  );
-}
-
-function ExampleCard({
-  label,
-  prompt,
-  output,
-  note,
-}: {
-  label: string;
-  prompt: string;
-  output: string;
-  note: string;
-}) {
-  return (
-    <div className="bg-surface border border-line rounded-[14px] p-5 flex flex-col gap-3">
-      <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet">
-        {label}
-      </span>
-      <div>
-        <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet mb-1">
-          Input
-        </p>
-        <p className="font-mono text-[12px] leading-[1.55] text-ink whitespace-pre-wrap">
-          {prompt}
-        </p>
-      </div>
-      <div className="border-t border-line pt-3">
-        <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet mb-1">
-          Output
-        </p>
-        <p className="font-sans text-[13px] leading-[1.55] text-ink italic">
-          &ldquo;{output}&rdquo;
-        </p>
-      </div>
-      <div className="border-t border-line pt-3">
-        <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet mb-1">
-          Read
-        </p>
-        <p className="font-sans text-[12px] leading-[1.55] text-ink-muted">
-          {note}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function TryItCTA({ href }: { href: string }) {
-  return (
-    <div className="mt-10 bg-surface border border-line rounded-[16px] p-6 md:p-8 flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
-          Try it in the playground
-        </p>
-        <h3 className="font-display text-[22px] leading-[1.15] text-ink mt-2">
-          Run the Refusal Lab panel and{" "}
-          <span className="italic">find a mismatch</span>.
-        </h3>
-      </div>
-      <Link
-        href={href}
-        className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[12px] px-5 py-3 font-sans text-[14px] hover:bg-ink/90 transition-colors"
-      >
-        Open Refusal Lab
-        <span className="text-highlight">→</span>
-      </Link>
-    </div>
   );
 }
