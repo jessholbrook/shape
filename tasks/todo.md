@@ -250,9 +250,32 @@ Reframing the third bridge card from "evaluations" to "A/B tests" was a small bu
 - Mobile nav for the homepage CTA pair — the buttons stack but the secondary loses prominence; could tighten.
 - Bridge card chips could become subtle hover states rather than always-on chips.
 
+## Curriculum entry — Module 1 + /learn index (this session)
+
+- [x] `lib/curriculum.ts` — `CurriculumModule` type + seeded array of all 9 modules (Module 0 setup + 8 concept modules per SPEC §8). Each carries num, slug, kicker, blurb, paired playground, artifact, status, read minutes. `getModule` / `nextModule` helpers for article navigation.
+- [x] `app/learn/page.tsx` — curriculum index. Hero ("Behavior designer 101 → 301"), live-count line ("2 of 9 modules live"), single-column module rows with status pills (Open / Soon), per-module paired-playground + artifact line. Ready modules click through; Soon modules render but don't link.
+- [x] `app/learn/prompts-as-design/page.tsx` — Module 1 article. 5 sections: "The familiar move" (brand voice → system prompt), "The lesson, stated plainly" (every word is a design decision), "A small example" (two side-by-side prompt+output cards), "Why this is the foundation" (small iteration loops), "What to take into the playground" (3-bullet rubric). Inline Diff Mode CTA. Next-module footer.
+- [x] Browser-verified: /learn renders 8 module rows with 2 Open + 7 Soon (Module 0 + Module 1), article scrolls through cleanly with example block and CTA, left-nav "04 Learn" now routes correctly, all 10 routes 200.
+
+### Review
+
+Closes the third homepage-implied 404 (after `/play` and the bridge cards). The Learn surface is now real, has a real piece of content, and has visible runway for the next 7 modules without faking it — each entry shows its Soon status and what it'll pair with.
+
+The article writes for the audience the spec calls out — UX designers and researchers — by leading with familiar work (brand voice docs, microcopy, A/B variants) and re-framing the model as the call site. The "Try it in Diff Mode" CTA sits roughly mid-article rather than at the end, because the lesson lands faster when the playground catches the reader between the abstract claim and the rubric.
+
+The curriculum module data lives in one file so future articles only need: a route, a slug entry's `href` change to point at it, and the article page. No notebook-style schema to migrate, no Supabase migration.
+
+### Known follow-ups (non-blocking)
+
+- Modules 2–8 don't exist yet. The data scaffolding makes adding them cheap, but each is its own writing pass.
+- "Continue reading" cross-link from playground pages back to the relevant module (e.g. Diff Mode → Module 1).
+- Progress tracking — which modules has this browser read? localStorage flag + ✓ on the index. Pre-Supabase.
+- MDX or a tiny renderer would be nicer than hand-built React for the article body. Worth it once we have 3+ articles.
+- The "9 modules live" copy in the index will need to shift the moment we ship Module 2. Easy automatic from the data.
+
 ## Next session
 
 Pick one:
-1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session; needs a Supabase project. The local draft shapes are stable and the round-trip is proven, so this is mostly an infrastructure + wiring task.
-2. **Refusal Lab playground** — fourth playground; v0.3. Boundary design with a panel of edge cases, produces a Refusal Scorecard. First "evaluation" surface vs. generation.
-3. **Curriculum entry — Module 1 article** — homepage talks about "Learn the craft" but `/learn` doesn't exist. Write the first concept article (Module 1: Prompts as design) and a basic `/learn` index. Smallest scope.
+1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session; needs a Supabase project. The local draft shapes are stable and the round-trip is proven; this is mostly infrastructure + wiring.
+2. **Refusal Lab playground** — fourth playground; v0.3. First "evaluation" surface vs. generation.
+3. **Module 2 article — Voice & tone** — write the next module so /learn has more than one live article. Cheap follow-up to this PR; uses the same scaffolding.
