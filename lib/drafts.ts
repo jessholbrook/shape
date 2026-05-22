@@ -190,6 +190,50 @@ export function deleteDraft(id: string): void {
   write(next);
 }
 
+/**
+ * Duplicate a draft. Returns the new draft (new id, new timestamps, title with
+ * " (copy)" suffix) or null if the source doesn't exist.
+ */
+export function duplicateDraft(id: string): Draft | null {
+  const source = read().find((d) => d.id === id);
+  if (!source) return null;
+  const now = Date.now();
+  const copy = {
+    ...source,
+    id: newId(),
+    title: `${source.title} (copy)`,
+    createdAt: now,
+    updatedAt: now,
+  } as Draft;
+  const next = [copy, ...read()];
+  if (next.length > MAX_DRAFTS) next.length = MAX_DRAFTS;
+  write(next);
+  return copy;
+}
+
+/**
+ * Restore a draft snapshot — used for undoing a delete. Writes the draft back
+ * with its original id and timestamps so the entry slots into the list as if
+ * it had never been removed.
+ */
+export function restoreDraft(draft: Draft): void {
+  const existing = read().filter((d) => d.id !== draft.id);
+  write([draft, ...existing]);
+}
+
+/**
+ * Export a draft to a portable JSON string. Includes everything except a small
+ * provenance header so consumers know what they're looking at.
+ */
+export function exportDraftJson(draft: Draft): string {
+  const payload = {
+    $schema: "shape.draft.v1",
+    exportedAt: new Date().toISOString(),
+    draft,
+  };
+  return JSON.stringify(payload, null, 2);
+}
+
 export function clearAllDrafts(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(DRAFTS_KEY);

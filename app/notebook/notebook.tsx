@@ -1,13 +1,78 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useDrafts } from "@/lib/hooks/use-drafts";
-import { deleteDraft, type Draft } from "@/lib/drafts";
+import {
+  deleteDraft,
+  duplicateDraft,
+  exportDraftJson,
+  restoreDraft,
+  type Draft,
+} from "@/lib/drafts";
+import { downloadBlob, slugify } from "@/lib/download";
 import { PROVIDERS } from "@/lib/providers";
 import { TONE_DIMENSIONS } from "@/lib/tone";
 
+const UNDO_WINDOW_MS = 6000;
+
+type PendingDelete = {
+  draft: Draft;
+  expiresAt: number;
+  timerId: ReturnType<typeof setTimeout>;
+};
+
 export function Notebook() {
   const { drafts, hydrated } = useDrafts();
+  const router = useRouter();
+  const [pending, setPending] = useState<PendingDelete[]>([]);
+  const pendingRef = useRef(pending);
+  pendingRef.current = pending;
+
+  useEffect(() => {
+    return () => {
+      pendingRef.current.forEach((p) => clearTimeout(p.timerId));
+    };
+  }, []);
+
+  function handleDelete(draft: Draft) {
+    deleteDraft(draft.id);
+    const expiresAt = Date.now() + UNDO_WINDOW_MS;
+    const timerId = setTimeout(() => {
+      setPending((prev) => prev.filter((p) => p.draft.id !== draft.id));
+    }, UNDO_WINDOW_MS);
+    setPending((prev) => [...prev, { draft, expiresAt, timerId }]);
+  }
+
+  function handleUndo(id: string) {
+    setPending((prev) => {
+      const entry = prev.find((p) => p.draft.id === id);
+      if (entry) {
+        clearTimeout(entry.timerId);
+        restoreDraft(entry.draft);
+      }
+      return prev.filter((p) => p.draft.id !== id);
+    });
+  }
+
+  function handleDuplicate(draft: Draft) {
+    const copy = duplicateDraft(draft.id);
+    if (!copy) return;
+    const href =
+      copy.kind === "diff"
+        ? `/play/diff?draft=${copy.id}`
+        : copy.kind === "tone"
+        ? `/play/tone?draft=${copy.id}`
+        : `/play/persona?draft=${copy.id}`;
+    router.push(href);
+  }
+
+  function handleExport(draft: Draft) {
+    const json = exportDraftJson(draft);
+    const slug = slugify(draft.title, draft.kind);
+    downloadBlob(`${slug}.shape.json`, "application/json", json);
+  }
 
   if (!hydrated) {
     return (
@@ -19,40 +84,63 @@ export function Notebook() {
     );
   }
 
-  if (drafts.length === 0) {
-    return <EmptyState />;
-  }
-
   const diffDrafts = drafts.filter((d) => d.kind === "diff");
   const toneDrafts = drafts.filter((d) => d.kind === "tone");
   const personaDrafts = drafts.filter((d) => d.kind === "persona");
+  const noDrafts = drafts.length === 0;
 
   return (
-    <div className="flex flex-col gap-12">
-      {diffDrafts.length > 0 && (
-        <Section title="Diff sessions" count={diffDrafts.length}>
-          {diffDrafts.map((d) => (
-            <DraftRow key={d.id} draft={d} />
-          ))}
-        </Section>
+    <>
+      {noDrafts ? (
+        <EmptyState />
+      ) : (
+        <div className="flex flex-col gap-12">
+          {diffDrafts.length > 0 && (
+            <Section title="Diff sessions" count={diffDrafts.length}>
+              {diffDrafts.map((d) => (
+                <DraftRow
+                  key={d.id}
+                  draft={d}
+                  onDuplicate={() => handleDuplicate(d)}
+                  onExport={() => handleExport(d)}
+                  onDelete={() => handleDelete(d)}
+                />
+              ))}
+            </Section>
+          )}
+
+          {personaDrafts.length > 0 && (
+            <Section title="Personas" count={personaDrafts.length}>
+              {personaDrafts.map((d) => (
+                <DraftRow
+                  key={d.id}
+                  draft={d}
+                  onDuplicate={() => handleDuplicate(d)}
+                  onExport={() => handleExport(d)}
+                  onDelete={() => handleDelete(d)}
+                />
+              ))}
+            </Section>
+          )}
+
+          {toneDrafts.length > 0 && (
+            <Section title="Tone setups" count={toneDrafts.length}>
+              {toneDrafts.map((d) => (
+                <DraftRow
+                  key={d.id}
+                  draft={d}
+                  onDuplicate={() => handleDuplicate(d)}
+                  onExport={() => handleExport(d)}
+                  onDelete={() => handleDelete(d)}
+                />
+              ))}
+            </Section>
+          )}
+        </div>
       )}
 
-      {personaDrafts.length > 0 && (
-        <Section title="Personas" count={personaDrafts.length}>
-          {personaDrafts.map((d) => (
-            <DraftRow key={d.id} draft={d} />
-          ))}
-        </Section>
-      )}
-
-      {toneDrafts.length > 0 && (
-        <Section title="Tone setups" count={toneDrafts.length}>
-          {toneDrafts.map((d) => (
-            <DraftRow key={d.id} draft={d} />
-          ))}
-        </Section>
-      )}
-    </div>
+      <UndoToasts pending={pending} onUndo={handleUndo} />
+    </>
   );
 }
 
@@ -80,7 +168,17 @@ function Section({
   );
 }
 
-function DraftRow({ draft }: { draft: Draft }) {
+function DraftRow({
+  draft,
+  onDuplicate,
+  onExport,
+  onDelete,
+}: {
+  draft: Draft;
+  onDuplicate: () => void;
+  onExport: () => void;
+  onDelete: () => void;
+}) {
   const href =
     draft.kind === "diff"
       ? `/play/diff?draft=${draft.id}`
@@ -111,7 +209,7 @@ function DraftRow({ draft }: { draft: Draft }) {
           </h3>
           <DraftSummary draft={draft} />
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
           <Link
             href={href}
             className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink underline decoration-highlight underline-offset-4 decoration-2"
@@ -120,11 +218,21 @@ function DraftRow({ draft }: { draft: Draft }) {
           </Link>
           <button
             type="button"
-            onClick={() => {
-              if (confirm(`Delete "${draft.title || "Untitled"}"?`)) {
-                deleteDraft(draft.id);
-              }
-            }}
+            onClick={onDuplicate}
+            className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+          >
+            Duplicate
+          </button>
+          <button
+            type="button"
+            onClick={onExport}
+            className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+          >
+            Export
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
             className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet hover:text-danger"
           >
             Delete
@@ -224,6 +332,65 @@ function DraftSummary({ draft }: { draft: Draft }) {
         <span className="text-ink-quiet"> — dials at neutral</span>
       )}
     </p>
+  );
+}
+
+function UndoToasts({
+  pending,
+  onUndo,
+}: {
+  pending: PendingDelete[];
+  onUndo: (id: string) => void;
+}) {
+  if (pending.length === 0) return null;
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-col gap-2 max-w-[90vw]">
+      {pending.map((p) => (
+        <UndoToast
+          key={p.draft.id}
+          draft={p.draft}
+          expiresAt={p.expiresAt}
+          onUndo={() => onUndo(p.draft.id)}
+        />
+      ))}
+    </div>
+  );
+}
+
+function UndoToast({
+  draft,
+  expiresAt,
+  onUndo,
+}: {
+  draft: Draft;
+  expiresAt: number;
+  onUndo: () => void;
+}) {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 250);
+    return () => clearInterval(id);
+  }, []);
+  const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+  return (
+    <div className="bg-ink text-canvas rounded-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.18)] px-4 py-3 flex items-center gap-4">
+      <span className="font-sans text-[14px] truncate">
+        Deleted{" "}
+        <span className="font-display italic">
+          {draft.title || "Untitled"}
+        </span>
+      </span>
+      <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-canvas/60 shrink-0">
+        {remaining}s
+      </span>
+      <button
+        type="button"
+        onClick={onUndo}
+        className="font-mono text-[11px] uppercase tracking-[0.08em] text-canvas underline decoration-highlight underline-offset-4 decoration-2 shrink-0"
+      >
+        Undo
+      </button>
+    </div>
   );
 }
 
