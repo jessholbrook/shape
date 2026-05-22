@@ -51,13 +51,13 @@ const PLAYGROUNDS: Playground[] = [
   },
   {
     num: "04",
-    href: "#",
+    href: "/play/refusal",
     title: "Refusal",
     italic: "lab",
     blurb:
       "Probe boundary design with a panel of edge cases. Tune the line between over- and under-refusal.",
     artifact: "Refusal Scorecard",
-    status: "soon",
+    status: "ready",
   },
 ];
 

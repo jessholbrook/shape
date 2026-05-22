@@ -273,9 +273,38 @@ The curriculum module data lives in one file so future articles only need: a rou
 - MDX or a tiny renderer would be nicer than hand-built React for the article body. Worth it once we have 3+ articles.
 - The "9 modules live" copy in the index will need to shift the moment we ship Module 2. Easy automatic from the data.
 
+## Refusal Lab (this session)
+
+- [x] `lib/refusal.ts` — `Probe` + `ProbeVerdict` + `ProbeResult` + `ExpectedBehavior` types; `SEED_PROBES` panel of 6 designer-framed edge cases (privacy boundary, vulnerability signal, borderline integrity, expertise scope, values question, fully legitimate request) with `why` notes that teach the lesson behind each case; `DEFAULT_REFUSAL_GUIDELINES` opinionated 5-rule starter system prompt; `evaluateMatch(expected, verdict)` → `match | mismatch | pending`.
+- [x] `lib/drafts.ts` — added `RefusalDraft` to the Draft union with provider/model/temp + guidelines (system prompt) + probes panel + per-probe results map. Updated `DraftInput` + the `importDraftJson` validator to recognize `kind: "refusal"`.
+- [x] `components/play/probe-row.tsx` — one probe card: numbered label, expected-behavior pill, match indicator, streamed output, manual verdict selector (Refused / Engaged / Partial / Unclear) as pill buttons. Verdict buttons disabled while idle to force a run before scoring.
+- [x] `app/play/refusal/{page,refusal-lab.tsx}` — full playground: provider/model/temp row, refusal guidelines editor (multiline system prompt), Run-all + Reset + live scorecard (X/Y match · unscored count), probe panel rendered as ProbeRows, draft save + `?draft=` hydration. Runs all probes in parallel against the configured guidelines.
+- [x] `app/play/page.tsx` — Refusal Lab flipped from Soon to Open. /play index now shows 4 Open cards, 0 Soon.
+- [x] `lib/curriculum.ts` — Module 4 (Refusal & boundaries) now pairs with `/play/refusal`. Status stays Soon since the article isn't written yet, but the playground link is wired.
+- [x] `app/notebook/notebook.tsx` — new "Refusal labs" section with type pill + summary line (`Model · X/Y match · Z unscored`).
+- [x] Browser-verified: 6 probes render with correct expected pills, scorecard updates from seeded draft state (3/4 match including the deliberate mismatch on the fake-review probe — output complied when refusal was expected), notebook surfaces the lab with the match count, all 11 routes 200.
+
+### Review
+
+First "evaluation" surface in Shape — every other playground generates, this one tests. The whole pedagogical move is making refusal *visible* as a design surface: the user writes guidelines, fires them at 6 cases they probably haven't pre-considered, then reads each output and judges whether the model actually did the right thing. The MISMATCH on the fake-review probe in the seeded screenshot lands the lesson without needing any prose explanation — the model said yes to writing a deceptive review because the guideline about "deception" didn't generalize to that phrasing.
+
+A few design calls worth flagging:
+- **Manual verdicts, not auto.** Auto-classification would need an LLM judge, which would muddy the pedagogy. The whole point is teaching the designer to *recognize* subtle refusal failure — partial compliance with a disclaimer can look like a "refusal" at a glance.
+- **6-probe seed is fixed, not editable.** Editing the panel is real product surface (case library, custom probes, sharing) and not session-scoped. Defer.
+- **Designer-framed probes only.** No adversarial jailbreak content. The audience is UX folks designing boundaries, not red-teamers.
+- **Hydration ran into a real bug.** Initial implementation kept `probes` immutable as `SEED_PROBES`, so reopening a saved draft with a different probe set would mismatch `results[probe.id]` and crash. Fixed by lifting probes into state and reloading them from the draft, plus a defensive `?? EMPTY_RESULT` fallback on the renderer. Reminder for future kinds: hydrate every saved field that affects rendering.
+
+### Known follow-ups (non-blocking)
+
+- Module 4 article (Refusal & boundaries) — the matching curriculum entry. Cheap once we want it.
+- Per-probe notes (mirror the per-turn notes in Diff Mode). Would slot cleanly into `ProbeResult.note`.
+- Add-your-own-probe UI; eventually a shared probe library.
+- "Compare two guidelines" mode — run the same panel against guidelines A vs guidelines B and diff the scorecards. The natural Diff-Mode-style extension of this playground.
+- Auto-judge mode with a clearly-labeled LLM classifier as a *suggestion* layer, not a replacement for manual review.
+
 ## Next session
 
 Pick one:
-1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session; needs a Supabase project. The local draft shapes are stable and the round-trip is proven; this is mostly infrastructure + wiring.
-2. **Refusal Lab playground** — fourth playground; v0.3. First "evaluation" surface vs. generation.
-3. **Module 2 article — Voice & tone** — write the next module so /learn has more than one live article. Cheap follow-up to this PR; uses the same scaffolding.
+1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session; needs a Supabase project. All four playground draft shapes are stable.
+2. **Module 4 article — Refusal & boundaries** — match the playground we just shipped with its concept article. Cheap, uses the existing curriculum scaffolding.
+3. **Eval Workshop playground** — fifth playground; v1.0 spec. Rubric-based evaluation against a panel of cases — the generalized version of Refusal Lab.

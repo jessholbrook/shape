@@ -14,6 +14,7 @@ import {
 import { downloadBlob, slugify } from "@/lib/download";
 import { PROVIDERS } from "@/lib/providers";
 import { TONE_DIMENSIONS } from "@/lib/tone";
+import { evaluateMatch } from "@/lib/refusal";
 import { ImportPanel } from "@/components/notebook/import-panel";
 
 const UNDO_WINDOW_MS = 6000;
@@ -61,12 +62,7 @@ export function Notebook() {
   function handleDuplicate(draft: Draft) {
     const copy = duplicateDraft(draft.id);
     if (!copy) return;
-    const href =
-      copy.kind === "diff"
-        ? `/play/diff?draft=${copy.id}`
-        : copy.kind === "tone"
-        ? `/play/tone?draft=${copy.id}`
-        : `/play/persona?draft=${copy.id}`;
+    const href = playgroundHref(copy);
     router.push(href);
   }
 
@@ -89,6 +85,7 @@ export function Notebook() {
   const diffDrafts = drafts.filter((d) => d.kind === "diff");
   const toneDrafts = drafts.filter((d) => d.kind === "tone");
   const personaDrafts = drafts.filter((d) => d.kind === "persona");
+  const refusalDrafts = drafts.filter((d) => d.kind === "refusal");
   const noDrafts = drafts.length === 0;
 
   return (
@@ -162,6 +159,20 @@ export function Notebook() {
               ))}
             </Section>
           )}
+
+          {refusalDrafts.length > 0 && (
+            <Section title="Refusal labs" count={refusalDrafts.length}>
+              {refusalDrafts.map((d) => (
+                <DraftRow
+                  key={d.id}
+                  draft={d}
+                  onDuplicate={() => handleDuplicate(d)}
+                  onExport={() => handleExport(d)}
+                  onDelete={() => handleDelete(d)}
+                />
+              ))}
+            </Section>
+          )}
         </div>
       )}
 
@@ -194,6 +205,20 @@ function Section({
   );
 }
 
+function playgroundHref(draft: Draft): string {
+  if (draft.kind === "diff") return `/play/diff?draft=${draft.id}`;
+  if (draft.kind === "tone") return `/play/tone?draft=${draft.id}`;
+  if (draft.kind === "persona") return `/play/persona?draft=${draft.id}`;
+  return `/play/refusal?draft=${draft.id}`;
+}
+
+function pillFor(draft: Draft): string {
+  if (draft.kind === "diff") return "Diff";
+  if (draft.kind === "tone") return "Tone";
+  if (draft.kind === "persona") return "Persona";
+  return "Refusal";
+}
+
 function DraftRow({
   draft,
   onDuplicate,
@@ -205,18 +230,8 @@ function DraftRow({
   onExport: () => void;
   onDelete: () => void;
 }) {
-  const href =
-    draft.kind === "diff"
-      ? `/play/diff?draft=${draft.id}`
-      : draft.kind === "tone"
-      ? `/play/tone?draft=${draft.id}`
-      : `/play/persona?draft=${draft.id}`;
-  const pill =
-    draft.kind === "diff"
-      ? "Diff"
-      : draft.kind === "tone"
-      ? "Tone"
-      : "Persona";
+  const href = playgroundHref(draft);
+  const pill = pillFor(draft);
 
   return (
     <div className="group bg-surface border border-line rounded-[14px] p-5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-shadow">
@@ -330,6 +345,36 @@ function DraftSummary({ draft }: { draft: Draft }) {
                 {role.length > 80 ? role.slice(0, 77) + "…" : role}
               </span>
             )}
+          </>
+        )}
+      </p>
+    );
+  }
+
+  if (draft.kind === "refusal") {
+    const modelName =
+      PROVIDERS[draft.provider].models.find((m) => m.id === draft.model)
+        ?.name ?? draft.model;
+    let matched = 0;
+    let scored = 0;
+    for (const probe of draft.probes) {
+      const verdict = draft.results[probe.id]?.verdict;
+      const m = evaluateMatch(probe.expected, verdict ?? null);
+      if (m !== "pending") scored += 1;
+      if (m === "match") matched += 1;
+    }
+    return (
+      <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
+        {modelName} ·{" "}
+        <span className="text-ink-muted">
+          {matched}/{draft.probes.length} match
+        </span>
+        {scored < draft.probes.length && (
+          <>
+            {" · "}
+            <span className="text-ink-quiet">
+              {draft.probes.length - scored} unscored
+            </span>
           </>
         )}
       </p>
