@@ -1,12 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
+import {
+  getDraft,
+  saveDraft,
+  suggestTitle,
+  type DiffTurn,
+  type DiffTurnOutput,
+} from "@/lib/drafts";
 import { ConfigPanel, type ConfigState } from "@/components/play/config-panel";
-import { OutputPanel, type OutputState } from "@/components/play/output-panel";
+import { TurnRow } from "@/components/play/turn-row";
+import {
+  DraftSaveBar,
+  type DraftSaveStatus,
+} from "@/components/play/draft-save-bar";
 
 const INITIAL_A: ConfigState = {
   provider: "anthropic",
@@ -22,49 +34,84 @@ const INITIAL_B: ConfigState = {
   temperature: 0.7,
 };
 
-const EMPTY_OUTPUT: OutputState = {
-  text: "",
-  status: "idle",
-  inputTokens: 0,
-  outputTokens: 0,
-  costUsd: 0,
-};
+const DEFAULT_MESSAGE =
+  "Write a one-sentence welcome message for a research interview tool.";
+
+function newTurnId(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+}
 
 export function DiffMode() {
   const { keys, hydrated } = useKeys();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialDraftId = searchParams.get("draft");
+
   const [configA, setConfigA] = useState<ConfigState>(INITIAL_A);
   const [configB, setConfigB] = useState<ConfigState>(INITIAL_B);
-  const [userMessage, setUserMessage] = useState(
-    "Write a one-sentence welcome message for a research interview tool.",
-  );
-  const [outputA, setOutputA] = useState<OutputState>(EMPTY_OUTPUT);
-  const [outputB, setOutputB] = useState<OutputState>(EMPTY_OUTPUT);
+  const [pendingMessage, setPendingMessage] = useState(DEFAULT_MESSAGE);
+  const [turns, setTurns] = useState<DiffTurn[]>([]);
   const [running, setRunning] = useState(false);
+
+  const [draftId, setDraftId] = useState<string | null>(initialDraftId);
+  const [title, setTitle] = useState("");
+  const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle");
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hydratedDraftIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!initialDraftId || hydratedDraftIdRef.current === initialDraftId) {
+      return;
+    }
+    const draft = getDraft(initialDraftId);
+    if (draft && draft.kind === "diff") {
+      setConfigA(draft.configA);
+      setConfigB(draft.configB);
+      setTurns(draft.turns);
+      setTitle(draft.title);
+      setDraftId(draft.id);
+      const lastTurn = draft.turns[draft.turns.length - 1];
+      if (lastTurn) setPendingMessage(lastTurn.userMessage);
+      hydratedDraftIdRef.current = draft.id;
+    }
+  }, [initialDraftId]);
 
   const aReady = hydrated && !!keys[configA.provider];
   const bReady = hydrated && !!keys[configB.provider];
-  const canRun = aReady && bReady && userMessage.trim() && !running;
+  const canRun = aReady && bReady && pendingMessage.trim() && !running;
+
+  function updateTurnOutput(
+    turnId: string,
+    which: "A" | "B",
+    updater: (prev: DiffTurnOutput) => DiffTurnOutput,
+  ) {
+    setTurns((prev) =>
+      prev.map((t) => {
+        if (t.id !== turnId) return t;
+        const key = which === "A" ? "outputA" : "outputB";
+        return { ...t, [key]: updater(t[key]) };
+      }),
+    );
+  }
 
   async function streamOne(
+    turnId: string,
+    which: "A" | "B",
     config: ConfigState,
-    setOutput: React.Dispatch<React.SetStateAction<OutputState>>,
+    userMessage: string,
   ) {
     const apiKey = keys[config.provider];
     if (!apiKey) {
-      setOutput({
-        ...EMPTY_OUTPUT,
+      updateTurnOutput(turnId, which, () => ({
+        text: "",
         status: "error",
         error: `No key set for ${config.provider}.`,
-      });
+      }));
       return;
     }
-
-    const startMs = Date.now();
-    setOutput({
-      ...EMPTY_OUTPUT,
-      status: "running",
-      startMs,
-    });
 
     try {
       const stream = runChat({
@@ -78,7 +125,10 @@ export function DiffMode() {
 
       for await (const event of stream) {
         if (event.type === "text") {
-          setOutput((prev) => ({ ...prev, text: prev.text + event.delta }));
+          updateTurnOutput(turnId, which, (prev) => ({
+            ...prev,
+            text: prev.text + event.delta,
+          }));
         } else if (event.type === "done") {
           const cost = calcCost(
             config.provider,
@@ -86,7 +136,7 @@ export function DiffMode() {
             event.usage.inputTokens,
             event.usage.outputTokens,
           );
-          setOutput((prev) => ({
+          updateTurnOutput(turnId, which, (prev) => ({
             ...prev,
             status: "done",
             inputTokens: event.usage.inputTokens,
@@ -101,7 +151,7 @@ export function DiffMode() {
             outputTokens: event.usage.outputTokens,
           });
         } else if (event.type === "error") {
-          setOutput((prev) => ({
+          updateTurnOutput(turnId, which, (prev) => ({
             ...prev,
             status: "error",
             error: event.message,
@@ -111,7 +161,7 @@ export function DiffMode() {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      setOutput((prev) => ({
+      updateTurnOutput(turnId, which, (prev) => ({
         ...prev,
         status: "error",
         error: message,
@@ -121,19 +171,56 @@ export function DiffMode() {
   }
 
   async function runBoth() {
+    const userMessage = pendingMessage.trim();
+    if (!userMessage) return;
+    const turnId = newTurnId();
+    const startMs = Date.now();
+    const newTurn: DiffTurn = {
+      id: turnId,
+      userMessage,
+      outputA: { text: "", status: "running", startMs },
+      outputB: { text: "", status: "running", startMs },
+    };
+    setTurns((prev) => [...prev, newTurn]);
     setRunning(true);
-    setOutputA({ ...EMPTY_OUTPUT, status: "running", startMs: Date.now() });
-    setOutputB({ ...EMPTY_OUTPUT, status: "running", startMs: Date.now() });
     await Promise.all([
-      streamOne(configA, setOutputA),
-      streamOne(configB, setOutputB),
+      streamOne(turnId, "A", configA, userMessage),
+      streamOne(turnId, "B", configB, userMessage),
     ]);
     setRunning(false);
   }
 
-  function reset() {
-    setOutputA(EMPTY_OUTPUT);
-    setOutputB(EMPTY_OUTPUT);
+  function clearSession() {
+    setTurns([]);
+  }
+
+  function deleteTurn(turnId: string) {
+    setTurns((prev) => prev.filter((t) => t.id !== turnId));
+  }
+
+  function handleSaveDraft() {
+    setSaveStatus("saving");
+    const saved = saveDraft({
+      id: draftId ?? undefined,
+      kind: "diff",
+      title:
+        title.trim() ||
+        suggestTitle(
+          turns[0]?.userMessage ?? pendingMessage,
+          "Untitled diff",
+        ),
+      configA,
+      configB,
+      turns,
+    });
+    setDraftId(saved.id);
+    setTitle(saved.title);
+    setSaveStatus("saved");
+    if (!searchParams.get("draft")) {
+      router.replace(`/play/diff?draft=${saved.id}`, { scroll: false });
+    }
+    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
   }
 
   return (
@@ -173,13 +260,42 @@ export function DiffMode() {
         />
       </div>
 
+      {turns.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
+              Session log — {turns.length}{" "}
+              {turns.length === 1 ? "turn" : "turns"}
+            </h2>
+            <button
+              type="button"
+              onClick={clearSession}
+              disabled={running}
+              className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-danger disabled:opacity-40"
+            >
+              Clear session
+            </button>
+          </div>
+          {turns.map((t, i) => (
+            <TurnRow
+              key={t.id}
+              num={i + 1}
+              turn={t}
+              configA={configA}
+              configB={configB}
+              onDelete={running ? undefined : () => deleteTurn(t.id)}
+            />
+          ))}
+        </div>
+      )}
+
       <div className="bg-surface border border-line rounded-[16px] p-5">
         <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet block mb-2">
-          User message
+          {turns.length > 0 ? "Next turn" : "User message"}
         </label>
         <textarea
-          value={userMessage}
-          onChange={(e) => setUserMessage(e.target.value)}
+          value={pendingMessage}
+          onChange={(e) => setPendingMessage(e.target.value)}
           rows={3}
           className="w-full bg-canvas border border-line rounded-[10px] px-3 py-2 font-sans text-[14px] leading-[1.55] text-ink placeholder:text-ink-quiet focus:border-ink focus:outline-none resize-y"
           placeholder="What do you want to send to both models?"
@@ -191,24 +307,31 @@ export function DiffMode() {
             disabled={!canRun}
             className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ink/90 transition-colors"
           >
-            {running ? "Streaming…" : "Run both"}
+            {running
+              ? "Streaming…"
+              : turns.length === 0
+              ? "Run both"
+              : "Run next turn"}
             <span className="text-highlight">→</span>
           </button>
-          <button
-            type="button"
-            onClick={reset}
-            disabled={running}
-            className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink disabled:opacity-40"
-          >
-            Reset
-          </button>
+          {turns.length > 0 && (
+            <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
+              Same configs, new message — outputs append below.
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <OutputPanel label="Output A" config={configA} output={outputA} />
-        <OutputPanel label="Output B" config={configB} output={outputB} />
-      </div>
+      <DraftSaveBar
+        title={title}
+        onTitleChange={(next) => {
+          setTitle(next);
+          if (saveStatus === "saved") setSaveStatus("idle");
+        }}
+        status={saveStatus}
+        draftId={draftId}
+        onSave={handleSaveDraft}
+      />
     </div>
   );
 }

@@ -82,9 +82,59 @@ Notable simplifications: the new page reuses `useKeys`, `validateKey`, and `test
 - Cookie/local flag to remember they've completed Module 0, so "Start shaping" can short-circuit to /play on subsequent visits.
 - Mobile sticky CTA on long pages.
 
+## Notebook + drafts (this session)
+
+- [x] `lib/drafts.ts` — Draft union (DiffDraft + ToneDraft), localStorage CRUD, event bus, suggestTitle helper
+- [x] `lib/hooks/use-drafts.ts` — reactive hook on `shape:drafts-changed`
+- [x] `components/play/draft-save-bar.tsx` — shared Save bar with title input, status, "Editing draft" indicator, link to Notebook
+- [x] Diff Mode: wired Save draft + `?draft=<id>` hydration on mount
+- [x] Tone Dial: same pattern (brief + tone values + provider/model/temperature + last output)
+- [x] `app/notebook/page.tsx` + `notebook.tsx` — grouped lists (Diff sessions / Tone setups), Open + Delete actions, hatched empty state with CTAs into both playgrounds
+- [x] Browser-verified: save → reopen hydrates state correctly, "Save changes" updates in-place (no duplicate), delete reactively removes from notebook, all 7 routes return 200
+
+### Review
+
+This was the spec's missing v0.1 piece. Before, every playground run was ephemeral — close the tab and you lost the prompt you'd been tuning. Now anything worth keeping has a Save action; the Notebook reads localStorage and groups drafts by type. The "Editing draft" indicator and URL `?draft=<id>` round-trip make it feel like real persistence, not a one-shot save.
+
+Architecturally it sets up cleanly for Supabase: the Draft schema is roughly what Supabase rows will store; the Notebook view is roughly what `/u/<handle>` will look like. The only meaningful new dependency was a shared `DraftSaveBar` — keeps both playgrounds tidy without abstracting too early.
+
+Caught one real bug while wiring this: setState calls fired synchronously in JS-driven tests share a stale closure (clicking two tone dials in one IIFE only applies the second). Not a real-user bug — sequential clicks process through React's render cycle normally — but worth remembering for future automation.
+
+### Known follow-ups (non-blocking)
+
+- Diff Mode currently saves the last user message + last outputs — could store a full multi-turn history once Diff Mode supports it.
+- No undo for delete. Could swap `confirm()` for a soft-delete with an in-page undo toast.
+- Notebook could surface usage cost per draft (we already record usage; just need to join by timestamp).
+- "Duplicate draft" action — useful for forking.
+- Export draft to JSON — small step, sets up the portable JSON export from the spec.
+
+## Diff Mode multi-turn (this session)
+
+- [x] `lib/drafts.ts` — DiffDraft schema now carries `turns: DiffTurn[]`, with per-turn outputs that retain text + status + token counts + cost + timing. Legacy single-shot drafts (`lastUserMessage`/`lastOutputA`/`lastOutputB`) migrated on read.
+- [x] `components/play/turn-row.tsx` — compact session-log row with user-message header, side-by-side outputs, status dot, token/cost/elapsed summary, per-turn Delete
+- [x] `app/play/diff/diff-mode.tsx` — refactored to multi-turn: Run appends a new turn instead of replacing output; streaming targets a turn by id; "Clear session" / per-turn Delete; input label flips to "Next turn" after the first run
+- [x] `app/notebook/notebook.tsx` — diff summary now shows "N turns" + last message instead of a single message
+- [x] Browser-verified: empty state, seeded 2-turn draft hydrates with both turns and all token/cost metadata, "Editing draft" indicator visible, "Run next turn" label correct, legacy draft migration produces a clean single-turn session log, all 7 routes 200
+
+### Review
+
+Diff Mode is now actually a *diff session* — keep iterating on the same configs, watch the log build up, then save the whole thing. This closes the gap with the SPEC §10 acceptance criteria (the artifact spec calls for a multi-turn `turns[]` array, which is exactly what we now store).
+
+The TurnRow component is intentionally lighter than OutputPanel — when you have 4+ turns on screen, full-height OutputPanels would dominate. Each turn is dense but readable. Status dot + truncated user message in the row header keeps the log scannable.
+
+The single tricky bit was making sure streaming updates the right turn. Solved with a `(turnId, which, updater) → setTurns(...)` helper that finds the turn by id and updates only the targeted output. Updates by id rather than index, so per-turn Delete during a stream wouldn't desync the writer (though in practice Delete is disabled while running).
+
+### Known follow-ups (non-blocking)
+
+- Per-turn notes/annotations — SPEC §10 mentions notes; would slot cleanly into `DiffTurn.note?: string`.
+- Word-level diff highlighting between A and B outputs (mentioned in original SPEC §10).
+- Streaming token deltas to the live turn need a real-key smoke test — pattern is identical to the single-shot version, just targeting nested state.
+- Optional: a "fork from turn N" action that creates a new draft branching from a specific turn.
+- Auto-scroll to the latest turn after Run.
+
 ## Next session
 
 Pick one:
-1. **Saveable artifacts (Diff Logs + Behavior Specs)** — Supabase setup + `/p/<user>/<slug>` public pages + PDF export. Lands the portfolio loop for both playgrounds at once.
+1. **Saveable artifacts (Diff Logs + Behavior Specs)** — Supabase setup + auth + `/p/<user>/<slug>` public pages + PDF export. Lands the portfolio loop on top of the draft model. With multi-turn now in place, the Diff Log schema is essentially what we publish.
 2. **Persona Workshop playground** — third playground; character design (backstory, beliefs, blind spots) → Persona Card.
-3. **Notebook page** — `/notebook` lists everything you've made (drafts, Diff sessions, tone setups) in localStorage. Lightweight precursor to artifact persistence — no Supabase needed yet.
+3. **Per-turn notes + word-level diff highlighting** — finish the Diff Log spec from §10 before going to Supabase. Adds notes to each `DiffTurn` and a diff-highlight toggle that shows word-level diff between A and B.

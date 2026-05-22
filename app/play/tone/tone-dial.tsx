@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
@@ -12,9 +13,14 @@ import {
   composeToneBlock,
   type ToneValues,
 } from "@/lib/tone";
+import { getDraft, saveDraft, suggestTitle } from "@/lib/drafts";
 import { ToneDialControls } from "@/components/play/tone-dial-controls";
 import { OutputPanel, type OutputState } from "@/components/play/output-panel";
 import type { ConfigState } from "@/components/play/config-panel";
+import {
+  DraftSaveBar,
+  type DraftSaveStatus,
+} from "@/components/play/draft-save-bar";
 
 const EMPTY_OUTPUT: OutputState = {
   text: "",
@@ -32,6 +38,10 @@ const DEFAULT_MESSAGE =
 
 export function ToneDial() {
   const { keys, hydrated } = useKeys();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialDraftId = searchParams.get("draft");
+
   const [provider, setProvider] = useState<ProviderId>("anthropic");
   const [model, setModel] = useState<string>(PROVIDERS.anthropic.defaultModel);
   const [temperature, setTemperature] = useState(0.7);
@@ -40,6 +50,57 @@ export function ToneDial() {
   const [tone, setTone] = useState<ToneValues>(DEFAULT_TONE);
   const [output, setOutput] = useState<OutputState>(EMPTY_OUTPUT);
   const [running, setRunning] = useState(false);
+
+  const [draftId, setDraftId] = useState<string | null>(initialDraftId);
+  const [title, setTitle] = useState("");
+  const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle");
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hydratedDraftIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!initialDraftId || hydratedDraftIdRef.current === initialDraftId) {
+      return;
+    }
+    const draft = getDraft(initialDraftId);
+    if (draft && draft.kind === "tone") {
+      setProvider(draft.provider);
+      setModel(draft.model);
+      setTemperature(draft.temperature);
+      setBrief(draft.brief);
+      setTone(draft.tone);
+      setUserMessage(draft.lastUserMessage);
+      setTitle(draft.title);
+      setDraftId(draft.id);
+      if (draft.lastOutput) {
+        setOutput({ ...EMPTY_OUTPUT, text: draft.lastOutput, status: "done" });
+      }
+      hydratedDraftIdRef.current = draft.id;
+    }
+  }, [initialDraftId]);
+
+  function handleSaveDraft() {
+    setSaveStatus("saving");
+    const saved = saveDraft({
+      id: draftId ?? undefined,
+      kind: "tone",
+      title: title.trim() || suggestTitle(brief, "Untitled tone"),
+      provider,
+      model,
+      temperature,
+      brief,
+      tone,
+      lastUserMessage: userMessage,
+      lastOutput: output.text || undefined,
+    });
+    setDraftId(saved.id);
+    setTitle(saved.title);
+    setSaveStatus("saved");
+    if (!searchParams.get("draft")) {
+      router.replace(`/play/tone?draft=${saved.id}`, { scroll: false });
+    }
+    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
+  }
 
   const composedSystem = useMemo(
     () => composeSystemPrompt(brief, tone),
@@ -257,6 +318,17 @@ export function ToneDial() {
       </div>
 
       <OutputPanel label="Output" config={config} output={output} />
+
+      <DraftSaveBar
+        title={title}
+        onTitleChange={(next) => {
+          setTitle(next);
+          if (saveStatus === "saved") setSaveStatus("idle");
+        }}
+        status={saveStatus}
+        draftId={draftId}
+        onSave={handleSaveDraft}
+      />
     </div>
   );
 }
