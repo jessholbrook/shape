@@ -207,9 +207,31 @@ One thing I noticed mid-build: an early test of Undo failed because my eval-base
 - Pin the most-recent draft in /start as a "Resume" card so the round-trip from Notebook isn't the only way back.
 - Toast UI nice-to-haves: pause countdown on hover, dismiss on click-outside, keyboard `u` to undo most recent.
 
+## Import draft from JSON (this session)
+
+- [x] `lib/drafts.ts` — `importDraftJson(json)` parses, validates `$schema === "shape.draft.v1"`, validates draft kind + required per-kind fields, generates a fresh id + timestamps + " (imported)" title suffix so imports never collide with existing local drafts. Returns `{ ok, draft }` or `{ ok: false, reason }`.
+- [x] `components/notebook/import-panel.tsx` — file picker (.json) + paste textarea + Import button. Inline error and success states; calls `onImported` and shows "Imported …" confirmation.
+- [x] `app/notebook/notebook.tsx` — header row above the list with draft count + Import toggle; expandable ImportPanel above the sections; visible on both populated and empty states.
+- [x] Browser-verified: header shows `2 DRAFTS / CANCEL IMPORT` when open, invalid JSON surfaces "Not valid JSON.", wrong schema surfaces `Expected $schema "shape.draft.v1", got "other.format".`, valid round-trip from a seeded draft creates a second entry with a UUID and "(imported)" suffix while preserving kind + values, all 8 routes 200
+
+### Review
+
+This closes the round-trip. Together with export, the notebook now supports the "save the file, share it, edit it elsewhere, drop it back in" workflow. The validation is intentionally permissive on optional fields (most subfields aren't checked) — the goal is to reject obvious garbage, not to gatekeep minor schema drift while v0.x ships.
+
+The import deliberately rewrites the id rather than preserving it, because two browsers re-importing the same export must not collide. Same reason the title gets a " (imported)" suffix — visible provenance in the notebook. The `$schema` field gives us a clean versioning hook for any future migration.
+
+Notable: this and the previous export PR together are roughly what we'll lift into Supabase. `exportDraftJson` ≈ POST body; `importDraftJson` ≈ what we'd run on a `/p/<user>/<slug>` fork-this page.
+
+### Known follow-ups (non-blocking)
+
+- Drag-and-drop onto the notebook page (currently file picker only).
+- Multi-draft import (paste/upload a wrapper `{ drafts: [...] }`).
+- Round-trip end-to-end test that exports a draft, imports the same blob, and asserts deep equality on the payload minus id/timestamps.
+- "Import overrides existing" toggle for when users *do* want to overwrite by id.
+
 ## Next session
 
 Pick one:
-1. **Saveable artifacts (Supabase backend)** — Now that all three playgrounds have stable, portable draft shapes, publish flow + `/p/<user>/<slug>` public pages + PDF export lands the portfolio loop. Multi-session.
-2. **Refusal Lab playground** — fourth playground; v0.3 spec. Boundary design, over- vs under-refusal scorecard. Different from the others: probes behavior with a panel of edge cases rather than generating from a configured prompt.
-3. **Import draft from JSON** — small companion to the export we just shipped. Drop-zone or paste-area on /notebook that reads `shape.draft.v1` files and adds them to localStorage. Closes the artifact round-trip without any backend.
+1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session; the local draft shapes are stable and the round-trip is proven.
+2. **Refusal Lab playground** — fourth playground; v0.3. Boundary design, over- vs under-refusal scorecard. First "evaluation" surface vs. generation.
+3. **Hero/landing polish + featured playgrounds** — homepage currently still references `/persona`, `/system`, `/evals` chips that don't go anywhere. Wire the homepage to the three real playgrounds and update the "Real work, real portfolios" section to show seeded examples.
