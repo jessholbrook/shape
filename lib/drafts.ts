@@ -29,6 +29,7 @@ export type DiffTurn = {
   userMessage: string;
   outputA: DiffTurnOutput;
   outputB: DiffTurnOutput;
+  note?: string;
 };
 
 export type DiffDraft = {

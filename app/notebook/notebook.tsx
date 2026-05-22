@@ -129,6 +129,7 @@ function DraftSummary({ draft }: { draft: Draft }) {
         (m) => m.id === draft.configB.model,
       )?.name ?? draft.configB.model;
     const turnCount = draft.turns.length;
+    const noteCount = draft.turns.filter((t) => t.note?.trim()).length;
     const lastMessage = draft.turns[draft.turns.length - 1]?.userMessage ?? "";
     return (
       <p className="font-mono text-[12px] text-ink-muted mt-2">
@@ -136,6 +137,14 @@ function DraftSummary({ draft }: { draft: Draft }) {
         <span className="text-ink-muted">
           {turnCount} {turnCount === 1 ? "turn" : "turns"}
         </span>
+        {noteCount > 0 && (
+          <>
+            {" · "}
+            <span className="text-ink-muted">
+              {noteCount} {noteCount === 1 ? "note" : "notes"}
+            </span>
+          </>
+        )}
         {lastMessage && (
           <>
             {" — "}
