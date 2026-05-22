@@ -221,17 +221,100 @@ export function restoreDraft(draft: Draft): void {
   write([draft, ...existing]);
 }
 
+const EXPORT_SCHEMA = "shape.draft.v1";
+
 /**
  * Export a draft to a portable JSON string. Includes everything except a small
  * provenance header so consumers know what they're looking at.
  */
 export function exportDraftJson(draft: Draft): string {
   const payload = {
-    $schema: "shape.draft.v1",
+    $schema: EXPORT_SCHEMA,
     exportedAt: new Date().toISOString(),
     draft,
   };
   return JSON.stringify(payload, null, 2);
+}
+
+export type ImportResult =
+  | { ok: true; draft: Draft }
+  | { ok: false; reason: string };
+
+function isObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: string } {
+  if (!isObject(d)) return { ok: false, reason: "Draft is not an object." };
+  const kind = d.kind;
+  if (kind !== "diff" && kind !== "tone" && kind !== "persona") {
+    return { ok: false, reason: `Unknown draft kind: ${String(kind)}` };
+  }
+  if (typeof d.title !== "string") {
+    return { ok: false, reason: "Draft is missing a title." };
+  }
+  if (kind === "diff") {
+    if (!isObject(d.configA) || !isObject(d.configB)) {
+      return { ok: false, reason: "Diff draft is missing configA / configB." };
+    }
+    if (!Array.isArray(d.turns)) {
+      return { ok: false, reason: "Diff draft is missing turns." };
+    }
+  } else if (kind === "tone") {
+    if (!isObject(d.tone) || typeof d.brief !== "string") {
+      return { ok: false, reason: "Tone draft is missing tone values or brief." };
+    }
+  } else if (kind === "persona") {
+    if (!isObject(d.persona)) {
+      return { ok: false, reason: "Persona draft is missing persona values." };
+    }
+  }
+  return { ok: true };
+}
+
+/**
+ * Validate + save a draft from an exported JSON payload. Always generates a
+ * fresh id and timestamps so imports never collide with existing local drafts.
+ * Appends " (imported)" to the title to make provenance obvious in the
+ * notebook.
+ */
+export function importDraftJson(json: string): ImportResult {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return { ok: false, reason: "Not valid JSON." };
+  }
+  if (!isObject(parsed)) {
+    return { ok: false, reason: "Top-level value is not an object." };
+  }
+  if (parsed.$schema !== EXPORT_SCHEMA) {
+    return {
+      ok: false,
+      reason: `Expected $schema "${EXPORT_SCHEMA}", got ${
+        parsed.$schema ? `"${String(parsed.$schema)}"` : "no schema"
+      }.`,
+    };
+  }
+  if (!isObject(parsed.draft)) {
+    return { ok: false, reason: "Missing `draft` payload." };
+  }
+  const shape = validateDraftShape(parsed.draft);
+  if (!shape.ok) return shape;
+
+  const incoming = parsed.draft as unknown as Draft;
+  const now = Date.now();
+  const created = {
+    ...incoming,
+    id: newId(),
+    title: `${incoming.title} (imported)`,
+    createdAt: now,
+    updatedAt: now,
+  } as Draft;
+  const next = [created, ...read()];
+  if (next.length > MAX_DRAFTS) next.length = MAX_DRAFTS;
+  write(next);
+  return { ok: true, draft: created };
 }
 
 export function clearAllDrafts(): void {

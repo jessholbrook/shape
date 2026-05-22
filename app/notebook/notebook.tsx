@@ -14,6 +14,7 @@ import {
 import { downloadBlob, slugify } from "@/lib/download";
 import { PROVIDERS } from "@/lib/providers";
 import { TONE_DIMENSIONS } from "@/lib/tone";
+import { ImportPanel } from "@/components/notebook/import-panel";
 
 const UNDO_WINDOW_MS = 6000;
 
@@ -27,6 +28,7 @@ export function Notebook() {
   const { drafts, hydrated } = useDrafts();
   const router = useRouter();
   const [pending, setPending] = useState<PendingDelete[]>([]);
+  const [importing, setImporting] = useState(false);
   const pendingRef = useRef(pending);
   pendingRef.current = pending;
 
@@ -91,6 +93,30 @@ export function Notebook() {
 
   return (
     <>
+      <div className="flex items-center justify-between mb-6">
+        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
+          {noDrafts
+            ? "Nothing here yet"
+            : `${drafts.length} ${drafts.length === 1 ? "draft" : "drafts"}`}
+        </p>
+        <button
+          type="button"
+          onClick={() => setImporting((v) => !v)}
+          className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink underline decoration-highlight underline-offset-4 decoration-2"
+        >
+          {importing ? "Cancel import" : "+ Import draft"}
+        </button>
+      </div>
+
+      {importing && (
+        <div className="mb-6">
+          <ImportPanel
+            onClose={() => setImporting(false)}
+            onImported={() => {}}
+          />
+        </div>
+      )}
+
       {noDrafts ? (
         <EmptyState />
       ) : (
