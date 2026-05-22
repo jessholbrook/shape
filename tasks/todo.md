@@ -402,9 +402,34 @@ The API choices that turned out to matter:
 - A long-form variant of ExampleBlock (3+ cards) if a future module wants three examples instead of two.
 - Article meta header (← Learn link + section number + h1 + read time line) is still inline in each article. It's only 4 elements but if we add a 4th article, lifting it makes sense.
 
+## Module 2 article — Voice & tone (this session)
+
+- [x] `app/learn/voice-and-tone/page.tsx` — first article written *with* the shared kit from PR #14 rather than retrofitted. Lede framing tone as multi-dimensional, 5 H2 sections (familiar move → lesson → example → why foundation → rubric), A/B example showing one dial moved (Energy: Composed vs Playful) with everything else equal — same warmth, different feel — to make composability legible. Mid-article Tone Dial CTA. Next-module footer to Module 3 (Soon).
+- [x] `lib/curriculum.ts` — Module 2 status soon → ready, href set, title split as "Voice" + italic "& tone" to mirror Module 4's display style.
+- [x] Browser-verified: /learn shows 5 of 9 modules live, Module 2 row clickable, article hero renders ("Voice & tone." with italic), all 5 sections + A/B with custom "Dials" label + Tone Dial CTA + next-module footer, all 5 learn routes 200.
+
+### Review
+
+First article written end-to-end on the extracted kit (PR #14). The experience was clean — the file is ~190 lines of essentially just prose + structure; no inline component definitions, no duplication of typography helpers, no copy-pasted CTAs. The custom "Dials" label override slots in via one prop, same way Module 6 used "Rubric" and "What you can say." The kit is shaped right.
+
+The article's load-bearing move is the A/B example. Same brief, same warmth, same brevity, same directness — only Energy differs (Composed → Playful). The two outputs show a real qualitative shift ("Take your time getting set up…" vs "Hey, glad you made it!…") that demonstrates the lesson without explanation. "Tone is composable" is asserted in prose, but the example is what makes it stick.
+
+This brings the curriculum to 5 of 9 modules live. The remaining four (Personas, Output formatting, Multi-turn flows, Putting it together) each pair with surface that exists or doesn't:
+- Module 3 (Personas) pairs with Persona Workshop — playground exists, article cheap.
+- Module 5 (Output formatting) has no paired playground in the spec — independent article.
+- Module 7 (Multi-turn flows) pairs with Conversation Choreographer — neither exists yet.
+- Module 8 (Putting it together) is a studio project — different surface entirely.
+
+### Known follow-ups (non-blocking)
+
+- Module 3 article — cheap follow-up; Persona Workshop already exists.
+- Standalone Module 5 article (no playground pairing in spec) — would be the first article without a Try-it CTA.
+- Article meta header (← Learn link + section number + h1 + read-time line) is still inline in each article. Four articles in, lifting it is overdue.
+- Cross-link from each playground header back to the matching article ("Read the concept →"). One-line addition per playground; not yet done.
+
 ## Next session
 
 Pick one:
 1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session.
-2. **Conversation Choreographer playground** — sixth (and last per SPEC §7) playground. Multi-turn flow design.
-3. **Module 2 article — Voice & tone** — fastest follow-up to this refactor. Three articles in, the kit is now well-shaped; Module 2 should be a quick write given Tone Dial already exists.
+2. **Module 3 article — Personas for AI** — cheap follow-up; pairs with Persona Workshop (already shipped). 6 of 9 live after this.
+3. **Lift the article meta header into the shared kit** — four articles in, the ← Learn + SectionNumber + h1 + read-time line is identical in every article. Cheap.

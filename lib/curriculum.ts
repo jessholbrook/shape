@@ -46,14 +46,15 @@ export const MODULES: CurriculumModule[] = [
   {
     num: "02",
     slug: "voice-and-tone",
-    title: "Voice & tone",
+    title: "Voice",
+    italic: "& tone",
     kicker: "Concept",
     blurb:
       "Style is composable. Move warmth, verbosity, directness as independent dials.",
     playground: { label: "Tone Dial", href: "/play/tone" },
     artifact: "Behavior Spec",
-    href: "#",
-    status: "soon",
+    href: "/learn/voice-and-tone",
+    status: "ready",
     readMinutes: 5,
   },
   {
