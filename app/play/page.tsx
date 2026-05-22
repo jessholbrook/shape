@@ -59,6 +59,16 @@ const PLAYGROUNDS: Playground[] = [
     artifact: "Refusal Scorecard",
     status: "ready",
   },
+  {
+    num: "05",
+    href: "/play/evals",
+    title: "Eval",
+    italic: "workshop",
+    blurb:
+      "Rubric-based evaluation. Define what good looks like, score the model against it, watch the average move.",
+    artifact: "Eval Rubric + Scorecard",
+    status: "ready",
+  },
 ];
 
 export default function PlayPage() {
