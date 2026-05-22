@@ -41,13 +41,13 @@ const PLAYGROUNDS: Playground[] = [
   },
   {
     num: "03",
-    href: "#",
+    href: "/play/persona",
     title: "Persona",
     italic: "workshop",
     blurb:
       "Design a character — backstory, beliefs, blind spots — and watch the model embody them.",
     artifact: "Persona Card",
-    status: "soon",
+    status: "ready",
   },
   {
     num: "04",
