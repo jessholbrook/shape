@@ -229,9 +229,30 @@ Notable: this and the previous export PR together are roughly what we'll lift in
 - Round-trip end-to-end test that exports a draft, imports the same blob, and asserts deep equality on the payload minus id/timestamps.
 - "Import overrides existing" toggle for when users *do* want to overwrite by id.
 
+## Homepage polish (this session)
+
+- [x] Bridge cards turned into `<Link>`s with chips/hrefs that match real routes (`/play/persona`, `/play/tone`, `/play/diff`). Third card reframed from "usability studies → run evaluations" to "A/B tests → diff two prompts" so it actually matches what Diff Mode does.
+- [x] New "Playgrounds" section (numbered 03) between bridge and how-it-works, with cards for Diff Mode / Tone Dial / Persona Workshop showing the artifact each produces, plus a "See all →" link to `/play`.
+- [x] Replaced the dead "See the gallery → /gallery" CTA with "Browse playgrounds → /play".
+- [x] How-it-works step 03 updated from "Publish a case study" (not yet shipped) to "Save it to your notebook" with a note that publish lands next — keeps the copy honest with what's actually built.
+- [x] Browse-verified: bridge cards now scroll to real route chips; featured playground cards render with artifact names; all 8 routes 200.
+
+### Review
+
+Small polish pass that cleaned up an embarrassing thing — the homepage was selling artifact publishing and pointing to chips that 404. With this change every link from the front door goes somewhere real, and the value proposition is now honest about what's shipped (local drafts in Notebook) vs. what's coming (publish).
+
+Reframing the third bridge card from "evaluations" to "A/B tests" was a small but useful copy fix — the original framing implied a Refusal Lab/Eval Workshop that doesn't exist yet. "A/B tests → diff two prompts" maps cleanly onto Diff Mode and reads naturally to a UX researcher.
+
+### Known follow-ups (non-blocking)
+
+- "Real work, real portfolios" section from SPEC §9 still unbuilt — needs seeded sample artifacts, which needs Supabase.
+- Hero animation / "live demo" embed of Diff Mode (per SPEC §9 featured-playgrounds bullet).
+- Mobile nav for the homepage CTA pair — the buttons stack but the secondary loses prominence; could tighten.
+- Bridge card chips could become subtle hover states rather than always-on chips.
+
 ## Next session
 
 Pick one:
-1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session; the local draft shapes are stable and the round-trip is proven.
-2. **Refusal Lab playground** — fourth playground; v0.3. Boundary design, over- vs under-refusal scorecard. First "evaluation" surface vs. generation.
-3. **Hero/landing polish + featured playgrounds** — homepage currently still references `/persona`, `/system`, `/evals` chips that don't go anywhere. Wire the homepage to the three real playgrounds and update the "Real work, real portfolios" section to show seeded examples.
+1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session; needs a Supabase project. The local draft shapes are stable and the round-trip is proven, so this is mostly an infrastructure + wiring task.
+2. **Refusal Lab playground** — fourth playground; v0.3. Boundary design with a panel of edge cases, produces a Refusal Scorecard. First "evaluation" surface vs. generation.
+3. **Curriculum entry — Module 1 article** — homepage talks about "Learn the craft" but `/learn` doesn't exist. Write the first concept article (Module 1: Prompts as design) and a basic `/learn` index. Smallest scope.
