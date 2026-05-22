@@ -358,9 +358,29 @@ Per-case fully-scored gating keeps the aggregate honest: a single missing slot i
 - Module 6 article (Evaluation) — pair the article with the playground we just shipped, same cadence as #11.
 - Drag-to-reorder criteria. Drag-to-reorder cases when those become editable.
 
+## Module 6 article — Evaluation (this session)
+
+- [x] `app/learn/evaluation/page.tsx` — article mirroring Module 1 / Module 4 structure. Lede ("a rubric makes good behavior something you can build"), 5 sections (familiar move → lesson → example → why foundation → rubric), A/B example contrasting a vague rubric ("write good copy") with a specific one (Clarity / Tone / Actionability scored 1-5) and naming the design surface the specific one exposes, mid-article Eval Workshop CTA, next-module footer to Module 7 (Soon).
+- [x] `lib/curriculum.ts` — Module 6 status soon → ready, href `/learn/evaluation`.
+- [x] Browser-verified: /learn now shows 4 of 9 modules live, Module 6 row clickable, article hero renders cleanly ("Evaluation." with italic), all 14 routes 200.
+
+### Review
+
+Third paired playground+article in the curriculum (after Modules 1 and 4). The lesson here is the *least* explored in UX literature applied to AI — most designers haven't carried a usability-study rubric over to system prompts and watched the same shape work. The article leads with that bridge explicitly: task scenarios → rubric → grading is exactly the move, just applied to a different surface.
+
+The A/B example pulls its weight by showing the *conversation* a rubric enables, not just the rubric itself. Vague rubric ends in a shrug; specific rubric ends in "tone dropped to 3 — that's where to push next." That's the move from squinting to designing.
+
+Worth noting: the rubric-design rubric at the end (criteria that aren't criteria / overlap / boring middle) is opinionated and short on purpose. With three failure modes named, you can mostly tell when a rubric is going to fall apart before you run anything against it. The Module 6 → Eval Workshop loop closes neatly: read the article, see the rubric-quality failure modes; open the playground, edit the rubric, see them in your own work.
+
+### Known follow-ups (non-blocking)
+
+- Per-criterion average across cases in Eval Workshop — would directly support the article's claim that you can diagnose specific weaknesses. (Followup from PR #12.)
+- Modules 2, 3, 5, 7, 8 still Soon. Pattern is now well-proven; each is just a writing pass.
+- Article kit extraction (Lede/H2/P/UL/LI/ExampleBlock/TryItCTA/next-module footer) is now overdue — three articles in, the duplication is real. Worth pulling into `components/learn/` before article 4.
+
 ## Next session
 
 Pick one:
-1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session; needs a Supabase project. All five playground draft shapes are stable.
-2. **Module 6 article — Evaluation** — pair the article with the playground we just shipped. Cheap, mirrors the Module 1 / Module 4 cadence.
-3. **Conversation Choreographer playground** — sixth (and last per SPEC §7) playground. Multi-turn flow design. Larger scope than evals.
+1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session.
+2. **Extract shared article components into `components/learn/`** — clean up the copy-paste across the three articles. Cheap, unblocks faster future article work.
+3. **Conversation Choreographer playground** — sixth (and last per SPEC §7) playground. Multi-turn flow design. Larger scope.
