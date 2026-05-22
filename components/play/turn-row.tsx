@@ -1,21 +1,39 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { PROVIDERS } from "@/lib/providers";
 import type { DiffTurn, DiffTurnOutput, DiffDraftConfig } from "@/lib/drafts";
+import { diffWords, type DiffSegment } from "@/lib/diff-words";
 
 export function TurnRow({
   num,
   turn,
   configA,
   configB,
+  highlightDiff,
   onDelete,
+  onNoteChange,
 }: {
   num: number;
   turn: DiffTurn;
   configA: DiffDraftConfig;
   configB: DiffDraftConfig;
+  highlightDiff: boolean;
   onDelete?: () => void;
+  onNoteChange: (note: string) => void;
 }) {
+  const canDiff =
+    highlightDiff &&
+    turn.outputA.status === "done" &&
+    turn.outputB.status === "done" &&
+    !!turn.outputA.text &&
+    !!turn.outputB.text;
+
+  const diff = useMemo(() => {
+    if (!canDiff) return null;
+    return diffWords(turn.outputA.text, turn.outputB.text);
+  }, [canDiff, turn.outputA.text, turn.outputB.text]);
+
   return (
     <div className="bg-surface border border-line rounded-[14px] p-4 md:p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-3 pb-3 border-b border-line">
@@ -41,9 +59,21 @@ export function TurnRow({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-4">
-        <TurnOutput label="A" config={configA} output={turn.outputA} />
-        <TurnOutput label="B" config={configB} output={turn.outputB} />
+        <TurnOutput
+          label="A"
+          config={configA}
+          output={turn.outputA}
+          segments={diff?.left ?? null}
+        />
+        <TurnOutput
+          label="B"
+          config={configB}
+          output={turn.outputB}
+          segments={diff?.right ?? null}
+        />
       </div>
+
+      <NoteEditor note={turn.note} onChange={onNoteChange} />
     </div>
   );
 }
@@ -52,10 +82,12 @@ function TurnOutput({
   label,
   config,
   output,
+  segments,
 }: {
   label: string;
   config: DiffDraftConfig;
   output: DiffTurnOutput;
+  segments: DiffSegment[] | null;
 }) {
   const modelName =
     PROVIDERS[config.provider].models.find((m) => m.id === config.model)?.name ??
@@ -82,6 +114,8 @@ function TurnOutput({
       <div className="font-mono text-[13px] leading-[1.55] text-ink whitespace-pre-wrap break-words min-h-[80px]">
         {output.error ? (
           <span className="text-danger">{output.error}</span>
+        ) : segments ? (
+          segments.map((seg, i) => <Segment key={i} segment={seg} />)
         ) : output.text ? (
           <>
             {output.text}
@@ -115,6 +149,128 @@ function TurnOutput({
             {elapsed && <span>{elapsed}</span>}
           </div>
         )}
+    </div>
+  );
+}
+
+function Segment({ segment }: { segment: DiffSegment }) {
+  if (segment.kind === "same") {
+    return <span>{segment.text}</span>;
+  }
+  // "removed" (A-only) and "added" (B-only) both render as diff highlights —
+  // the side they appear on signals whose unique text it is.
+  return (
+    <span className="bg-highlight-soft text-highlight-ink rounded-sm px-0.5">
+      {segment.text}
+    </span>
+  );
+}
+
+function NoteEditor({
+  note,
+  onChange,
+}: {
+  note: string | undefined;
+  onChange: (next: string) => void;
+}) {
+  const hasNote = !!note?.trim();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(note ?? "");
+
+  function startEditing() {
+    setDraft(note ?? "");
+    setEditing(true);
+  }
+
+  function save() {
+    onChange(draft.trim());
+    setEditing(false);
+  }
+
+  function cancel() {
+    setDraft(note ?? "");
+    setEditing(false);
+  }
+
+  function clear() {
+    onChange("");
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="mt-4 pt-4 border-t border-line flex flex-col gap-2">
+        <label className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+          Note
+        </label>
+        <textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          rows={2}
+          placeholder="What did you learn from this turn?"
+          autoFocus
+          className="w-full bg-canvas border border-line rounded-[8px] px-3 py-2 font-sans text-[13px] leading-[1.5] text-ink placeholder:text-ink-quiet focus:border-ink focus:outline-none resize-y"
+        />
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={save}
+            className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink underline decoration-highlight underline-offset-4 decoration-2"
+          >
+            Save note
+          </button>
+          <button
+            type="button"
+            onClick={cancel}
+            className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+          >
+            Cancel
+          </button>
+          {hasNote && (
+            <button
+              type="button"
+              onClick={clear}
+              className="ml-auto font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet hover:text-danger"
+            >
+              Clear note
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (hasNote) {
+    return (
+      <div className="mt-4 pt-4 border-t border-line">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+            Note
+          </span>
+          <button
+            type="button"
+            onClick={startEditing}
+            className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+          >
+            Edit
+          </button>
+        </div>
+        <p className="font-sans text-[14px] leading-[1.55] text-ink mt-1 whitespace-pre-wrap">
+          {note}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 pt-3 border-t border-line">
+      <button
+        type="button"
+        onClick={startEditing}
+        className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+      >
+        + Add note
+      </button>
     </div>
   );
 }

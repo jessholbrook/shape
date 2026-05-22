@@ -132,9 +132,33 @@ The single tricky bit was making sure streaming updates the right turn. Solved w
 - Optional: a "fork from turn N" action that creates a new draft branching from a specific turn.
 - Auto-scroll to the latest turn after Run.
 
+## Per-turn notes + word-level diff highlighting (this session)
+
+- [x] `DiffTurn.note?: string` added to schema (lib/drafts.ts)
+- [x] `lib/diff-words.ts` — LCS-based word-level diff utility; no deps; returns paired left/right segments with `same | removed | added` kinds
+- [x] `components/play/turn-row.tsx` — per-turn note editor (Add → textarea with Save/Cancel/Clear; rendered note with Edit affordance) and `highlightDiff` mode that renders outputs as colored segments
+- [x] `app/play/diff/diff-mode.tsx` — "Highlight diffs" checkbox in the session-log header; `updateTurnNote` wiring per turn
+- [x] `app/notebook/notebook.tsx` — diff summary shows "N notes" alongside turn count when any turn has a note
+- [x] Browser-verified: seeded 2-turn draft, added a note to turn 1 (renders + Edit), toggled highlight on (25 highlighted spans, both A-only and B-only words colored), saved → note persists in localStorage → reloaded → note hydrates back, notebook summary shows "2 turns · 1 note"
+
+### Review
+
+This closes the Diff Log spec from §10 — the artifact data model now has every piece the spec asked for: configs, turns, notes, diff toggle. With this PR landed, "save as Diff Log" can become "save as artifact and publish" without any further data-model changes; Supabase just persists the same `DiffDraft` shape (renamed to `DiffLog`).
+
+The diff-words utility is intentionally small (LCS over word/whitespace tokens, ~75 lines) — no external dependency needed for this size of completion. The visual treatment uses the same `bg-highlight-soft` token as model name pills, which keeps the language of "highlight = look here" consistent across the UI.
+
+Notes were the trickier UX call. Three states (no-note, editing, has-note) without any global notes-mode toggle keeps each turn self-contained. The note placeholder ("What did you learn from this turn?") nudges toward reflection rather than just transcription.
+
+### Known follow-ups (non-blocking)
+
+- Diff highlight is per-pair-of-outputs only; doesn't yet diff *across turns* (e.g., "how did A change between turn 1 and turn 2"). That's a bigger info-design question — defer.
+- Real-key smoke test for the highlight toggle during streaming. Currently `canDiff` requires both outputs to be `done`, so live streaming runs ignore highlight until complete — that may be surprising. Could show a partial diff against the in-progress text. Defer.
+- Notes don't appear in the Notebook summary text itself; just the count. Could show the first note as a preview if the use case warrants.
+- The diff algorithm is O(n·m) memory — fine for prose completions; could hit issues at 10k-token long outputs. Add a length guard if/when we extend Diff to long-form content.
+
 ## Next session
 
 Pick one:
-1. **Saveable artifacts (Diff Logs + Behavior Specs)** — Supabase setup + auth + `/p/<user>/<slug>` public pages + PDF export. Lands the portfolio loop on top of the draft model. With multi-turn now in place, the Diff Log schema is essentially what we publish.
+1. **Saveable artifacts (Diff Logs + Behavior Specs)** — Supabase setup + auth + `/p/<user>/<slug>` public pages + PDF export. The draft schemas are now stable enough to lift directly.
 2. **Persona Workshop playground** — third playground; character design (backstory, beliefs, blind spots) → Persona Card.
-3. **Per-turn notes + word-level diff highlighting** — finish the Diff Log spec from §10 before going to Supabase. Adds notes to each `DiffTurn` and a diff-highlight toggle that shows word-level diff between A and B.
+3. **Notebook polish + JSON export** — "Duplicate draft" action, soft-delete with undo, "Export as JSON" per draft. Smaller-scope; sets up portable artifacts.

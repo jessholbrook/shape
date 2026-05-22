@@ -55,6 +55,7 @@ export function DiffMode() {
   const [pendingMessage, setPendingMessage] = useState(DEFAULT_MESSAGE);
   const [turns, setTurns] = useState<DiffTurn[]>([]);
   const [running, setRunning] = useState(false);
+  const [highlightDiff, setHighlightDiff] = useState(false);
 
   const [draftId, setDraftId] = useState<string | null>(initialDraftId);
   const [title, setTitle] = useState("");
@@ -198,6 +199,14 @@ export function DiffMode() {
     setTurns((prev) => prev.filter((t) => t.id !== turnId));
   }
 
+  function updateTurnNote(turnId: string, note: string) {
+    setTurns((prev) =>
+      prev.map((t) =>
+        t.id === turnId ? { ...t, note: note || undefined } : t,
+      ),
+    );
+  }
+
   function handleSaveDraft() {
     setSaveStatus("saving");
     const saved = saveDraft({
@@ -262,19 +271,32 @@ export function DiffMode() {
 
       {turns.length > 0 && (
         <div className="flex flex-col gap-3">
-          <div className="flex items-baseline justify-between gap-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h2 className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
               Session log — {turns.length}{" "}
               {turns.length === 1 ? "turn" : "turns"}
             </h2>
-            <button
-              type="button"
-              onClick={clearSession}
-              disabled={running}
-              className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-danger disabled:opacity-40"
-            >
-              Clear session
-            </button>
+            <div className="flex items-center gap-4">
+              <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={highlightDiff}
+                  onChange={(e) => setHighlightDiff(e.target.checked)}
+                  className="accent-[var(--highlight)]"
+                />
+                <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted">
+                  Highlight diffs
+                </span>
+              </label>
+              <button
+                type="button"
+                onClick={clearSession}
+                disabled={running}
+                className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-danger disabled:opacity-40"
+              >
+                Clear session
+              </button>
+            </div>
           </div>
           {turns.map((t, i) => (
             <TurnRow
@@ -283,7 +305,9 @@ export function DiffMode() {
               turn={t}
               configA={configA}
               configB={configB}
+              highlightDiff={highlightDiff}
               onDelete={running ? undefined : () => deleteTurn(t.id)}
+              onNoteChange={(note) => updateTurnNote(t.id, note)}
             />
           ))}
         </div>
