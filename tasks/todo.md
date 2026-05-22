@@ -184,9 +184,32 @@ Two design calls worth flagging:
 - Roleplay guardrail toggle (refuse to break character vs. allow breaking).
 - Strength tags as chips rather than free-text once we know what people write.
 
+## Notebook polish + JSON export (this session)
+
+- [x] `lib/drafts.ts` — added `duplicateDraft(id)` (new id + new timestamps + " (copy)" suffix), `restoreDraft(draft)` (writes a snapshot back preserving id/timestamps; used by undo), `exportDraftJson(draft)` (returns portable JSON with `$schema: "shape.draft.v1"` + `exportedAt` + draft)
+- [x] `lib/download.ts` — `downloadBlob(filename, mime, content)` browser-only helper that creates blob URL → temp anchor click → revoke; `slugify(title, fallback)` for filenames. Reusable for future PDF export.
+- [x] `app/notebook/notebook.tsx` — Duplicate / Export / Delete actions per row. Delete is optimistic + reversible: row removes immediately, a centered floating toast appears at the bottom with title, countdown, and Undo button. Cleanup on unmount cancels any pending timers.
+- [x] Browser-verified: Duplicate creates "Welcome copy (copy)" and `router.push`es to its playground URL; Export downloads `welcome-copy-copy.shape.json` with the right schema header; Delete → undo toast appears with 6s countdown → Undo restores the row to its original position; all 8 routes 200
+
+### Review
+
+This is the missing layer between "drafts that exist" and "artifacts you can move around." Duplicate enables the fork-this workflow; JSON export gives users a real ownership story (you can copy the file out, version it in git, share it); soft-delete fixes the most jarring UX wart in the notebook (a destructive `confirm()` modal that interrupts a glance-and-clean workflow).
+
+The portable JSON intentionally includes a `$schema` field. Future Supabase publish will use the same shape on the wire, and an "Import draft" action could read these files back. The `exportedAt` timestamp is provenance — gets useful if these files get shared.
+
+One thing I noticed mid-build: an early test of Undo failed because my eval-based test was operating against a DOM that HMR had partially replaced. Reproduced cleanly after a hard reload. Real-user clicks were never affected. Worth remembering for future eval-driven verification.
+
+### Known follow-ups (non-blocking)
+
+- Import flow — paste/upload a `shape.draft.v1` JSON file and it lands in the notebook. Closes the round-trip.
+- Bulk actions on the notebook: select multiple → delete / export all.
+- "Export all drafts as one JSON" for backup.
+- Pin the most-recent draft in /start as a "Resume" card so the round-trip from Notebook isn't the only way back.
+- Toast UI nice-to-haves: pause countdown on hover, dismiss on click-outside, keyboard `u` to undo most recent.
+
 ## Next session
 
 Pick one:
-1. **Saveable artifacts (Supabase backend)** — Now that all three v0.2 playgrounds produce stable draft shapes (Diff Log, Behavior Spec, Persona Card), publish flow + `/p/<user>/<slug>` public pages + PDF export lands the portfolio loop. Multi-session.
-2. **Refusal Lab playground** — fourth playground; v0.3 spec. Boundary design, over- vs under-refusal scorecard.
-3. **Notebook polish + JSON export** — "Duplicate draft", soft-delete with undo, "Export as JSON" per draft. Smaller-scope; sets up portable artifacts before Supabase.
+1. **Saveable artifacts (Supabase backend)** — Now that all three playgrounds have stable, portable draft shapes, publish flow + `/p/<user>/<slug>` public pages + PDF export lands the portfolio loop. Multi-session.
+2. **Refusal Lab playground** — fourth playground; v0.3 spec. Boundary design, over- vs under-refusal scorecard. Different from the others: probes behavior with a panel of edge cases rather than generating from a configured prompt.
+3. **Import draft from JSON** — small companion to the export we just shipped. Drop-zone or paste-area on /notebook that reads `shape.draft.v1` files and adds them to localStorage. Closes the artifact round-trip without any backend.
