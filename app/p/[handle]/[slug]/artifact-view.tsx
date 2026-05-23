@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ARTIFACTS_EVENT,
   getArtifactBackend,
   type Artifact,
 } from "@/lib/artifacts";
+import { draftEditorHref, getDraft } from "@/lib/drafts";
 import { PROVIDERS } from "@/lib/providers";
 import { TONE_DIMENSIONS } from "@/lib/tone";
 import {
@@ -31,6 +33,9 @@ export function ArtifactView({
   slug: string;
 }) {
   const [status, setStatus] = useState<Status>({ kind: "loading" });
+  const [editHref, setEditHref] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const republished = searchParams.get("republished") === "1";
 
   useEffect(() => {
     let cancelled = false;
@@ -38,16 +43,25 @@ export function ArtifactView({
       const backend = getArtifactBackend();
       const a = await backend.get(handle, slug);
       if (cancelled) return;
-      setStatus(a ? { kind: "found", artifact: a } : { kind: "missing" });
+      if (a) {
+        setStatus({ kind: "found", artifact: a });
+        const localDraft = getDraft(a.draft.id);
+        setEditHref(localDraft ? draftEditorHref(localDraft) : null);
+      } else {
+        setStatus({ kind: "missing" });
+        setEditHref(null);
+      }
     }
     load();
     const refresh = () => load();
     window.addEventListener(ARTIFACTS_EVENT, refresh);
     window.addEventListener("storage", refresh);
+    window.addEventListener("shape:drafts-changed", refresh);
     return () => {
       cancelled = true;
       window.removeEventListener(ARTIFACTS_EVENT, refresh);
       window.removeEventListener("storage", refresh);
+      window.removeEventListener("shape:drafts-changed", refresh);
     };
   }, [handle, slug]);
 
@@ -66,9 +80,10 @@ export function ArtifactView({
   const a = status.artifact;
   return (
     <div className="flex flex-col gap-10">
-      <Header artifact={a} />
+      <Header artifact={a} editHref={editHref} />
       <ArtifactBody artifact={a} />
       <Footer artifact={a} />
+      {republished && <RepublishedToast />}
     </div>
   );
 }
@@ -108,7 +123,13 @@ function MissingState({ handle, slug }: { handle: string; slug: string }) {
   );
 }
 
-function Header({ artifact: a }: { artifact: Artifact }) {
+function Header({
+  artifact: a,
+  editHref,
+}: {
+  artifact: Artifact;
+  editHref: string | null;
+}) {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -118,7 +139,17 @@ function Header({ artifact: a }: { artifact: Artifact }) {
             {a.visibility === "private" ? "Private" : "Public"}
           </span>
         </div>
-        <SaveAsPdfButton />
+        <div className="flex items-center gap-3" data-print-hide>
+          {editHref && (
+            <Link
+              href={editHref}
+              className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink underline decoration-highlight underline-offset-4 decoration-2"
+            >
+              Edit draft →
+            </Link>
+          )}
+          <SaveAsPdfButton />
+        </div>
       </div>
       <h1 className="font-display text-[44px] md:text-[64px] leading-[1.02] tracking-tight text-ink mt-4">
         {a.title}
@@ -152,6 +183,28 @@ function SaveAsPdfButton() {
     >
       Save as PDF
     </button>
+  );
+}
+
+function RepublishedToast() {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const id = setTimeout(() => setVisible(false), 4000);
+    return () => clearTimeout(id);
+  }, []);
+
+  if (!visible) return null;
+  return (
+    <div
+      data-print-hide
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-ink text-canvas rounded-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.18)] px-4 py-3 flex items-center gap-3"
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-highlight" />
+      <span className="font-sans text-[14px]">
+        Republished — your changes are live.
+      </span>
+    </div>
   );
 }
 
