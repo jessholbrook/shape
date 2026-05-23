@@ -450,9 +450,30 @@ This brings the curriculum to **6 of 9 live**. Remaining:
 - Cross-link from each playground back to the matching article ("Read the concept →"). Five articles now have paired playgrounds; one-line change per playground.
 - Article TOC component (jump to sections within the article) once any article passes ~10 minutes.
 
+## Module 5 article — Output formatting (this session)
+
+- [x] `app/learn/output-formatting/page.tsx` — first article without a paired playground. Establishes the no-Try-it-CTA variant of the article structure. Lede framing format as part of voice (not neutral), 4 H2 sections matching the standard shape (familiar move → lesson → example → why foundation), plus a custom 5th section "Try it in your own work" that points to Diff Mode inline as the closest fit but doesn't pretend a dedicated playground exists. A/B example: "Bulleted default" vs "Prose, on purpose" — same content, two formats, different reading experiences. Next-module footer.
+- [x] `lib/curriculum.ts` — Module 5 status soon → ready, href set, title split into "Output" + italic "formatting".
+- [x] Browser-verified: /learn shows 7 of 9 modules live, Module 5 row clickable, article renders with "4 MIN READ" meta (no "pairs with" suffix), all sections + A/B example + inline Diff Mode link in the closing section, all 7 learn routes 200.
+
+### Review
+
+Resolves a structural question the curriculum had been ducking: what does an article look like when there's no paired playground? SPEC §8 lists Module 5 paired with "lightweight studio" but doesn't define one. Two options — invent a playground, or write the article as standalone. Picked standalone because format choices show up in *every* playground; a dedicated one would teach less than already-existing tools used with intent.
+
+The structural change is small: the standard Try-it card is replaced with a "Try it in your own work" paragraph that links inline to Diff Mode as the closest existing surface. The meta line drops the "pairs with" suffix since there's no pairing. Same kit, two prop differences. Future no-playground articles can follow the same pattern.
+
+Curriculum now **7 of 9 live**. Remaining gaps are exactly the two surfaces that don't exist yet — Module 7 needs Conversation Choreographer first, Module 8 is a Studio project.
+
+### Known follow-ups (non-blocking)
+
+- Module 7 + Conversation Choreographer playground — biggest remaining piece.
+- Module 8 / Studio project — different surface entirely.
+- Article meta header (← Learn + section number + h1 + read-time) is inline in six articles now. Lifting is overdue.
+- Cross-link from playground headers back to matching articles. One-line change per playground.
+
 ## Next session
 
 Pick one:
 1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session.
-2. **Module 5 article — Output formatting** — last "easy" article. No playground pairing; would establish the no-Try-it variant of the article structure.
-3. **Lift article meta header into shared kit** — five articles in, identical header still inline. Pull into `ArticleHeader` taking the module.
+2. **Conversation Choreographer playground + Module 7 article** — biggest remaining v1.0 piece. Multi-turn flow design + matching article.
+3. **Lift article meta header into shared kit** — six articles in, identical header still inline. Cheap.

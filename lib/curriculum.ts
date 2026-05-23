@@ -88,13 +88,14 @@ export const MODULES: CurriculumModule[] = [
   {
     num: "05",
     slug: "output-formatting",
-    title: "Output formatting",
+    title: "Output",
+    italic: "formatting",
     kicker: "Concept",
     blurb:
       "Lists, headings, JSON, paragraphs. Format is part of voice; pick one on purpose.",
     artifact: "Structured-output spec",
-    href: "#",
-    status: "soon",
+    href: "/learn/output-formatting",
+    status: "ready",
     readMinutes: 4,
   },
   {
