@@ -72,14 +72,15 @@ export const MODULES: CurriculumModule[] = [
   {
     num: "04",
     slug: "refusal-and-boundaries",
-    title: "Refusal & boundaries",
+    title: "Refusal",
+    italic: "& boundaries",
     kicker: "Concept",
     blurb:
       "Where the model says no is a design surface. Over- and under-refusal both fail users.",
     playground: { label: "Refusal Lab", href: "/play/refusal" },
     artifact: "Refusal Scorecard",
-    href: "#",
-    status: "soon",
+    href: "/learn/refusal-and-boundaries",
+    status: "ready",
     readMinutes: 6,
   },
   {

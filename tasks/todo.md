@@ -302,9 +302,34 @@ A few design calls worth flagging:
 - "Compare two guidelines" mode — run the same panel against guidelines A vs guidelines B and diff the scorecards. The natural Diff-Mode-style extension of this playground.
 - Auto-judge mode with a clearly-labeled LLM classifier as a *suggestion* layer, not a replacement for manual review.
 
+## Module 4 article — Refusal & boundaries (this session)
+
+- [x] `app/learn/refusal-and-boundaries/page.tsx` — full article mirroring Module 1's structure: lede ("a refusal is a design surface"), 5 H2 sections (familiar move → lesson → example → why foundation → rubric), an A/B refusal example with per-card "Read" notes that name what each output is doing, mid-article "Open Refusal Lab" CTA, next-module footer.
+- [x] `lib/curriculum.ts` — Module 4 flipped status soon → ready, href `/learn/refusal-and-boundaries`, title split into "Refusal & boundaries" with italic on the "& boundaries" half to match the other live article's display style.
+- [x] Browser-verified: /learn shows 3 of 9 modules live, Module 4 row open and clickable, article renders with all 5 sections + example + CTA + next-module footer, all 12 routes 200.
+
+### Review
+
+Pairs the Refusal Lab playground with its concept article. The A/B example earns the lesson by hand — same input, two refusals, one with one-line "Read" annotation pointing out exactly what each does (one walls, one redirects). That's the trick the rest of the article hangs on; without it, the "refusal is a design surface" claim is just an assertion.
+
+The four-shape rubric (harm to third party / vulnerability / scope / contested values) maps 1:1 to the Refusal Lab's seeded probes. Read the article, run the lab, you'll see the same four categories show up — and now you know what you're looking at.
+
+Caught two bugs while writing:
+- **JSX attribute parser:** `aPrompt='...\'...'` doesn't work because JSX attribute strings don't honor `\` escapes. The `\` is literal and the next `'` closes the string. Fix: use the expression form `aPrompt={\`...\`}` so it's a real JS template literal.
+- **JSX whitespace collapse:** `<em>one rule</em>\n in the guidelines` renders as "one rulein the guidelines" because JSX strips the newline + leading indent. Fix: `<em>one rule</em>{" "}` to force the space.
+
+Both are JSX gotchas worth remembering for future article work.
+
+### Known follow-ups (non-blocking)
+
+- Modules 2, 3, 5, 6, 7, 8 still Soon — each is its own writing pass but the scaffolding is now well-proven (two articles in, the structure is settling: lede + 5 sections + A/B example + CTA + next).
+- Pull the inline article components (Lede, H2, P, UL, LI, ExampleBlock, ExampleCard, TryItCTA, next-module footer) into a shared `components/learn/` set so future articles import instead of copy. The current duplication between Module 1 and Module 4 is fine for two articles, would be a smell at four.
+- "Continue to the next concept" link from each playground header back to the matching module article. Currently the article links to the playground but not the reverse.
+- Reading progress dots on /learn — localStorage flag set on article visit, ✓ on the index. Pre-Supabase.
+
 ## Next session
 
 Pick one:
-1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session; needs a Supabase project. All four playground draft shapes are stable.
-2. **Module 4 article — Refusal & boundaries** — match the playground we just shipped with its concept article. Cheap, uses the existing curriculum scaffolding.
-3. **Eval Workshop playground** — fifth playground; v1.0 spec. Rubric-based evaluation against a panel of cases — the generalized version of Refusal Lab.
+1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session; the local draft shapes are stable and the round-trip is proven.
+2. **Eval Workshop playground** — fifth playground; v1.0 spec. Rubric-based evaluation against a panel of cases — the generalized Refusal Lab. Would pair with Module 6.
+3. **Extract shared learn components** — pull Lede/H2/P/UL/LI/ExampleBlock/TryItCTA into `components/learn/` so future articles aren't copy-paste. Low-value alone but unlocks faster article work.
