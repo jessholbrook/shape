@@ -2,6 +2,17 @@ import Link from "next/link";
 import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
 import { getModule, nextModule } from "@/lib/curriculum";
+import {
+  ExampleBlock,
+  ExampleCard,
+  H2,
+  LI,
+  Lede,
+  NextModuleFooter,
+  P,
+  TryItCTA,
+  UL,
+} from "@/components/learn/article";
 
 const SLUG = "prompts-as-design";
 
@@ -79,14 +90,18 @@ export default function PromptsAsDesignPage() {
         </P>
 
         <H2>A small example</H2>
-        <ExampleBlock
-          aLabel="Version A"
-          aPrompt="You are a research assistant."
-          aOutput={`Welcome! How can I help you with your research today?`}
-          bLabel="Version B"
-          bPrompt="You are a research assistant who's been doing this for fifteen years. You've watched a lot of interviews fail because the interviewer asked a leading question in the first minute. Be warm, but cut straight to what matters."
-          bOutput={`Hi — quick check before we get going: do you have one or two specific behaviors you're hoping to see today? If not, that's our first move.`}
-        />
+        <ExampleBlock>
+          <ExampleCard
+            label="Version A"
+            prompt="You are a research assistant."
+            output="Welcome! How can I help you with your research today?"
+          />
+          <ExampleCard
+            label="Version B"
+            prompt="You are a research assistant who's been doing this for fifteen years. You've watched a lot of interviews fail because the interviewer asked a leading question in the first minute. Be warm, but cut straight to what matters."
+            output="Hi — quick check before we get going: do you have one or two specific behaviors you're hoping to see today? If not, that's our first move."
+          />
+        </ExampleBlock>
         <P>
           Same task. Same model. Different prompt, different behavior. You
           didn&apos;t need to know anything about transformers or tokens to
@@ -107,7 +122,13 @@ export default function PromptsAsDesignPage() {
           your head and start seeing them.
         </P>
 
-        <TryItCTA href={mod.playground?.href ?? "/play/diff"} />
+        <TryItCTA
+          href={mod.playground?.href ?? "/play/diff"}
+          buttonLabel="Open Diff Mode"
+        >
+          Open Diff Mode and{" "}
+          <span className="italic">change one variable</span>.
+        </TryItCTA>
 
         <H2>What to take into the playground</H2>
         <UL>
@@ -120,162 +141,13 @@ export default function PromptsAsDesignPage() {
             won&apos;t know which one moved the output.
           </LI>
           <LI>
-            Save the run as a Diff Log. The point isn&apos;t the answer; it&apos;s
-            the trail of decisions you made.
+            Save the run as a Diff Log. The point isn&apos;t the answer;
+            it&apos;s the trail of decisions you made.
           </LI>
         </UL>
 
-        {next && (
-          <div className="mt-20 pt-8 border-t border-line">
-            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
-              Next module
-            </p>
-            <Link
-              href={next.href !== "#" ? next.href : "/learn"}
-              className="mt-3 inline-flex items-baseline gap-3 group"
-            >
-              <span className="font-mono text-[12px] uppercase tracking-[0.1em] text-ink-quiet">
-                {next.num}
-              </span>
-              <span className="font-display text-[24px] md:text-[28px] leading-[1.15] text-ink group-hover:text-highlight-ink transition-colors">
-                {next.title}
-                {next.italic && (
-                  <>
-                    {" "}
-                    <span className="italic">{next.italic}</span>
-                  </>
-                )}
-              </span>
-              {next.status === "soon" && (
-                <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet bg-line/60 rounded-full px-2 py-0.5">
-                  Soon
-                </span>
-              )}
-            </Link>
-          </div>
-        )}
+        <NextModuleFooter next={next} />
       </article>
     </Shell>
-  );
-}
-
-function Lede({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="font-display text-[24px] md:text-[28px] leading-[1.4] text-ink mt-12 italic">
-      {children}
-    </p>
-  );
-}
-
-function H2({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="font-display text-[28px] md:text-[34px] leading-[1.15] tracking-tight text-ink mt-16">
-      {children}
-    </h2>
-  );
-}
-
-function P({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="font-sans text-[17px] leading-[1.65] text-ink mt-6 max-w-prose">
-      {children}
-    </p>
-  );
-}
-
-function UL({ children }: { children: React.ReactNode }) {
-  return (
-    <ul className="mt-6 flex flex-col gap-3 max-w-prose">
-      {children}
-    </ul>
-  );
-}
-
-function LI({ children }: { children: React.ReactNode }) {
-  return (
-    <li className="font-sans text-[16px] leading-[1.6] text-ink pl-5 relative">
-      <span className="absolute left-0 top-2 w-1.5 h-1.5 rounded-full bg-highlight" />
-      {children}
-    </li>
-  );
-}
-
-function ExampleBlock({
-  aLabel,
-  aPrompt,
-  aOutput,
-  bLabel,
-  bPrompt,
-  bOutput,
-}: {
-  aLabel: string;
-  aPrompt: string;
-  aOutput: string;
-  bLabel: string;
-  bPrompt: string;
-  bOutput: string;
-}) {
-  return (
-    <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-      <ExampleCard label={aLabel} prompt={aPrompt} output={aOutput} />
-      <ExampleCard label={bLabel} prompt={bPrompt} output={bOutput} />
-    </div>
-  );
-}
-
-function ExampleCard({
-  label,
-  prompt,
-  output,
-}: {
-  label: string;
-  prompt: string;
-  output: string;
-}) {
-  return (
-    <div className="bg-surface border border-line rounded-[14px] p-5 flex flex-col gap-3">
-      <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet">
-        {label}
-      </span>
-      <div>
-        <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet mb-1">
-          System prompt
-        </p>
-        <p className="font-mono text-[12px] leading-[1.55] text-ink whitespace-pre-wrap">
-          {prompt}
-        </p>
-      </div>
-      <div className="border-t border-line pt-3">
-        <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet mb-1">
-          Output
-        </p>
-        <p className="font-sans text-[13px] leading-[1.55] text-ink italic">
-          &ldquo;{output}&rdquo;
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function TryItCTA({ href }: { href: string }) {
-  return (
-    <div className="mt-10 bg-surface border border-line rounded-[16px] p-6 md:p-8 flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
-          Try it in the playground
-        </p>
-        <h3 className="font-display text-[22px] leading-[1.15] text-ink mt-2">
-          Open Diff Mode and{" "}
-          <span className="italic">change one variable</span>.
-        </h3>
-      </div>
-      <Link
-        href={href}
-        className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[12px] px-5 py-3 font-sans text-[14px] hover:bg-ink/90 transition-colors"
-      >
-        Open Diff Mode
-        <span className="text-highlight">→</span>
-      </Link>
-    </div>
   );
 }

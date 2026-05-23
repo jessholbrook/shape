@@ -378,9 +378,33 @@ Worth noting: the rubric-design rubric at the end (criteria that aren't criteria
 - Modules 2, 3, 5, 7, 8 still Soon. Pattern is now well-proven; each is just a writing pass.
 - Article kit extraction (Lede/H2/P/UL/LI/ExampleBlock/TryItCTA/next-module footer) is now overdue — three articles in, the duplication is real. Worth pulling into `components/learn/` before article 4.
 
+## Shared article components (this session)
+
+- [x] `components/learn/article.tsx` — extracted Lede, H2, P, UL, LI, ExampleBlock, ExampleCard, TryItCTA, NextModuleFooter. ExampleCard takes optional `promptLabel` / `outputLabel` / `noteLabel` (with sensible defaults), and `note` only renders when provided. TryItCTA takes JSX `children` for the title + a `buttonLabel` prop so each article can compose its own copy.
+- [x] Refactored `app/learn/prompts-as-design/page.tsx` — was 282 lines, now 158. Two ExampleCards with default "System prompt" / "Output" labels (no note).
+- [x] Refactored `app/learn/refusal-and-boundaries/page.tsx` — overrides labels to "Input" / "Output" / "Read" + note.
+- [x] Refactored `app/learn/evaluation/page.tsx` — overrides labels to "Rubric" / "What you can say" / "Read" + note.
+- [x] Browser-verified: all three articles still render with their distinct label vocabularies, all 5 sections, correct CTA + next-module footer.
+
+### Review
+
+Net effect: ~370 lines of duplicated component code collapsed into one shared module. Future article work now consists of: write the prose, configure the ExampleCard labels for whatever domain you're writing about, pick a TryItCTA button label. The three articles now read as variations on the same template rather than three independent files that happen to look alike.
+
+The API choices that turned out to matter:
+- **Configurable labels with sensible defaults.** Without this, every article would need 3 label props even when the defaults are fine. With it, Module 1 (the most generic) needed none of the override props.
+- **JSX children for the TryItCTA title.** The italic-in-the-middle pattern ("Open Diff Mode and *change one variable*") is core to the visual rhythm; a string prop would lose that. Children with a separate `buttonLabel` keeps both flexible.
+- **NextModuleFooter takes the `next` value directly**, not the slug. Keeps the helper colocated with `nextModule()` in the article and avoids a circular knowledge of the curriculum inside the component.
+
+### Known follow-ups (non-blocking)
+
+- Optional H3 for sub-sections (one article might want it later; not yet).
+- Inline `Em` and `Strong` helpers if we want non-default emphasis styling — currently the articles just use raw `<em>` / `<strong>`.
+- A long-form variant of ExampleBlock (3+ cards) if a future module wants three examples instead of two.
+- Article meta header (← Learn link + section number + h1 + read time line) is still inline in each article. It's only 4 elements but if we add a 4th article, lifting it makes sense.
+
 ## Next session
 
 Pick one:
 1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session.
-2. **Extract shared article components into `components/learn/`** — clean up the copy-paste across the three articles. Cheap, unblocks faster future article work.
-3. **Conversation Choreographer playground** — sixth (and last per SPEC §7) playground. Multi-turn flow design. Larger scope.
+2. **Conversation Choreographer playground** — sixth (and last per SPEC §7) playground. Multi-turn flow design.
+3. **Module 2 article — Voice & tone** — fastest follow-up to this refactor. Three articles in, the kit is now well-shaped; Module 2 should be a quick write given Tone Dial already exists.
