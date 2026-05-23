@@ -76,6 +76,7 @@ export const MODULES: CurriculumModule[] = [
     kicker: "Concept",
     blurb:
       "Where the model says no is a design surface. Over- and under-refusal both fail users.",
+    playground: { label: "Refusal Lab", href: "/play/refusal" },
     artifact: "Refusal Scorecard",
     href: "#",
     status: "soon",

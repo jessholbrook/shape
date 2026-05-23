@@ -1,11 +1,12 @@
 import type { ProviderId } from "./providers";
 import type { ToneValues } from "./tone";
 import type { PersonaValues } from "./persona";
+import type { Probe, ProbeResult } from "./refusal";
 
 const DRAFTS_KEY = "shape:drafts:log";
 const MAX_DRAFTS = 100;
 
-export type DraftKind = "diff" | "tone" | "persona";
+export type DraftKind = "diff" | "tone" | "persona" | "refusal";
 
 export type DiffDraftConfig = {
   provider: ProviderId;
@@ -108,7 +109,23 @@ export type PersonaDraft = {
   updatedAt: number;
 };
 
-export type Draft = DiffDraft | ToneDraft | PersonaDraft;
+export type RefusalDraft = {
+  id: string;
+  kind: "refusal";
+  title: string;
+  provider: ProviderId;
+  model: string;
+  temperature: number;
+  /** System prompt with refusal guidelines. */
+  guidelines: string;
+  probes: Probe[];
+  /** Results keyed by probe id. */
+  results: Record<string, ProbeResult>;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type Draft = DiffDraft | ToneDraft | PersonaDraft | RefusalDraft;
 
 function read(): Draft[] {
   if (typeof window === "undefined") return [];
@@ -149,7 +166,8 @@ export function getDraft(id: string): Draft | null {
 export type DraftInput =
   | (Omit<DiffDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
   | (Omit<ToneDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
-  | (Omit<PersonaDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
+  | (Omit<PersonaDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
+  | (Omit<RefusalDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
 
 /**
  * Save a draft. If `data.id` matches an existing draft, it's updated in place;
@@ -247,7 +265,12 @@ function isObject(v: unknown): v is Record<string, unknown> {
 function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: string } {
   if (!isObject(d)) return { ok: false, reason: "Draft is not an object." };
   const kind = d.kind;
-  if (kind !== "diff" && kind !== "tone" && kind !== "persona") {
+  if (
+    kind !== "diff" &&
+    kind !== "tone" &&
+    kind !== "persona" &&
+    kind !== "refusal"
+  ) {
     return { ok: false, reason: `Unknown draft kind: ${String(kind)}` };
   }
   if (typeof d.title !== "string") {
@@ -267,6 +290,13 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
   } else if (kind === "persona") {
     if (!isObject(d.persona)) {
       return { ok: false, reason: "Persona draft is missing persona values." };
+    }
+  } else if (kind === "refusal") {
+    if (!Array.isArray(d.probes) || typeof d.guidelines !== "string") {
+      return {
+        ok: false,
+        reason: "Refusal draft is missing probes or guidelines.",
+      };
     }
   }
   return { ok: true };
