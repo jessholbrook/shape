@@ -617,9 +617,28 @@ The artifact-view renderers reuse the existing per-kind vocabulary: diff session
 - Republish-replace UX: currently re-publishing the same handle+slug overwrites silently; should at least show a "Republished" toast.
 - /notebook should surface published artifacts as a section ("Published" → list with public URLs).
 
+## Per-handle profile page (this session)
+
+- [x] `lib/artifacts.ts` — added `listByHandle(handle)` to the `ArtifactBackend` interface + local impl. Returns *public* artifacts only, newest first.
+- [x] `app/p/[handle]/page.tsx` + `profile-view.tsx` — sibling to the per-slug artifact route. Hero with handle as display title + public-artifact count, list of cards (kind pill, date, title, summary, Open link), empty state explainer for handles with nothing public yet, footer line noting localStorage-first nature.
+- [x] Browser-verified: seeded 3 artifacts (2 public + 1 private) under handle "jess", `/p/jess` rendered "2 public artifacts" with both public ones in newest-first order; private artifact correctly excluded. `/p/nobody` rendered the empty state ("Publish something to fill this page."). All 9 sampled routes 200.
+
+### Review
+
+Tiny follow-up to #22 that closes a real gap in the artifact loop: the artifact page footer already linked `by [handle]` to `/p/<handle>`, but that route was a dead end until now. Now it lists everything that handle has published publicly.
+
+The visibility filter happens at the backend level (`listByHandle` only returns public). That's intentional — keeps the API honest about what a profile page can show, and matches what Supabase RLS will enforce server-side once that's wired (the RLS policy in `0001_artifacts.sql` already says `visibility = 'public'` for the public select policy).
+
+### Known follow-ups (non-blocking)
+
+- Private artifact pages currently render to anyone who knows the URL (private only hides them from listings). Need a real auth gate before that's defensible. For now it's effectively "unlisted, not private."
+- Profile-level bio / display name / avatar — currently just the handle string. Add when there's a Users table to back it.
+- Filter / sort controls on the profile page (by kind, by date).
+- Profile OG image generation — composed from kind pills + handle.
+
 ## Next session
 
 Pick one:
-1. **Wire actual Supabase** — install `@supabase/supabase-js`, create the project (or document the setup steps), implement `supabaseArtifactBackend`, swap it in. The schema, env, and interface are all ready.
-2. **Per-handle profile page** — `/p/<handle>` listing all that handle's public artifacts. Cheap; lays groundwork for the portfolio-page surface from SPEC §5.
-3. **Module 8 / Studio scaffold** — last curriculum entry, end-to-end guided project.
+1. **Wire actual Supabase** — install `@supabase/supabase-js`, create the project (or document setup), implement `supabaseArtifactBackend`. The schema, env, and `getArtifactBackend()` seam are all ready.
+2. **Module 8 / Studio scaffold** — last curriculum entry, end-to-end guided project. Larger scope.
+3. **PDF export for artifacts** — secondary export format per SPEC §5. The artifact-view layouts are already designed to render print-friendly.

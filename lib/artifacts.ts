@@ -28,6 +28,8 @@ export type Artifact = {
  */
 export interface ArtifactBackend {
   list(): Promise<Artifact[]>;
+  /** Public artifacts only, sorted newest first. */
+  listByHandle(handle: string): Promise<Artifact[]>;
   get(handle: string, slug: string): Promise<Artifact | null>;
   publish(input: PublishInput): Promise<Artifact>;
   unpublish(handle: string, slug: string): Promise<void>;
@@ -99,6 +101,11 @@ function deriveSummary(draft: Draft): string {
 export const localArtifactBackend: ArtifactBackend = {
   async list() {
     return readLocal().sort((a, b) => b.publishedAt - a.publishedAt);
+  },
+  async listByHandle(handle) {
+    return readLocal()
+      .filter((a) => a.handle === handle && a.visibility === "public")
+      .sort((a, b) => b.publishedAt - a.publishedAt);
   },
   async get(handle, slug) {
     return (
