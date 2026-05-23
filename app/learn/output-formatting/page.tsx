@@ -12,6 +12,7 @@ import {
   P,
   UL,
 } from "@/components/learn/article";
+import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "output-formatting";
 
@@ -160,6 +161,7 @@ export default function OutputFormattingPage() {
         </P>
 
         <NextModuleFooter next={next} />
+        <MarkAsRead slug={SLUG} />
       </article>
     </Shell>
   );

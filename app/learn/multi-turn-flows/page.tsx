@@ -12,6 +12,7 @@ import {
   TryItCTA,
   UL,
 } from "@/components/learn/article";
+import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "multi-turn-flows";
 
@@ -169,6 +170,7 @@ When the user follows up, reference what you said earlier rather than repeating 
         </UL>
 
         <NextModuleFooter next={next} />
+        <MarkAsRead slug={SLUG} />
       </article>
     </Shell>
   );
