@@ -17,6 +17,7 @@ import { TONE_DIMENSIONS } from "@/lib/tone";
 import { evaluateMatch } from "@/lib/refusal";
 import { aggregateScore, SCORE_MAX } from "@/lib/evals";
 import { ImportPanel } from "@/components/notebook/import-panel";
+import { PublishDialog } from "@/components/notebook/publish-dialog";
 
 const UNDO_WINDOW_MS = 6000;
 
@@ -31,6 +32,7 @@ export function Notebook() {
   const router = useRouter();
   const [pending, setPending] = useState<PendingDelete[]>([]);
   const [importing, setImporting] = useState(false);
+  const [publishingDraft, setPublishingDraft] = useState<Draft | null>(null);
   const pendingRef = useRef(pending);
   pendingRef.current = pending;
 
@@ -132,6 +134,7 @@ export function Notebook() {
                   onDuplicate={() => handleDuplicate(d)}
                   onExport={() => handleExport(d)}
                   onDelete={() => handleDelete(d)}
+                  onPublish={() => setPublishingDraft(d)}
                 />
               ))}
             </Section>
@@ -146,6 +149,7 @@ export function Notebook() {
                   onDuplicate={() => handleDuplicate(d)}
                   onExport={() => handleExport(d)}
                   onDelete={() => handleDelete(d)}
+                  onPublish={() => setPublishingDraft(d)}
                 />
               ))}
             </Section>
@@ -160,6 +164,7 @@ export function Notebook() {
                   onDuplicate={() => handleDuplicate(d)}
                   onExport={() => handleExport(d)}
                   onDelete={() => handleDelete(d)}
+                  onPublish={() => setPublishingDraft(d)}
                 />
               ))}
             </Section>
@@ -174,6 +179,7 @@ export function Notebook() {
                   onDuplicate={() => handleDuplicate(d)}
                   onExport={() => handleExport(d)}
                   onDelete={() => handleDelete(d)}
+                  onPublish={() => setPublishingDraft(d)}
                 />
               ))}
             </Section>
@@ -188,6 +194,7 @@ export function Notebook() {
                   onDuplicate={() => handleDuplicate(d)}
                   onExport={() => handleExport(d)}
                   onDelete={() => handleDelete(d)}
+                  onPublish={() => setPublishingDraft(d)}
                 />
               ))}
             </Section>
@@ -202,6 +209,7 @@ export function Notebook() {
                   onDuplicate={() => handleDuplicate(d)}
                   onExport={() => handleExport(d)}
                   onDelete={() => handleDelete(d)}
+                  onPublish={() => setPublishingDraft(d)}
                 />
               ))}
             </Section>
@@ -210,6 +218,13 @@ export function Notebook() {
       )}
 
       <UndoToasts pending={pending} onUndo={handleUndo} />
+
+      {publishingDraft && (
+        <PublishDialog
+          draft={publishingDraft}
+          onClose={() => setPublishingDraft(null)}
+        />
+      )}
     </>
   );
 }
@@ -261,11 +276,13 @@ function DraftRow({
   onDuplicate,
   onExport,
   onDelete,
+  onPublish,
 }: {
   draft: Draft;
   onDuplicate: () => void;
   onExport: () => void;
   onDelete: () => void;
+  onPublish: () => void;
 }) {
   const href = playgroundHref(draft);
   const pill = pillFor(draft);
@@ -294,6 +311,13 @@ function DraftRow({
           >
             Open →
           </Link>
+          <button
+            type="button"
+            onClick={onPublish}
+            className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink hover:text-highlight-ink"
+          >
+            Publish
+          </button>
           <button
             type="button"
             onClick={onDuplicate}
