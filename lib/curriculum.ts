@@ -149,3 +149,13 @@ export function nextModule(slug: string): CurriculumModule | undefined {
   if (i === -1 || i === MODULES.length - 1) return undefined;
   return MODULES[i + 1];
 }
+
+/**
+ * Reverse lookup — find the module paired with a given playground href, so a
+ * playground page can resolve its concept article without hardcoding the slug.
+ */
+export function getModuleByPlaygroundHref(
+  href: string,
+): CurriculumModule | undefined {
+  return MODULES.find((m) => m.playground?.href === href);
+}

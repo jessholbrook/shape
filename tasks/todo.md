@@ -527,9 +527,37 @@ This is the second extraction in the article work (after `components/learn/artic
 - TOC component for articles once any one exceeds ~10 minutes (none do yet).
 - Possibly extract the trailing `<NextModuleFooter />`-only wrapper into the same ArticleHeader-style helper if/when we add anything else to the article footer (related links, share button, etc.).
 
+## Cross-link playgrounds back to articles (this session)
+
+- [x] `lib/curriculum.ts` — added `getModuleByPlaygroundHref(href)` reverse-lookup helper so a playground can resolve its paired article from the curriculum without hardcoding the slug.
+- [x] `components/play/concept-link.tsx` — new `ConceptLink` component. Takes a `playgroundHref`, looks up the matching module via the helper, renders a small "Module N — Read the concept →" caption link. Renders nothing if there's no paired module or the article isn't live yet (Module 8 case).
+- [x] All 6 playground pages (`diff`, `tone`, `persona`, `refusal`, `evals`, `choreographer`) — added `<ConceptLink playgroundHref="…" />` directly below the header description block.
+- [x] Browser-verified: each playground renders the link with the right module number ("Module 01" → "Module 07"), each link points to the matching article href, all 6 routes 200.
+
+### Review
+
+Tiny pass that completes the round-trip. Before, articles linked to their paired playgrounds but playgrounds had no back-pointer; you could land on Diff Mode from the playground index and never know there was a concept article waiting. Now every playground header reads:
+
+```
+02 — PLAYGROUND
+Diff mode    One prompt, two configurations, side by side…
+MODULE 01 — READ THE CONCEPT →
+```
+
+The link sits between the title row and the playground body so it's visible without dominating the layout. Caption-styled (font-mono, 11px, uppercase) keeps it in the navigational register rather than competing with the title.
+
+Code-wise, the `ConceptLink` component plus the curriculum reverse-lookup means each playground page picks up the link with one line — no manual mapping of playground hrefs to article hrefs, no duplicated JSX. When Module 8 lands, no playground page needs touching; the link would auto-appear if/when that module ever gets a paired playground.
+
+### Known follow-ups (non-blocking)
+
+- Module 8 (Studio) — last curriculum entry, different surface (guided multi-step project, not a concept article).
+- Lift the `<ConceptLink />` into a sticky bar on long playgrounds? Currently it scrolls off after the user starts working. Defer until anyone asks.
+- Per-turn / per-case anchor links from the article example into a pre-filled playground state. Would let the "A small example" cards open a runnable Diff Log / lab / workshop directly. Cleanest after Supabase publishes.
+- TOC for articles when any one passes ~10 minutes.
+
 ## Next session
 
 Pick one:
 1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Portfolio loop. Multi-session.
 2. **Module 8 / Studio scaffold** — last curriculum entry. Different shape (guided multi-step project), larger scope.
-3. **Cross-link playgrounds back to articles** — six playgrounds now have paired articles; add a "Read the concept →" link in each playground's header. Tiny.
+3. **"Recommended path" enhancement on /learn** — show modules in order with completion checkmarks (read-flag in localStorage), like a tutorial path. Pre-Supabase.

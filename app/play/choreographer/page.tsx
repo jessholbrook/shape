@@ -1,5 +1,6 @@
 import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
+import { ConceptLink } from "@/components/play/concept-link";
 import { Choreographer } from "./choreographer-page";
 
 export const metadata = {
@@ -23,6 +24,8 @@ export default function ChoreographerPage() {
             the flow end-to-end, see how the model holds the thread.
           </p>
         </div>
+
+        <ConceptLink playgroundHref="/play/choreographer" />
 
         <div className="mt-12">
           <Choreographer />

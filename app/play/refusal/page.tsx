@@ -1,5 +1,6 @@
 import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
+import { ConceptLink } from "@/components/play/concept-link";
 import { RefusalLab } from "./refusal-lab";
 
 export const metadata = {
@@ -23,6 +24,8 @@ export default function RefusalPage() {
             no — and where it shouldn&apos;t — is a design surface.
           </p>
         </div>
+
+        <ConceptLink playgroundHref="/play/refusal" />
 
         <div className="mt-12">
           <RefusalLab />
