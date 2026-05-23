@@ -162,6 +162,8 @@ function KindPill({ kind }: { kind: Artifact["kind"] }) {
       ? "Refusal Scorecard"
       : kind === "evals"
       ? "Eval Scorecard"
+      : kind === "case-study"
+      ? "Case Study"
       : "Conversation";
   return (
     <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-highlight-ink bg-highlight-soft rounded-full px-2 py-0.5">
