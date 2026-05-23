@@ -111,11 +111,14 @@ function MissingState({ handle, slug }: { handle: string; slug: string }) {
 function Header({ artifact: a }: { artifact: Artifact }) {
   return (
     <div>
-      <div className="flex items-center gap-2">
-        <KindPill kind={a.kind} />
-        <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
-          {a.visibility === "private" ? "Private" : "Public"}
-        </span>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <KindPill kind={a.kind} />
+          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+            {a.visibility === "private" ? "Private" : "Public"}
+          </span>
+        </div>
+        <SaveAsPdfButton />
       </div>
       <h1 className="font-display text-[44px] md:text-[64px] leading-[1.02] tracking-tight text-ink mt-4">
         {a.title}
@@ -139,14 +142,28 @@ function Header({ artifact: a }: { artifact: Artifact }) {
   );
 }
 
+function SaveAsPdfButton() {
+  return (
+    <button
+      type="button"
+      onClick={() => window.print()}
+      data-print-hide
+      className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink border border-line rounded-full px-3 py-1"
+    >
+      Save as PDF
+    </button>
+  );
+}
+
 function Footer({ artifact: a }: { artifact: Artifact }) {
   return (
     <div className="pt-8 border-t border-line flex flex-wrap items-center justify-between gap-3">
       <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
-        Published from Shape · Kind — {a.kind}
+        Published from Shape · /p/{a.handle}/{a.slug}
       </p>
       <Link
         href="/play"
+        data-print-hide
         className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink underline decoration-highlight underline-offset-4 decoration-2"
       >
         Try a playground →

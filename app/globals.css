@@ -83,3 +83,55 @@ body {
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
+
+/* ----------------------------------------------------------------------- */
+/* Print: artifact pages double as PDF exports via the browser's           */
+/* "Save as PDF" dialog. Hide chrome (sidebar, mobile bar, anything tagged */
+/* data-print-hide), flatten backgrounds, preserve highlight chips.        */
+/* ----------------------------------------------------------------------- */
+@media print {
+  @page {
+    margin: 0.6in;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  aside,
+  [data-print-hide],
+  nextjs-portal {
+    display: none !important;
+  }
+
+  /* Mobile top bar uses md:hidden + sticky in the Shell */
+  .md\:hidden.sticky {
+    display: none !important;
+  }
+
+  main {
+    margin-left: 0 !important;
+  }
+
+  /* Keep highlight chips visible in printed PDFs */
+  .bg-highlight-soft,
+  .text-highlight,
+  .text-highlight-ink,
+  .decoration-highlight {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Avoid awkward page breaks inside titles and rows */
+  h1,
+  h2,
+  h3,
+  .group {
+    break-inside: avoid;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
