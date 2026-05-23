@@ -1,0 +1,33 @@
+import { Shell } from "@/components/shell";
+import { SectionNumber } from "@/components/section-number";
+import { Choreographer } from "./choreographer-page";
+
+export const metadata = {
+  title: "Conversation Choreographer — Shape",
+  description:
+    "Multi-turn flow design. Script a conversation, run it end-to-end, watch how the model holds the thread.",
+};
+
+export default function ChoreographerPage() {
+  return (
+    <Shell>
+      <section className="mx-auto max-w-[1100px] px-6 md:px-12 pt-16 md:pt-20 pb-32">
+        <SectionNumber label="Playground">07</SectionNumber>
+
+        <div className="mt-6 flex flex-wrap items-baseline justify-between gap-4">
+          <h1 className="font-display text-[48px] md:text-[64px] leading-[1.0] tracking-tight text-ink">
+            Conversation <span className="italic">choreographer</span>
+          </h1>
+          <p className="font-sans text-[14px] text-ink-muted max-w-md">
+            A conversation has shape. Script the user&apos;s turns, run
+            the flow end-to-end, see how the model holds the thread.
+          </p>
+        </div>
+
+        <div className="mt-12">
+          <Choreographer />
+        </div>
+      </section>
+    </Shell>
+  );
+}

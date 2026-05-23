@@ -471,9 +471,42 @@ Curriculum now **7 of 9 live**. Remaining gaps are exactly the two surfaces that
 - Article meta header (← Learn + section number + h1 + read-time) is inline in six articles now. Lifting is overdue.
 - Cross-link from playground headers back to matching articles. One-line change per playground.
 
+## Conversation Choreographer + Module 7 article (this session)
+
+- [x] `lib/choreographer.ts` — `ChoreographedTurn` + `AssistantResult` types; `SEED_TURNS` (4-turn flow exercising multi-turn coherence: context-setter → context-dependent follow-up → exploratory follow-up → contradiction check); `DEFAULT_CHOREOGRAPHER_PROMPT` with explicit coherence rules; `buildHistoryUpTo` helper that constructs the conversation history for each turn; `completedTurnCount` aggregator.
+- [x] `lib/drafts.ts` — `ChoreographerDraft` added to the union; DraftInput extended; importDraftJson validator recognizes `kind: "choreographer"`.
+- [x] `components/play/choreographer-turn-row.tsx` — one turn row: numbered, editable user textarea, streamed assistant response, per-turn note editor (three states: no-note / editing / has-note), per-turn delete with `canDelete` gating.
+- [x] `app/play/choreographer/{page,choreographer-page.tsx}` — full playground. Sequential run-all that builds history into each subsequent turn (the choreography), stops on error, supports add/remove turns (max 10), draft save + `?draft=` hydration. The streaming pattern intentionally mirrors Diff Mode's per-turn update logic.
+- [x] `app/play/page.tsx` — 6th card added. /play now 6 Open / 0 Soon.
+- [x] `lib/curriculum.ts` — Module 7 status soon → ready, paired with /play/choreographer, title split as "Multi-turn" + italic "flows".
+- [x] `app/notebook/notebook.tsx` — "Conversations" section, "Flow" pill, summary line "model · X/Y turns run".
+- [x] `app/learn/multi-turn-flows/page.tsx` — Module 7 article. Lede framing multi-turn as its own design surface, 5 standard sections, A/B example showing a tone/coherence failure at turn 4 vs. how 2 sentences of coherence rules fix it, Choreographer CTA. Names three multi-turn failure modes by name (tone drift / forgetting / backpedaling).
+- [x] Browser-verified: empty state shows 4 seeded turns + Run flow + Add turn (capped at 10), seeded draft hydrates with title + "Editing draft" indicator + "2 of 2 turns complete" + per-turn note rendered with Edit affordance, notebook shows "Conversations" section with "Flow" pill + "Claude Sonnet 4.6 · 2/2 turns run" summary, /play has 6 Open / 0 Soon, /learn has **8 of 9 modules live**, all 19 routes 200.
+
+### Review
+
+Closes the v1.0 playground catalog from SPEC §7 — Conversation Choreographer was the last missing one. Closes Module 7 from SPEC §8. Curriculum now has 8 of 9 modules live; only Module 8 (Studio) remains, and that's a different surface entirely (an end-to-end guided project, not a module).
+
+The Choreographer is the third "evaluation-shaped" playground, alongside Refusal Lab and Eval Workshop. Each makes a different lever visible:
+- Refusal Lab: did the model handle a specific edge case as expected?
+- Eval Workshop: how does the model score against an explicit rubric?
+- Choreographer: does the model hold the thread across turns?
+
+The pedagogical move that ties all three together is the same — *evaluate a flow, not a moment.* That theme is now strong enough that v1.0 of the product feels like a coherent story rather than a set of disconnected tools.
+
+A design decision worth flagging: the choreographer fires turns sequentially (not in parallel) because each turn depends on the assistant's actual response to the previous one. Stops on error to avoid noisy downstream turns — the working-copy pattern (mutating a local array while React state updates render) is the cleanest way to maintain that invariant without race conditions.
+
+### Known follow-ups (non-blocking)
+
+- "Improvise" mode in Choreographer — let the user add a turn live after running the scripted flow. The current MVP is fully scripted, no live conversation.
+- Cross-turn scoring on the same axis as Eval Workshop (per-turn rubric scores → flow average). Would unify the eval surfaces.
+- Module 8 (Putting it together) — last remaining curriculum entry. Studio-shaped project, not an article.
+- Article meta header (← Learn + section number + h1 + read-time) inline in seven articles. Way overdue.
+- Cross-link from playground headers back to matching articles. Six playgrounds with paired articles now; would round out the loop.
+
 ## Next session
 
 Pick one:
-1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session.
-2. **Conversation Choreographer playground + Module 7 article** — biggest remaining v1.0 piece. Multi-turn flow design + matching article.
-3. **Lift article meta header into shared kit** — six articles in, identical header still inline. Cheap.
+1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. The five draft shapes are stable; this is the portfolio-loop work.
+2. **Lift article meta header into shared kit** — seven articles in, identical inline header. ~30-line refactor that pays off the next time anyone writes an article.
+3. **Module 8 / Studio scaffold** — last curriculum entry. Different shape (guided multi-step project, not concept article). Larger scope.

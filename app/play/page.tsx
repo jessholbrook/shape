@@ -69,6 +69,16 @@ const PLAYGROUNDS: Playground[] = [
     artifact: "Eval Rubric + Scorecard",
     status: "ready",
   },
+  {
+    num: "06",
+    href: "/play/choreographer",
+    title: "Conversation",
+    italic: "choreographer",
+    blurb:
+      "Multi-turn flow design. Script the user's turns, run the conversation end-to-end, watch the model hold the thread.",
+    artifact: "Behavior Spec",
+    status: "ready",
+  },
 ];
 
 export default function PlayPage() {
