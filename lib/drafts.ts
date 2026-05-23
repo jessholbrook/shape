@@ -465,6 +465,30 @@ export function clearAllDrafts(): void {
 }
 
 /**
+ * Where this draft can be opened for editing. Studios live under /build/,
+ * everything else under /play/. Pairs with the originating client component's
+ * `?draft=<id>` hydration.
+ */
+export function draftEditorHref(draft: Draft): string {
+  switch (draft.kind) {
+    case "diff":
+      return `/play/diff?draft=${draft.id}`;
+    case "tone":
+      return `/play/tone?draft=${draft.id}`;
+    case "persona":
+      return `/play/persona?draft=${draft.id}`;
+    case "refusal":
+      return `/play/refusal?draft=${draft.id}`;
+    case "evals":
+      return `/play/evals?draft=${draft.id}`;
+    case "choreographer":
+      return `/play/choreographer?draft=${draft.id}`;
+    case "case-study":
+      return `/build/${draft.studioId}?draft=${draft.id}`;
+  }
+}
+
+/**
  * Suggest a draft title from a brief or user message — first ~50 chars,
  * single line, with "…" if truncated.
  */

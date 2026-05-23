@@ -8,6 +8,7 @@ import { usePublishedArtifacts } from "@/lib/hooks/use-published-artifacts";
 import type { Artifact } from "@/lib/artifacts";
 import {
   deleteDraft,
+  draftEditorHref,
   duplicateDraft,
   exportDraftJson,
   restoreDraft,
@@ -68,8 +69,7 @@ export function Notebook() {
   function handleDuplicate(draft: Draft) {
     const copy = duplicateDraft(draft.id);
     if (!copy) return;
-    const href = playgroundHref(copy);
-    router.push(href);
+    router.push(draftEditorHref(copy));
   }
 
   function handleExport(draft: Draft) {
@@ -352,17 +352,6 @@ function Section({
   );
 }
 
-function playgroundHref(draft: Draft): string {
-  if (draft.kind === "diff") return `/play/diff?draft=${draft.id}`;
-  if (draft.kind === "tone") return `/play/tone?draft=${draft.id}`;
-  if (draft.kind === "persona") return `/play/persona?draft=${draft.id}`;
-  if (draft.kind === "refusal") return `/play/refusal?draft=${draft.id}`;
-  if (draft.kind === "evals") return `/play/evals?draft=${draft.id}`;
-  if (draft.kind === "case-study")
-    return `/build/${draft.studioId}?draft=${draft.id}`;
-  return `/play/choreographer?draft=${draft.id}`;
-}
-
 function pillFor(draft: Draft): string {
   if (draft.kind === "diff") return "Diff";
   if (draft.kind === "tone") return "Tone";
@@ -388,7 +377,7 @@ function DraftRow({
   onDelete: () => void;
   onPublish: () => void;
 }) {
-  const href = playgroundHref(draft);
+  const href = draftEditorHref(draft);
   const pill = pillFor(draft);
 
   return (

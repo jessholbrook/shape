@@ -61,6 +61,7 @@ export function PublishDialog({
     try {
       persistHandle(h.normalized);
       const backend = getArtifactBackend();
+      const existing = await backend.get(h.normalized, cleanedSlug);
       const artifact = await backend.publish({
         handle: h.normalized,
         slug: cleanedSlug,
@@ -69,7 +70,10 @@ export function PublishDialog({
         visibility,
         draft,
       });
-      router.push(`/p/${artifact.handle}/${artifact.slug}`);
+      const url = existing
+        ? `/p/${artifact.handle}/${artifact.slug}?republished=1`
+        : `/p/${artifact.handle}/${artifact.slug}`;
+      router.push(url);
     } catch (err) {
       const reason = err instanceof Error ? err.message : String(err);
       setStatus({ kind: "error", reason });
