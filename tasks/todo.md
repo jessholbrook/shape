@@ -582,9 +582,44 @@ A few decisions that matter:
 - "Just read" indicator immediately after a visit could be a brief toast rather than only showing on the next /learn visit.
 - Module 8 / Studio is still the missing piece.
 
+## Saveable artifacts — publish loop (this session)
+
+First slice of the portfolio loop. The full end-to-end publish flow works **right now** against localStorage; the Supabase backend is scaffolded as a swap-in so the same code activates once env vars + migrations are in place.
+
+- [x] `lib/artifacts.ts` — `Artifact` type (id, handle, slug, title, summary, visibility, draft snapshot, kind, published/updatedAt), `ArtifactBackend` interface (list/get/publish/unpublish), `localArtifactBackend` impl over localStorage `shape:artifacts:log`. `getArtifactBackend()` picks the active backend; currently local, will return supabase backend when env is set.
+- [x] `lib/handle.ts` — `getHandle` / `setHandle` / `validateHandle` (2–32 chars, slug-safe). Publish dialog asks the first time, remembers thereafter.
+- [x] `lib/supabase/client.ts` — lazy `getSupabase()` that returns null without env or without the optional `@supabase/supabase-js` dep installed. No new dependency added to package.json in this PR; install is the next step.
+- [x] `supabase/migrations/0001_artifacts.sql` — full schema for the `artifacts` table: per-(handle, slug) uniqueness, JSONB draft payload, RLS policies for public reads + anonymous writes (tightens to `auth.uid()` when auth lands), updated_at trigger.
+- [x] `.env.example` — `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` documented as optional.
+- [x] `components/notebook/publish-dialog.tsx` — modal with handle / slug / summary / visibility, validates handle + slug, publishes via backend, routes to `/p/<handle>/<slug>`.
+- [x] `app/p/[handle]/[slug]/page.tsx` + `artifact-view.tsx` — public artifact page. Per-kind read-only renderers for diff, tone, persona, refusal, evals, choreographer. Missing-state explainer makes the localStorage-first nature visible to anyone hitting an unknown URL.
+- [x] `app/notebook/notebook.tsx` — Publish action added next to Open / Duplicate / Export / Delete on every row, opens the dialog with the draft pre-filled.
+- [x] Browser-verified: seeded a tone draft, clicked Publish, set handle "jess" / slug auto-suggested as "onboarding-warmth", published with visibility public. Landed on `/p/jess/onboarding-warmth` showing the Behavior Spec layout (brief + tone dials with non-neutral stops highlighted + sample output + footer). All 7 sampled routes 200 including a non-existent `/p/no-one/missing` (renders the missing-state explainer).
+
+### Review
+
+This was the load-bearing UX decision in the artifact work: **localStorage as the development backend** lets the publish loop be testable end-to-end before any cloud infrastructure exists. The ArtifactBackend interface is the seam — `localArtifactBackend` today, `supabaseArtifactBackend` once the dependency lands and env is set. Public pages, notebook integration, draft → artifact mapping, and the per-kind viewer all keep working through the swap.
+
+Two design calls worth flagging:
+- **No `@supabase/supabase-js` dependency yet.** The Supabase client is wrapped in a dynamic import that fails gracefully when the package isn't installed. Keeps this PR small and the bundle untouched. The next PR will `npm i` and uncomment the live backend.
+- **Anonymous publishing.** The RLS policies in `0001_artifacts.sql` allow public writes for v1 — Shape has no auth yet, so requiring an owner_id is premature. Tightens to `auth.uid() = owner_id` the moment magic-link lands.
+
+The artifact-view renderers reuse the existing per-kind vocabulary: diff sessions show their two configs + turns + notes, tone shows brief + dials + sample output, persona renders as a field card, refusal shows the scorecard + per-probe verdicts, evals shows rubric + per-case scores, choreographer shows the conversation transcript. None of these are pretty enough to be the final design, but they're all legible and shareable today.
+
+### Known follow-ups (non-blocking)
+
+- **Next PR**: install `@supabase/supabase-js`, set up the project, run `0001_artifacts.sql`, swap `getArtifactBackend()` to return Supabase when env is set. The local backend stays as the no-env default.
+- Open Graph metadata generation per artifact (title, summary, kind badge as image).
+- PDF export of any artifact — the artifact-view layout is already designed to render print-friendly.
+- Visitor demo mode on public artifacts (per SPEC §12 — server-side pooled key, rate-limited).
+- Per-handle profile pages: `/p/<handle>` lists everything that handle has published.
+- "Edit" link on artifact pages back to the originating draft (when you own it locally).
+- Republish-replace UX: currently re-publishing the same handle+slug overwrites silently; should at least show a "Republished" toast.
+- /notebook should surface published artifacts as a section ("Published" → list with public URLs).
+
 ## Next session
 
 Pick one:
-1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Portfolio loop. Multi-session.
-2. **Module 8 / Studio scaffold** — last curriculum entry. Different shape (guided multi-step project), larger scope.
-3. **Merge the open PR chain** — five PRs (#17–#20 + Recommended path) are now open and stacked. Worth merging to main before adding more.
+1. **Wire actual Supabase** — install `@supabase/supabase-js`, create the project (or document the setup steps), implement `supabaseArtifactBackend`, swap it in. The schema, env, and interface are all ready.
+2. **Per-handle profile page** — `/p/<handle>` listing all that handle's public artifacts. Cheap; lays groundwork for the portfolio-page surface from SPEC §5.
+3. **Module 8 / Studio scaffold** — last curriculum entry, end-to-end guided project.
