@@ -38,7 +38,12 @@ export function Notebook() {
   const [importing, setImporting] = useState(false);
   const [publishingDraft, setPublishingDraft] = useState<Draft | null>(null);
   const pendingRef = useRef(pending);
-  pendingRef.current = pending;
+
+  // Keep the ref in sync with state so the unmount cleanup below can read the
+  // latest pending entries without subscribing to them.
+  useEffect(() => {
+    pendingRef.current = pending;
+  }, [pending]);
 
   useEffect(() => {
     return () => {
@@ -48,11 +53,13 @@ export function Notebook() {
 
   function handleDelete(draft: Draft) {
     deleteDraft(draft.id);
-    const expiresAt = Date.now() + UNDO_WINDOW_MS;
     const timerId = setTimeout(() => {
       setPending((prev) => prev.filter((p) => p.draft.id !== draft.id));
     }, UNDO_WINDOW_MS);
-    setPending((prev) => [...prev, { draft, expiresAt, timerId }]);
+    setPending((prev) => [
+      ...prev,
+      { draft, expiresAt: Date.now() + UNDO_WINDOW_MS, timerId },
+    ]);
   }
 
   function handleUndo(id: string) {
@@ -669,12 +676,14 @@ function UndoToast({
   expiresAt: number;
   onUndo: () => void;
 }) {
-  const [, setTick] = useState(0);
+  // The toast renders for UNDO_WINDOW_MS, so the initial `now` is just
+  // (expiresAt - window). The interval refreshes it from there.
+  const [now, setNow] = useState(expiresAt - UNDO_WINDOW_MS);
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 250);
+    const id = setInterval(() => setNow(Date.now()), 250);
     return () => clearInterval(id);
   }, []);
-  const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+  const remaining = Math.max(0, Math.ceil((expiresAt - now) / 1000));
   return (
     <div className="bg-ink text-canvas rounded-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.18)] px-4 py-3 flex items-center gap-4">
       <span className="font-sans text-[14px] truncate">
