@@ -327,9 +327,40 @@ Both are JSX gotchas worth remembering for future article work.
 - "Continue to the next concept" link from each playground header back to the matching module article. Currently the article links to the playground but not the reverse.
 - Reading progress dots on /learn — localStorage flag set on article visit, ✓ on the index. Pre-Supabase.
 
+## Eval Workshop (this session)
+
+- [x] `lib/evals.ts` — `Criterion`, `EvalCase`, `Score` (1-5 with labeled levels), `CaseResult` (output + per-criterion scores + note); `SEED_CRITERIA` (Clarity / Tone / Completeness / Actionability / Conciseness), `SEED_CASES` (3 UX-writing prompts: empty state / payment error / welcome), `DEFAULT_EVAL_SYSTEM_PROMPT`. `caseScore` and `aggregateScore` helpers.
+- [x] `lib/drafts.ts` — `EvalsDraft` added with rubric + cases + per-case results. DraftInput extended and the `importDraftJson` validator now recognizes `kind: "evals"`.
+- [x] `components/play/rubric-editor.tsx` — editable list of criteria (add / edit name / edit description / remove); min 1 / max 8.
+- [x] `components/play/eval-case-row.tsx` — one case with user message + streamed output + per-criterion 1-5 pill scorer + reviewer note. Per-case total displayed in the header.
+- [x] `app/play/evals/{page,evals-workshop}.tsx` — full playground: provider/model/temp + system prompt + rubric editor + Run-all/Reset + live aggregate scorecard ("avg X/Y · N of M fully scored") + case panel. Draft save + `?draft=` hydration with the same defensive fallback we applied to Refusal Lab.
+- [x] `app/play/page.tsx` — fifth playground card added (Eval workshop, /play/evals, "Eval Rubric + Scorecard"). /play index now has 5 Open / 0 Soon.
+- [x] `lib/curriculum.ts` — Module 6 (Evaluation) paired with /play/evals. Article still Soon.
+- [x] `app/notebook/notebook.tsx` — new "Evaluations" section with summary line: model · cases × criteria · avg score.
+- [x] Browser-verified: seeded eval draft hydrates fully (3 criteria × 2 cases × scores), aggregate computed to "13.0/15" with "2 of 2 fully scored", notebook surfaces matching summary, all 13 routes 200.
+
+### Review
+
+Closes the v1.0 playground catalog from SPEC §7 except for Conversation Choreographer. Five distinct mechanics now live: paired generation (Diff), compositional style (Tone), structured authoring (Persona), categorical evaluation (Refusal), and rubric-based evaluation (Evals). The two eval surfaces — Refusal Lab and Eval Workshop — sit at different points on a spectrum: Refusal scores against a binary-ish "did the model do the expected thing" with 4 verdicts per probe; Evals scores along a 1-5 continuum across multiple criteria per case. Together they cover the two patterns the spec calls out: refusal scorecard + eval rubric.
+
+Two design decisions worth flagging:
+- **Editable rubric, static cases.** The pedagogical move is "build a rubric" — that's the *user's* surface to author. Cases are the *world's* — pre-seeded so the user can compare against a fixed bench. Add-your-own-case can land later, paired with a case library.
+- **1-5 scale, not pass/fail.** UX folks know rubric numbers; pass/fail erases the gradient where the design work actually lives. The center-three scores (Weak / OK / Good) are where most outputs sit, and that's where the conversation gets useful.
+
+Per-case fully-scored gating keeps the aggregate honest: a single missing slot in one case means that case is *not* counted in the average, and the "X of N fully scored" line makes that visible. No false confidence from partial scoring.
+
+### Known follow-ups (non-blocking)
+
+- Editable case list (mirror the rubric editor for cases) — natural next step once we know the use cases.
+- Saveable case libraries — let users build and share reusable case sets per domain (UX writing, support, research interviews, etc.).
+- LLM judge mode as a *suggestion* layer on top of manual scoring — pre-fills the pills with a rationale; reviewer can accept or override.
+- Per-criterion average across cases (currently we show case totals + aggregate avg; per-criterion would help diagnose specific weaknesses).
+- Module 6 article (Evaluation) — pair the article with the playground we just shipped, same cadence as #11.
+- Drag-to-reorder criteria. Drag-to-reorder cases when those become editable.
+
 ## Next session
 
 Pick one:
-1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session; the local draft shapes are stable and the round-trip is proven.
-2. **Eval Workshop playground** — fifth playground; v1.0 spec. Rubric-based evaluation against a panel of cases — the generalized Refusal Lab. Would pair with Module 6.
-3. **Extract shared learn components** — pull Lede/H2/P/UL/LI/ExampleBlock/TryItCTA into `components/learn/` so future articles aren't copy-paste. Low-value alone but unlocks faster article work.
+1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session; needs a Supabase project. All five playground draft shapes are stable.
+2. **Module 6 article — Evaluation** — pair the article with the playground we just shipped. Cheap, mirrors the Module 1 / Module 4 cadence.
+3. **Conversation Choreographer playground** — sixth (and last per SPEC §7) playground. Multi-turn flow design. Larger scope than evals.

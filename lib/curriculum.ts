@@ -102,6 +102,7 @@ export const MODULES: CurriculumModule[] = [
     kicker: "Concept",
     blurb:
       "Rubrics + sample sets. Score behavior the same way you score a usability study.",
+    playground: { label: "Eval Workshop", href: "/play/evals" },
     artifact: "Eval Rubric + Scorecard",
     href: "#",
     status: "soon",
