@@ -1,4 +1,6 @@
 import type { Draft } from "./drafts";
+import { ARTIFACTS_EVENT, summarizeDraft, slugForTitle } from "./artifact-utils";
+import { supabaseArtifactBackend } from "./supabase/artifacts";
 
 export type ArtifactVisibility = "public" | "private";
 
@@ -45,7 +47,6 @@ export type PublishInput = {
 };
 
 const ARTIFACTS_KEY = "shape:artifacts:log";
-const EVENT = "shape:artifacts-changed";
 
 function readLocal(): Artifact[] {
   if (typeof window === "undefined") return [];
@@ -62,7 +63,7 @@ function readLocal(): Artifact[] {
 function writeLocal(artifacts: Artifact[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem(ARTIFACTS_KEY, JSON.stringify(artifacts));
-  window.dispatchEvent(new CustomEvent(EVENT));
+  window.dispatchEvent(new CustomEvent(ARTIFACTS_EVENT));
 }
 
 function newId(): string {
@@ -70,31 +71,6 @@ function newId(): string {
     return crypto.randomUUID();
   }
   return `a_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function deriveSummary(draft: Draft): string {
-  switch (draft.kind) {
-    case "diff": {
-      const turns = draft.turns.length;
-      const last = draft.turns[draft.turns.length - 1]?.userMessage ?? "";
-      const tail = last ? ` — "${last.slice(0, 80)}${last.length > 80 ? "…" : ""}"` : "";
-      return `${turns} ${turns === 1 ? "turn" : "turns"}${tail}`;
-    }
-    case "tone":
-      return draft.brief.slice(0, 140) + (draft.brief.length > 140 ? "…" : "");
-    case "persona": {
-      const { name, role } = draft.persona;
-      return [name, role].filter(Boolean).join(" — ");
-    }
-    case "refusal":
-      return `${draft.probes.length} probe panel`;
-    case "evals":
-      return `${draft.cases.length} cases × ${draft.rubric.length} criteria`;
-    case "choreographer":
-      return `${draft.turns.length}-turn flow`;
-    default:
-      return "";
-  }
 }
 
 /** Local-storage backend. Used as the default until Supabase env is set. */
@@ -121,7 +97,7 @@ export const localArtifactBackend: ArtifactBackend = {
       handle,
       slug,
       title,
-      summary: summary || deriveSummary(draft),
+      summary: summary || summarizeDraft(draft),
       visibility,
       draft,
       kind: draft.kind,
@@ -142,24 +118,18 @@ export const localArtifactBackend: ArtifactBackend = {
   },
 };
 
-/** Picked at module load. Will swap to Supabase once env is configured. */
+/**
+ * Prefers Supabase when env is configured; falls back to the localStorage
+ * backend so the publish loop still works offline.
+ */
 export function getArtifactBackend(): ArtifactBackend {
-  // Future: return supabaseArtifactBackend if env is set.
+  if (
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    return supabaseArtifactBackend;
+  }
   return localArtifactBackend;
 }
 
-/** Suggest a URL-safe slug from a title. */
-export function slugForTitle(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
-}
-
-/** Returns the convention summary for a given draft. Exposed for previews. */
-export function summarizeDraft(draft: Draft): string {
-  return deriveSummary(draft);
-}
-
-export const ARTIFACTS_EVENT = EVENT;
+export { ARTIFACTS_EVENT, summarizeDraft, slugForTitle };

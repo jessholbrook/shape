@@ -73,8 +73,7 @@ export function ProfileView({ handle }: { handle: string }) {
 
       <div className="pt-8 border-t border-line flex flex-wrap items-center justify-between gap-3">
         <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
-          Profiles render from the browser&apos;s local artifacts. Sync arrives
-          with Supabase.
+          Public artifacts published from a Shape handle.
         </p>
         <Link
           href="/play"

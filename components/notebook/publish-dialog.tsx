@@ -101,7 +101,7 @@ export function PublishDialog({
           {draft.title || "Untitled"}
         </h2>
         <p className="font-mono text-[11px] text-ink-quiet mt-1">
-          Publishes locally for now. Wire Supabase env to share these URLs.
+          Publishes to a shareable URL that anyone can open.
         </p>
 
         <div className="mt-6 flex flex-col gap-4">
