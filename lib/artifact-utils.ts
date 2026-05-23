@@ -24,6 +24,10 @@ export function summarizeDraft(draft: Draft): string {
       return `${draft.cases.length} cases × ${draft.rubric.length} criteria`;
     case "choreographer":
       return `${draft.turns.length}-turn flow`;
+    case "case-study": {
+      const head = draft.brief.replace(/\s+/g, " ").trim();
+      return head.length > 140 ? head.slice(0, 137) + "…" : head;
+    }
     default:
       return "";
   }

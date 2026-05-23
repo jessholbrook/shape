@@ -10,6 +10,7 @@ const KIND_LABEL = {
   refusal: "Refusal Scorecard",
   evals: "Eval Scorecard",
   choreographer: "Conversation",
+  "case-study": "Case Study",
 } as const;
 
 export async function generateMetadata({

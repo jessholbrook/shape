@@ -14,7 +14,8 @@ export type DraftKind =
   | "persona"
   | "refusal"
   | "evals"
-  | "choreographer";
+  | "choreographer"
+  | "case-study";
 
 export type DiffDraftConfig = {
   provider: ProviderId;
@@ -163,13 +164,39 @@ export type ChoreographerDraft = {
   updatedAt: number;
 };
 
+export type CaseStudyDraft = {
+  id: string;
+  kind: "case-study";
+  /** Which Studio produced this draft (e.g. "research-interview-assistant"). */
+  studioId: string;
+  title: string;
+  provider: ProviderId;
+  model: string;
+  temperature: number;
+  brief: string;
+  audience: string;
+  persona: PersonaValues;
+  tone: ToneValues;
+  sample: {
+    userMessage: string;
+    output?: string;
+    inputTokens?: number;
+    outputTokens?: number;
+    costUsd?: number;
+  };
+  reflection: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
 export type Draft =
   | DiffDraft
   | ToneDraft
   | PersonaDraft
   | RefusalDraft
   | EvalsDraft
-  | ChoreographerDraft;
+  | ChoreographerDraft
+  | CaseStudyDraft;
 
 function read(): Draft[] {
   if (typeof window === "undefined") return [];
@@ -215,7 +242,8 @@ export type DraftInput =
   | (Omit<EvalsDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
   | (Omit<ChoreographerDraft, "id" | "createdAt" | "updatedAt"> & {
       id?: string;
-    });
+    })
+  | (Omit<CaseStudyDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
 
 /**
  * Save a draft. If `data.id` matches an existing draft, it's updated in place;
@@ -319,7 +347,8 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     kind !== "persona" &&
     kind !== "refusal" &&
     kind !== "evals" &&
-    kind !== "choreographer"
+    kind !== "choreographer" &&
+    kind !== "case-study"
   ) {
     return { ok: false, reason: `Unknown draft kind: ${String(kind)}` };
   }
@@ -364,6 +393,20 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
       return {
         ok: false,
         reason: "Choreographer draft is missing turns or systemPrompt.",
+      };
+    }
+  } else if (kind === "case-study") {
+    if (
+      typeof d.brief !== "string" ||
+      typeof d.studioId !== "string" ||
+      !isObject(d.persona) ||
+      !isObject(d.tone) ||
+      !isObject(d.sample)
+    ) {
+      return {
+        ok: false,
+        reason:
+          "Case study draft is missing brief, studioId, persona, tone, or sample.",
       };
     }
   }
