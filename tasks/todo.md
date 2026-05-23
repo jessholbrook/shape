@@ -555,9 +555,36 @@ Code-wise, the `ConceptLink` component plus the curriculum reverse-lookup means 
 - Per-turn / per-case anchor links from the article example into a pre-filled playground state. Would let the "A small example" cards open a runnable Diff Log / lab / workshop directly. Cleanest after Supabase publishes.
 - TOC for articles when any one passes ~10 minutes.
 
+## Recommended-path enhancement on /learn (this session)
+
+- [x] `lib/learn-progress.ts` — localStorage CRUD for which article slugs have been read (`markRead`, `getReadSlugs`, `clearReadSlugs`) plus a `shape:learn-progress-changed` event for reactivity.
+- [x] `lib/hooks/use-learn-progress.ts` — reactive hook returning the read-set and a `hasRead(slug)` helper.
+- [x] `components/learn/mark-as-read.tsx` — small `"use client"` component with a single mount effect that calls `markRead(slug)`. Keeps article pages themselves server-rendered while still recording visits.
+- [x] `components/learn/learn-index.tsx` — `"use client"` wrapper around the curriculum list. Adds: progress chip ("X of N read in this browser"), a top "Up next" card pointing at the first ready + unread non-setup module, and ✓ Read badges on completed rows. Renders "Curriculum complete" once everything live is read.
+- [x] `app/learn/page.tsx` — slimmed to the static hero + the client wrapper.
+- [x] All 7 articles wired with `<MarkAsRead slug={SLUG} />` at the end of the article body.
+- [x] Browser-verified: empty progress shows "0 of 7 read" + Up next = Prompts as design. Visiting that article writes to localStorage; back on /learn, progress reads "1 of 7 read", Up next auto-advances to Voice & tone, the Module 1 row shows ● READ + OPEN pills.
+
+### Review
+
+Small but genuinely useful. The /learn index now has a discoverable next step instead of a flat list — useful when you've forgotten where you were last time. The progress count gives the curriculum a sense of accomplishment without gamifying it; the ✓ Read badge on each completed row is the same affordance.
+
+A few decisions that matter:
+- **Module 0 (setup) excluded from progress accounting.** It's onboarding, not a reading module. Showing "1 of 9 read" the moment a user lands felt wrong; "0 of 7" before they read anything reads correctly.
+- **MarkAsRead is a mount-time client component, not a server-side hit counter.** This is read-state in *this browser*, like everything else in Shape (BYOK, drafts, usage). Honest with the "your data stays here" framing. Supabase-tier per-account progress is a natural follow-up.
+- **`<MarkAsRead slug={SLUG} />` rather than a page-wrapper or HoC.** One line per article, lets each article stay a server component except for the tiny effect.
+
+### Known follow-ups (non-blocking)
+
+- "Mark unread" affordance on /learn (right now the only way to reset is clearing site data).
+- Per-account progress once Supabase lands — read-state syncs across devices.
+- Show estimated time remaining ("28 min of reading left in the curriculum") next to the progress count.
+- "Just read" indicator immediately after a visit could be a brief toast rather than only showing on the next /learn visit.
+- Module 8 / Studio is still the missing piece.
+
 ## Next session
 
 Pick one:
 1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Portfolio loop. Multi-session.
 2. **Module 8 / Studio scaffold** — last curriculum entry. Different shape (guided multi-step project), larger scope.
-3. **"Recommended path" enhancement on /learn** — show modules in order with completion checkmarks (read-flag in localStorage), like a tutorial path. Pre-Supabase.
+3. **Merge the open PR chain** — five PRs (#17–#20 + Recommended path) are now open and stacked. Worth merging to main before adding more.

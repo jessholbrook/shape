@@ -12,6 +12,7 @@ import {
   TryItCTA,
   UL,
 } from "@/components/learn/article";
+import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "prompts-as-design";
 
@@ -123,6 +124,7 @@ export default function PromptsAsDesignPage() {
         </UL>
 
         <NextModuleFooter next={next} />
+        <MarkAsRead slug={SLUG} />
       </article>
     </Shell>
   );

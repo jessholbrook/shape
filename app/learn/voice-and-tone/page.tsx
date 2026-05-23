@@ -12,6 +12,7 @@ import {
   TryItCTA,
   UL,
 } from "@/components/learn/article";
+import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "voice-and-tone";
 
@@ -155,6 +156,7 @@ Directness: Direct
         </UL>
 
         <NextModuleFooter next={next} />
+        <MarkAsRead slug={SLUG} />
       </article>
     </Shell>
   );

@@ -12,6 +12,7 @@ import {
   TryItCTA,
   UL,
 } from "@/components/learn/article";
+import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "evaluation";
 
@@ -157,6 +158,7 @@ Each scored 1-5.`}
         </UL>
 
         <NextModuleFooter next={next} />
+        <MarkAsRead slug={SLUG} />
       </article>
     </Shell>
   );

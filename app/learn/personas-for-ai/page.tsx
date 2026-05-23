@@ -12,6 +12,7 @@ import {
   TryItCTA,
   UL,
 } from "@/components/learn/article";
+import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "personas-for-ai";
 
@@ -156,6 +157,7 @@ export default function PersonasForAIPage() {
         </UL>
 
         <NextModuleFooter next={next} />
+        <MarkAsRead slug={SLUG} />
       </article>
     </Shell>
   );
