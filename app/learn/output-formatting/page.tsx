@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Shell } from "@/components/shell";
-import { SectionNumber } from "@/components/section-number";
 import { getModule, nextModule } from "@/lib/curriculum";
 import {
+  ArticleHeader,
   ExampleBlock,
   ExampleCard,
   H2,
@@ -28,24 +28,7 @@ export default function OutputFormattingPage() {
   return (
     <Shell>
       <article className="mx-auto max-w-[760px] px-6 md:px-12 pt-16 md:pt-20 pb-32">
-        <Link
-          href="/learn"
-          className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
-        >
-          ← Learn
-        </Link>
-
-        <div className="mt-10">
-          <SectionNumber label={`Module ${mod.num}`}>{mod.num}</SectionNumber>
-        </div>
-
-        <h1 className="font-display text-[56px] md:text-[80px] leading-[0.98] tracking-tight text-ink mt-6">
-          Output <span className="italic">formatting</span>.
-        </h1>
-
-        <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
-          {mod.readMinutes} min read
-        </p>
+        <ArticleHeader module={mod} />
 
         <Lede>
           Format isn&apos;t neutral. A bulleted list and a paragraph carry

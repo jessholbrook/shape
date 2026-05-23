@@ -101,7 +101,8 @@ export const MODULES: CurriculumModule[] = [
   {
     num: "06",
     slug: "evaluation",
-    title: "Evaluation",
+    title: "",
+    italic: "Evaluation",
     kicker: "Concept",
     blurb:
       "Rubrics + sample sets. Score behavior the same way you score a usability study.",
