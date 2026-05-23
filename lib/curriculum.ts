@@ -114,13 +114,15 @@ export const MODULES: CurriculumModule[] = [
   {
     num: "07",
     slug: "multi-turn-flows",
-    title: "Multi-turn flows",
+    title: "Multi-turn",
+    italic: "flows",
     kicker: "Concept",
     blurb:
       "Conversations have shape. Choreograph turns the way you'd choreograph an onboarding.",
+    playground: { label: "Conversation Choreographer", href: "/play/choreographer" },
     artifact: "Behavior Spec",
-    href: "#",
-    status: "soon",
+    href: "/learn/multi-turn-flows",
+    status: "ready",
     readMinutes: 6,
   },
   {

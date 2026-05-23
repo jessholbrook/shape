@@ -3,11 +3,18 @@ import type { ToneValues } from "./tone";
 import type { PersonaValues } from "./persona";
 import type { Probe, ProbeResult } from "./refusal";
 import type { Criterion, EvalCase, CaseResult } from "./evals";
+import type { ChoreographedTurn } from "./choreographer";
 
 const DRAFTS_KEY = "shape:drafts:log";
 const MAX_DRAFTS = 100;
 
-export type DraftKind = "diff" | "tone" | "persona" | "refusal" | "evals";
+export type DraftKind =
+  | "diff"
+  | "tone"
+  | "persona"
+  | "refusal"
+  | "evals"
+  | "choreographer";
 
 export type DiffDraftConfig = {
   provider: ProviderId;
@@ -143,12 +150,26 @@ export type EvalsDraft = {
   updatedAt: number;
 };
 
+export type ChoreographerDraft = {
+  id: string;
+  kind: "choreographer";
+  title: string;
+  provider: ProviderId;
+  model: string;
+  temperature: number;
+  systemPrompt: string;
+  turns: ChoreographedTurn[];
+  createdAt: number;
+  updatedAt: number;
+};
+
 export type Draft =
   | DiffDraft
   | ToneDraft
   | PersonaDraft
   | RefusalDraft
-  | EvalsDraft;
+  | EvalsDraft
+  | ChoreographerDraft;
 
 function read(): Draft[] {
   if (typeof window === "undefined") return [];
@@ -191,7 +212,10 @@ export type DraftInput =
   | (Omit<ToneDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
   | (Omit<PersonaDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
   | (Omit<RefusalDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
-  | (Omit<EvalsDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
+  | (Omit<EvalsDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
+  | (Omit<ChoreographerDraft, "id" | "createdAt" | "updatedAt"> & {
+      id?: string;
+    });
 
 /**
  * Save a draft. If `data.id` matches an existing draft, it's updated in place;
@@ -294,7 +318,8 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     kind !== "tone" &&
     kind !== "persona" &&
     kind !== "refusal" &&
-    kind !== "evals"
+    kind !== "evals" &&
+    kind !== "choreographer"
   ) {
     return { ok: false, reason: `Unknown draft kind: ${String(kind)}` };
   }
@@ -332,6 +357,13 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
       return {
         ok: false,
         reason: "Evals draft is missing rubric, cases, or systemPrompt.",
+      };
+    }
+  } else if (kind === "choreographer") {
+    if (!Array.isArray(d.turns) || typeof d.systemPrompt !== "string") {
+      return {
+        ok: false,
+        reason: "Choreographer draft is missing turns or systemPrompt.",
       };
     }
   }

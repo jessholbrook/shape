@@ -88,6 +88,9 @@ export function Notebook() {
   const personaDrafts = drafts.filter((d) => d.kind === "persona");
   const refusalDrafts = drafts.filter((d) => d.kind === "refusal");
   const evalsDrafts = drafts.filter((d) => d.kind === "evals");
+  const choreographerDrafts = drafts.filter(
+    (d) => d.kind === "choreographer",
+  );
   const noDrafts = drafts.length === 0;
 
   return (
@@ -189,6 +192,20 @@ export function Notebook() {
               ))}
             </Section>
           )}
+
+          {choreographerDrafts.length > 0 && (
+            <Section title="Conversations" count={choreographerDrafts.length}>
+              {choreographerDrafts.map((d) => (
+                <DraftRow
+                  key={d.id}
+                  draft={d}
+                  onDuplicate={() => handleDuplicate(d)}
+                  onExport={() => handleExport(d)}
+                  onDelete={() => handleDelete(d)}
+                />
+              ))}
+            </Section>
+          )}
         </div>
       )}
 
@@ -226,7 +243,8 @@ function playgroundHref(draft: Draft): string {
   if (draft.kind === "tone") return `/play/tone?draft=${draft.id}`;
   if (draft.kind === "persona") return `/play/persona?draft=${draft.id}`;
   if (draft.kind === "refusal") return `/play/refusal?draft=${draft.id}`;
-  return `/play/evals?draft=${draft.id}`;
+  if (draft.kind === "evals") return `/play/evals?draft=${draft.id}`;
+  return `/play/choreographer?draft=${draft.id}`;
 }
 
 function pillFor(draft: Draft): string {
@@ -234,7 +252,8 @@ function pillFor(draft: Draft): string {
   if (draft.kind === "tone") return "Tone";
   if (draft.kind === "persona") return "Persona";
   if (draft.kind === "refusal") return "Refusal";
-  return "Evals";
+  if (draft.kind === "evals") return "Evals";
+  return "Flow";
 }
 
 function DraftRow({
@@ -422,6 +441,23 @@ function DraftSummary({ draft }: { draft: Draft }) {
             <span className="text-ink-quiet">unscored</span>
           </>
         )}
+      </p>
+    );
+  }
+
+  if (draft.kind === "choreographer") {
+    const modelName =
+      PROVIDERS[draft.provider].models.find((m) => m.id === draft.model)
+        ?.name ?? draft.model;
+    const completed = draft.turns.filter(
+      (t) => t.assistant.status === "done",
+    ).length;
+    return (
+      <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
+        {modelName} ·{" "}
+        <span className="text-ink-muted">
+          {completed}/{draft.turns.length} turns run
+        </span>
       </p>
     );
   }
