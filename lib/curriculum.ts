@@ -129,14 +129,19 @@ export const MODULES: CurriculumModule[] = [
   {
     num: "08",
     slug: "putting-it-together",
-    title: "Putting it together",
+    title: "Putting it",
+    italic: "together",
     kicker: "Studio",
     blurb:
-      "End-to-end project. Brief → persona → tone → evals → case study.",
+      "End-to-end project. Brief → persona → tone → sample → reflection. The case study is the deliverable.",
+    playground: {
+      label: "Research Interview Assistant",
+      href: "/build/research-interview-assistant",
+    },
     artifact: "Case Study",
-    href: "#",
-    status: "soon",
-    readMinutes: 10,
+    href: "/learn/putting-it-together",
+    status: "ready",
+    readMinutes: 6,
   },
 ];
 

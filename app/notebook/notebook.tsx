@@ -96,6 +96,7 @@ export function Notebook() {
   const choreographerDrafts = drafts.filter(
     (d) => d.kind === "choreographer",
   );
+  const caseStudyDrafts = drafts.filter((d) => d.kind === "case-study");
   const noDrafts = drafts.length === 0;
 
   return (
@@ -229,6 +230,22 @@ export function Notebook() {
               ))}
             </Section>
           )}
+
+          {caseStudyDrafts.length > 0 && (
+            <Section title="Case studies" count={caseStudyDrafts.length}>
+              {caseStudyDrafts.map((d) => (
+                <DraftRow
+                  key={d.id}
+                  draft={d}
+                  published={byDraftId.get(d.id) ?? null}
+                  onDuplicate={() => handleDuplicate(d)}
+                  onExport={() => handleExport(d)}
+                  onDelete={() => handleDelete(d)}
+                  onPublish={() => setPublishingDraft(d)}
+                />
+              ))}
+            </Section>
+          )}
         </div>
       )}
 
@@ -307,6 +324,7 @@ function pillForKind(kind: Artifact["kind"]): string {
   if (kind === "persona") return "Persona";
   if (kind === "refusal") return "Refusal";
   if (kind === "evals") return "Evals";
+  if (kind === "case-study") return "Case Study";
   return "Flow";
 }
 
@@ -340,6 +358,8 @@ function playgroundHref(draft: Draft): string {
   if (draft.kind === "persona") return `/play/persona?draft=${draft.id}`;
   if (draft.kind === "refusal") return `/play/refusal?draft=${draft.id}`;
   if (draft.kind === "evals") return `/play/evals?draft=${draft.id}`;
+  if (draft.kind === "case-study")
+    return `/build/${draft.studioId}?draft=${draft.id}`;
   return `/play/choreographer?draft=${draft.id}`;
 }
 
@@ -349,6 +369,7 @@ function pillFor(draft: Draft): string {
   if (draft.kind === "persona") return "Persona";
   if (draft.kind === "refusal") return "Refusal";
   if (draft.kind === "evals") return "Evals";
+  if (draft.kind === "case-study") return "Case Study";
   return "Flow";
 }
 
@@ -578,6 +599,27 @@ function DraftSummary({ draft }: { draft: Draft }) {
         <span className="text-ink-muted">
           {completed}/{draft.turns.length} turns run
         </span>
+      </p>
+    );
+  }
+
+  if (draft.kind === "case-study") {
+    const modelName =
+      PROVIDERS[draft.provider].models.find((m) => m.id === draft.model)
+        ?.name ?? draft.model;
+    const briefSnippet = draft.brief.replace(/\s+/g, " ").trim().slice(0, 80);
+    return (
+      <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
+        {modelName} · {draft.studioId}
+        {briefSnippet && (
+          <>
+            {" — "}
+            <span className="italic">
+              &quot;{briefSnippet}
+              {draft.brief.length > 80 ? "…" : ""}&quot;
+            </span>
+          </>
+        )}
       </p>
     );
   }

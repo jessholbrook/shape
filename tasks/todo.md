@@ -636,9 +636,45 @@ The visibility filter happens at the backend level (`listByHandle` only returns 
 - Filter / sort controls on the profile page (by kind, by date).
 - Profile OG image generation — composed from kind pills + handle.
 
+## Studio scaffold — Research Interview Assistant (this session)
+
+First entry in the `/build` section. Module 8 is now ready; the curriculum
+is end-to-end.
+
+- [x] `lib/studio.ts` — `Studio` + `StudioStep` types, `STUDIOS` registry, first studio (Research Interview Assistant) with pre-filled defaults (brief, audience, persona, tone, sample message).
+- [x] `lib/drafts.ts` — added `CaseStudyDraft` to the `Draft` union (studioId, brief, audience, persona, tone, sample, reflection). Import validator updated.
+- [x] `lib/artifact-utils.ts` — `summarizeDraft` handles `case-study` (head-of-brief snippet).
+- [x] `app/build/page.tsx` — Studios index. Live studio card + "More studios coming" hatched placeholder.
+- [x] `app/build/research-interview-assistant/page.tsx` + `studio.tsx` — 4-step guided flow (Brief → Design → Test → Reflect). Step tabs with progress checkmarks, provider/model/temperature row, persona form + tone dials with live-composed system prompt, sample runner that streams and records usage, reflection box with publish-readiness checklist. Wraps client in `<Suspense>` for `useSearchParams`.
+- [x] `lib/curriculum.ts` — Module 8 flipped to `ready`, points at `/learn/putting-it-together`, pairs with `/build/research-interview-assistant`.
+- [x] `app/learn/putting-it-together/page.tsx` — Module 8 article ("Putting it together"). Familiar move → lesson stated plainly → why it's the foundation → TryItCTA to the Studio.
+- [x] `app/p/[handle]/[slug]/page.tsx` + `artifact-view.tsx` + `opengraph-image.tsx` — `case-study` added to `KIND_LABEL`, `KindPill`, `ArtifactBody`. New `CaseStudyBody` renders five sections: Brief, Persona, Voice, Sample exchange, Reflection.
+- [x] `app/notebook/notebook.tsx` — Case studies section, pill, summary line, `playgroundHref` mapping to `/build/<studioId>?draft=<id>`.
+- [x] Browser-verified: `/build`, `/build/research-interview-assistant`, `/learn`, `/learn/putting-it-together`, `/notebook`, `/play`, `/play/persona`, `/` all 200. HTML contains expected step labels (Brief / Design / Test / Reflect), studio card, and Module 8 row marked as a Studio kicker without the "Soon" pill.
+
+### Review
+
+The Studio is a guided shell around tools designers already used — the persona form from Module 3 and tone dials from Module 2 — plus a brief / audience / reflection framing. The pedagogical move is sequencing: the first three modules taught one lever each, and Module 8 says "here's the order to combine them in when you're producing a portfolio piece."
+
+The Case Study artifact body is composed of the same per-kind vocabulary as the others — persona fields, tone dial summary, a sample exchange, plus the case-study-specific Brief and Reflection sections. No new design system primitives were needed.
+
+Two notable calls:
+- **One studio at a time.** The `STUDIOS` array is open-ended but only ships with `research-interview-assistant`. The second card on `/build` is a hatched placeholder. Adding studios later means appending to the array — the routing scheme is `app/build/<id>/`, not a dynamic `[studio]` segment, because each Studio will likely need its own seeded defaults and per-step custom logic.
+- **`<Suspense>` wrapper.** Next 16 prerendering now errors on bare `useSearchParams()` usage. The studio client component is wrapped in `<Suspense fallback="Loading studio…">` on the server page. The existing playground pages (persona, diff, refusal, evals, choreographer) hit the same prerender error against `next build`; they're a pre-existing regression on main, separate from this PR.
+
+### Known follow-ups (non-blocking)
+
+- Wrap the other playground pages in `<Suspense>` so `next build` succeeds across the whole app. Pre-existing.
+- Visitor demo mode on Case Study pages (per SPEC §12 — server-side pooled key, rate-limited).
+- "Iteration log" step (SPEC §5 calls for one) — currently rolled into Reflection. Could be its own step that lets you record multiple sample-runs across the Studio session.
+- Mini eval rubric inside the Studio (3-checkbox quality check). Right now evaluation only lives in the standalone Eval Workshop.
+- Second Studio. Onboarding-flow builder, support-copilot, or an eval-heavy Studio.
+- Studio-aware artifact pages — a "Try this assistant" link back to the Studio with hydrated draft.
+
 ## Next session
 
 Pick one:
-1. **Wire actual Supabase** — install `@supabase/supabase-js`, create the project (or document setup), implement `supabaseArtifactBackend`. The schema, env, and `getArtifactBackend()` seam are all ready.
-2. **Module 8 / Studio scaffold** — last curriculum entry, end-to-end guided project. Larger scope.
-3. **PDF export for artifacts** — secondary export format per SPEC §5. The artifact-view layouts are already designed to render print-friendly.
+1. **Wrap playground pages in `<Suspense>`** — small but unblocks `next build`. `useSearchParams()` calls in `/play/*` need a Suspense boundary in their server pages, same pattern as `/build/<studio>` in this PR.
+2. **Second Studio** — e.g. Onboarding-flow builder. The `STUDIOS` array and `CaseStudyDraft` type are ready to take a second entry.
+3. **Visitor demo mode** — server-side pooled key for one-shot demos on public artifact pages, per SPEC §12.
+4. **"Iteration log" step in the Studio** — currently rolled into Reflection. A dedicated step that captures multiple sample-runs would match SPEC §5 more literally.

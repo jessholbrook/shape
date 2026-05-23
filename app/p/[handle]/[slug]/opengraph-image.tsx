@@ -13,6 +13,7 @@ const KIND_LABEL: Record<string, string> = {
   refusal: "Refusal Scorecard",
   evals: "Eval Scorecard",
   choreographer: "Conversation",
+  "case-study": "Case Study",
 };
 
 export default async function ArtifactOgImage({

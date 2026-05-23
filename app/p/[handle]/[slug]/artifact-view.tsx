@@ -184,6 +184,8 @@ function KindPill({ kind }: { kind: Artifact["kind"] }) {
       ? "Refusal Scorecard"
       : kind === "evals"
       ? "Eval Scorecard"
+      : kind === "case-study"
+      ? "Case Study"
       : "Conversation";
   return (
     <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-highlight-ink bg-highlight-soft rounded-full px-2 py-0.5">
@@ -199,6 +201,7 @@ function ArtifactBody({ artifact: a }: { artifact: Artifact }) {
   if (d.kind === "persona") return <PersonaBody draft={d} />;
   if (d.kind === "refusal") return <RefusalBody draft={d} />;
   if (d.kind === "evals") return <EvalsBody draft={d} />;
+  if (d.kind === "case-study") return <CaseStudyBody draft={d} />;
   return <ChoreographerBody draft={d} />;
 }
 
@@ -664,4 +667,150 @@ function OutputBlock({
 function modelName(provider: string, model: string): string {
   const p = PROVIDERS[provider as keyof typeof PROVIDERS];
   return p?.models.find((m) => m.id === model)?.name ?? model;
+}
+
+function CaseStudyBody({
+  draft,
+}: {
+  draft: Extract<Artifact["draft"], { kind: "case-study" }>;
+}) {
+  const p = draft.persona;
+  const personaFields: { label: string; value: string }[] = [
+    { label: "Name", value: p.name },
+    { label: "Role", value: p.role },
+    { label: "Backstory", value: p.backstory },
+    { label: "Core beliefs", value: p.beliefs },
+    { label: "Voice", value: p.voice },
+    { label: "Won't discuss", value: p.wontDiscuss },
+    { label: "Strengths", value: p.strengths },
+  ];
+  const activeTone = TONE_DIMENSIONS.map((dim) => {
+    const stop = draft.tone[dim.id];
+    return {
+      id: dim.id,
+      label: dim.label,
+      stopLabel: dim.stops[stop + 2].label,
+      neutral: stop === 0,
+    };
+  });
+  return (
+    <div className="flex flex-col gap-10">
+      <CaseSection num="01" label="Brief">
+        <p className="font-sans text-[16px] leading-[1.6] text-ink whitespace-pre-wrap">
+          {draft.brief}
+        </p>
+        {draft.audience.trim() && (
+          <div className="mt-5 pt-5 border-t border-line">
+            <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet mb-2">
+              Audience
+            </p>
+            <p className="font-sans text-[15px] leading-[1.55] text-ink whitespace-pre-wrap">
+              {draft.audience}
+            </p>
+          </div>
+        )}
+      </CaseSection>
+
+      <CaseSection num="02" label="Approach — persona">
+        <div className="flex flex-col gap-4">
+          {personaFields.map((f) =>
+            f.value.trim() ? (
+              <div key={f.label}>
+                <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet mb-1">
+                  {f.label}
+                </p>
+                <p className="font-sans text-[15px] leading-[1.55] text-ink whitespace-pre-wrap">
+                  {f.value}
+                </p>
+              </div>
+            ) : null,
+          )}
+        </div>
+      </CaseSection>
+
+      <CaseSection num="03" label="Approach — voice">
+        <ul className="flex flex-col gap-2">
+          {activeTone.map((t) => (
+            <li
+              key={t.id}
+              className="flex items-center justify-between gap-3 font-mono text-[12px]"
+            >
+              <span className="text-ink">{t.label}</span>
+              <span
+                className={
+                  t.neutral ? "text-ink-quiet" : "text-highlight-ink"
+                }
+              >
+                {t.stopLabel}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </CaseSection>
+
+      <CaseSection num="04" label="Sample exchange">
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet mb-2">
+              User
+            </p>
+            <p className="font-sans text-[15px] leading-[1.55] text-ink italic">
+              &ldquo;{draft.sample.userMessage}&rdquo;
+            </p>
+          </div>
+          {draft.sample.output ? (
+            <div className="border-t border-line pt-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+                  Assistant — {modelName(draft.provider, draft.model)}
+                </p>
+                {draft.sample.outputTokens !== undefined && (
+                  <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+                    {draft.sample.outputTokens} tok
+                  </p>
+                )}
+              </div>
+              <p className="font-mono text-[13px] leading-[1.6] text-ink whitespace-pre-wrap">
+                {draft.sample.output}
+              </p>
+            </div>
+          ) : (
+            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
+              No sample captured yet.
+            </p>
+          )}
+        </div>
+      </CaseSection>
+
+      {draft.reflection.trim() && (
+        <CaseSection num="05" label="Reflection">
+          <p className="font-sans text-[16px] leading-[1.65] text-ink whitespace-pre-wrap">
+            {draft.reflection}
+          </p>
+        </CaseSection>
+      )}
+    </div>
+  );
+}
+
+function CaseSection({
+  num,
+  label,
+  children,
+}: {
+  num: string;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <div className="flex items-baseline gap-3 font-mono text-[12px] uppercase tracking-[0.08em] text-ink-quiet">
+        <span>{num}</span>
+        <span>—&nbsp;{label}</span>
+      </div>
+      <div className="mt-5 bg-surface border border-line rounded-[14px] p-5 md:p-6">
+        {children}
+      </div>
+    </section>
+  );
 }
