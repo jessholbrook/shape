@@ -1,15 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
+import { useDraftHydration } from "@/lib/hooks/use-draft-hydration";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDER_LIST, PROVIDERS, type ProviderId } from "@/lib/providers";
 import { composePersonaPrompt, type PersonaValues } from "@/lib/persona";
 import { composeToneBlock, type ToneValues } from "@/lib/tone";
-import { getDraft, saveDraft, suggestTitle, type Draft } from "@/lib/drafts";
+import {
+  getDraft,
+  saveDraft,
+  suggestTitle,
+  type CaseStudyDraft,
+  type Draft,
+} from "@/lib/drafts";
 import { STUDIO_STEPS, type Studio, type StudioStepId } from "@/lib/studio";
 import { PersonaForm } from "@/components/play/persona-form";
 import { ToneDialControls } from "@/components/play/tone-dial-controls";
@@ -57,34 +64,29 @@ export function Studio({ studio }: { studio: Studio }) {
   const [title, setTitle] = useState("");
   const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle");
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hydratedDraftIdRef = useRef<string | null>(null);
 
   const [publishing, setPublishing] = useState(false);
 
-  useEffect(() => {
-    if (!initialDraftId || hydratedDraftIdRef.current === initialDraftId) return;
-    const d = getDraft(initialDraftId);
-    if (d && d.kind === "case-study") {
-      setProvider(d.provider);
-      setModel(d.model);
-      setTemperature(d.temperature);
-      setBrief(d.brief);
-      setAudience(d.audience);
-      setPersona(d.persona);
-      setTone(d.tone);
-      setSample({
-        userMessage: d.sample.userMessage,
-        output: d.sample.output,
-        inputTokens: d.sample.inputTokens,
-        outputTokens: d.sample.outputTokens,
-        costUsd: d.sample.costUsd,
-      });
-      setReflection(d.reflection);
-      setTitle(d.title);
-      setDraftId(d.id);
-      hydratedDraftIdRef.current = d.id;
-    }
-  }, [initialDraftId]);
+  const hydrateFromDraft = useCallback((d: CaseStudyDraft) => {
+    setProvider(d.provider);
+    setModel(d.model);
+    setTemperature(d.temperature);
+    setBrief(d.brief);
+    setAudience(d.audience);
+    setPersona(d.persona);
+    setTone(d.tone);
+    setSample({
+      userMessage: d.sample.userMessage,
+      output: d.sample.output,
+      inputTokens: d.sample.inputTokens,
+      outputTokens: d.sample.outputTokens,
+      costUsd: d.sample.costUsd,
+    });
+    setReflection(d.reflection);
+    setTitle(d.title);
+    setDraftId(d.id);
+  }, []);
+  useDraftHydration(initialDraftId, "case-study", hydrateFromDraft);
 
   const composedSystem = useMemo(() => {
     const personaPart = composePersonaPrompt(persona);

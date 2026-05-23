@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
+import { useDraftHydration } from "@/lib/hooks/use-draft-hydration";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import {
-  getDraft,
   saveDraft,
   suggestTitle,
+  type DiffDraft,
   type DiffTurn,
   type DiffTurnOutput,
 } from "@/lib/drafts";
@@ -61,24 +62,17 @@ export function DiffMode() {
   const [title, setTitle] = useState("");
   const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle");
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hydratedDraftIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!initialDraftId || hydratedDraftIdRef.current === initialDraftId) {
-      return;
-    }
-    const draft = getDraft(initialDraftId);
-    if (draft && draft.kind === "diff") {
-      setConfigA(draft.configA);
-      setConfigB(draft.configB);
-      setTurns(draft.turns);
-      setTitle(draft.title);
-      setDraftId(draft.id);
-      const lastTurn = draft.turns[draft.turns.length - 1];
-      if (lastTurn) setPendingMessage(lastTurn.userMessage);
-      hydratedDraftIdRef.current = draft.id;
-    }
-  }, [initialDraftId]);
+  const hydrateFromDraft = useCallback((draft: DiffDraft) => {
+    setConfigA(draft.configA);
+    setConfigB(draft.configB);
+    setTurns(draft.turns);
+    setTitle(draft.title);
+    setDraftId(draft.id);
+    const lastTurn = draft.turns[draft.turns.length - 1];
+    if (lastTurn) setPendingMessage(lastTurn.userMessage);
+  }, []);
+  useDraftHydration(initialDraftId, "diff", hydrateFromDraft);
 
   const aReady = hydrated && !!keys[configA.provider];
   const bReady = hydrated && !!keys[configB.provider];

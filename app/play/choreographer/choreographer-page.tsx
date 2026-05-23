@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
+import { useDraftHydration } from "@/lib/hooks/use-draft-hydration";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDER_LIST, PROVIDERS, type ProviderId } from "@/lib/providers";
@@ -17,7 +18,7 @@ import {
   type AssistantResult,
   type ChoreographedTurn,
 } from "@/lib/choreographer";
-import { getDraft, saveDraft, suggestTitle } from "@/lib/drafts";
+import { saveDraft, suggestTitle, type ChoreographerDraft } from "@/lib/drafts";
 import { ChoreographerTurnRow } from "@/components/play/choreographer-turn-row";
 import {
   DraftSaveBar,
@@ -43,24 +44,17 @@ export function Choreographer() {
   const [title, setTitle] = useState("");
   const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle");
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hydratedDraftIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!initialDraftId || hydratedDraftIdRef.current === initialDraftId) {
-      return;
-    }
-    const draft = getDraft(initialDraftId);
-    if (draft && draft.kind === "choreographer") {
-      setProvider(draft.provider);
-      setModel(draft.model);
-      setTemperature(draft.temperature);
-      setSystemPrompt(draft.systemPrompt);
-      setTurns(draft.turns);
-      setTitle(draft.title);
-      setDraftId(draft.id);
-      hydratedDraftIdRef.current = draft.id;
-    }
-  }, [initialDraftId]);
+  const hydrateFromDraft = useCallback((draft: ChoreographerDraft) => {
+    setProvider(draft.provider);
+    setModel(draft.model);
+    setTemperature(draft.temperature);
+    setSystemPrompt(draft.systemPrompt);
+    setTurns(draft.turns);
+    setTitle(draft.title);
+    setDraftId(draft.id);
+  }, []);
+  useDraftHydration(initialDraftId, "choreographer", hydrateFromDraft);
 
   const ready = hydrated && !!keys[provider];
   const completed = completedTurnCount(turns);
