@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
-import { useDraftHydration } from "@/lib/hooks/use-draft-hydration";
+import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, type ProviderId } from "@/lib/providers";
@@ -13,14 +13,11 @@ import {
   isPersonaEmpty,
   type PersonaValues,
 } from "@/lib/persona";
-import { saveDraft, suggestTitle, type PersonaDraft } from "@/lib/drafts";
+import { suggestTitle, type PersonaDraft } from "@/lib/drafts";
 import { PersonaForm } from "@/components/play/persona-form";
 import { OutputPanel, type OutputState } from "@/components/play/output-panel";
 import type { ConfigState } from "@/components/play/config-panel";
-import {
-  DraftSaveBar,
-  type DraftSaveStatus,
-} from "@/components/play/draft-save-bar";
+import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
 
@@ -37,7 +34,6 @@ const DEFAULT_MESSAGE =
 
 export function PersonaWorkshop() {
   const { keys, hydrated } = useKeys();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const initialDraftId = searchParams.get("draft");
 
@@ -49,27 +45,22 @@ export function PersonaWorkshop() {
   const [output, setOutput] = useState<OutputState>(EMPTY_OUTPUT);
   const [running, setRunning] = useState(false);
 
-  const [draftId, setDraftId] = useState<string | null>(initialDraftId);
-  const [title, setTitle] = useState("");
-  const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle");
-  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const hydrateFromDraft = useCallback(
-    (draft: PersonaDraft) => {
-      setProvider(draft.provider);
-      setModel(draft.model);
-      setTemperature(draft.temperature);
-      setPersona(draft.persona);
-      setUserMessage(draft.lastUserMessage);
-      setTitle(draft.title);
-      setDraftId(draft.id);
-      if (draft.lastOutput) {
-        setOutput({ ...EMPTY_OUTPUT, text: draft.lastOutput, status: "done" });
-      }
-    },
-    [],
-  );
-  useDraftHydration(initialDraftId, "persona", hydrateFromDraft);
+  const hydrateFromDraft = useCallback((draft: PersonaDraft) => {
+    setProvider(draft.provider);
+    setModel(draft.model);
+    setTemperature(draft.temperature);
+    setPersona(draft.persona);
+    setUserMessage(draft.lastUserMessage);
+    if (draft.lastOutput) {
+      setOutput({ ...EMPTY_OUTPUT, text: draft.lastOutput, status: "done" });
+    }
+  }, []);
+  const { draftId, title, setTitle, saveStatus, save } = useDraftEditing({
+    initialDraftId,
+    editorRoute: "/play/persona",
+    kind: "persona",
+    apply: hydrateFromDraft,
+  });
 
   const composedSystem = useMemo(
     () => composePersonaPrompt(persona),
@@ -148,10 +139,7 @@ export function PersonaWorkshop() {
   }
 
   function handleSaveDraft() {
-    setSaveStatus("saving");
-    const saved = saveDraft({
-      id: draftId ?? undefined,
-      kind: "persona",
+    save({
       title:
         title.trim() ||
         suggestTitle(persona.name || persona.role, "Untitled persona"),
@@ -162,14 +150,6 @@ export function PersonaWorkshop() {
       lastUserMessage: userMessage,
       lastOutput: output.text || undefined,
     });
-    setDraftId(saved.id);
-    setTitle(saved.title);
-    setSaveStatus("saved");
-    if (!searchParams.get("draft")) {
-      router.replace(`/play/persona?draft=${saved.id}`, { scroll: false });
-    }
-    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-    savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
   }
 
   const config: ConfigState = {
@@ -242,10 +222,7 @@ export function PersonaWorkshop() {
 
       <DraftSaveBar
         title={title}
-        onTitleChange={(next) => {
-          setTitle(next);
-          if (saveStatus === "saved") setSaveStatus("idle");
-        }}
+        onTitleChange={setTitle}
         status={saveStatus}
         draftId={draftId}
         onSave={handleSaveDraft}

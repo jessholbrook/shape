@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
-import { useDraftHydration } from "@/lib/hooks/use-draft-hydration";
+import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, type ProviderId } from "@/lib/providers";
@@ -17,12 +17,9 @@ import {
   type AssistantResult,
   type ChoreographedTurn,
 } from "@/lib/choreographer";
-import { saveDraft, suggestTitle, type ChoreographerDraft } from "@/lib/drafts";
+import { suggestTitle, type ChoreographerDraft } from "@/lib/drafts";
 import { ChoreographerTurnRow } from "@/components/play/choreographer-turn-row";
-import {
-  DraftSaveBar,
-  type DraftSaveStatus,
-} from "@/components/play/draft-save-bar";
+import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
 
@@ -30,7 +27,6 @@ const MAX_TURNS = 10;
 
 export function Choreographer() {
   const { keys, hydrated } = useKeys();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const initialDraftId = searchParams.get("draft");
 
@@ -41,21 +37,19 @@ export function Choreographer() {
   const [turns, setTurns] = useState<ChoreographedTurn[]>(SEED_TURNS);
   const [running, setRunning] = useState(false);
 
-  const [draftId, setDraftId] = useState<string | null>(initialDraftId);
-  const [title, setTitle] = useState("");
-  const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle");
-  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const hydrateFromDraft = useCallback((draft: ChoreographerDraft) => {
     setProvider(draft.provider);
     setModel(draft.model);
     setTemperature(draft.temperature);
     setSystemPrompt(draft.systemPrompt);
     setTurns(draft.turns);
-    setTitle(draft.title);
-    setDraftId(draft.id);
   }, []);
-  useDraftHydration(initialDraftId, "choreographer", hydrateFromDraft);
+  const { draftId, title, setTitle, saveStatus, save } = useDraftEditing({
+    initialDraftId,
+    editorRoute: "/play/choreographer",
+    kind: "choreographer",
+    apply: hydrateFromDraft,
+  });
 
   const ready = hydrated && !!keys[provider];
   const completed = completedTurnCount(turns);
@@ -214,10 +208,7 @@ export function Choreographer() {
   }
 
   function handleSaveDraft() {
-    setSaveStatus("saving");
-    const saved = saveDraft({
-      id: draftId ?? undefined,
-      kind: "choreographer",
+    save({
       title:
         title.trim() ||
         suggestTitle(
@@ -230,16 +221,6 @@ export function Choreographer() {
       systemPrompt,
       turns,
     });
-    setDraftId(saved.id);
-    setTitle(saved.title);
-    setSaveStatus("saved");
-    if (!searchParams.get("draft")) {
-      router.replace(`/play/choreographer?draft=${saved.id}`, {
-        scroll: false,
-      });
-    }
-    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-    savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
   }
 
   return (
@@ -342,10 +323,7 @@ export function Choreographer() {
 
       <DraftSaveBar
         title={title}
-        onTitleChange={(next) => {
-          setTitle(next);
-          if (saveStatus === "saved") setSaveStatus("idle");
-        }}
+        onTitleChange={setTitle}
         status={saveStatus}
         draftId={draftId}
         onSave={handleSaveDraft}
