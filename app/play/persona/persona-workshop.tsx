@@ -7,7 +7,7 @@ import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftHydration } from "@/lib/hooks/use-draft-hydration";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
-import { PROVIDER_LIST, PROVIDERS, type ProviderId } from "@/lib/providers";
+import { PROVIDERS, type ProviderId } from "@/lib/providers";
 import {
   DEFAULT_PERSONA,
   composePersonaPrompt,
@@ -22,6 +22,7 @@ import {
   DraftSaveBar,
   type DraftSaveStatus,
 } from "@/components/play/draft-save-bar";
+import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
 
 const EMPTY_OUTPUT: OutputState = {
   text: "",
@@ -198,49 +199,14 @@ export function PersonaWorkshop() {
         </div>
       )}
 
-      <div className="bg-surface border border-line rounded-[16px] p-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-        <Field label="Provider">
-          <select
-            value={provider}
-            onChange={(e) => {
-              const next = e.target.value as ProviderId;
-              setProvider(next);
-              setModel(PROVIDERS[next].defaultModel);
-            }}
-            className="w-full bg-canvas border border-line rounded-[10px] px-3 py-2 font-mono text-[13px] text-ink focus:border-ink focus:outline-none"
-          >
-            {PROVIDER_LIST.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Model">
-          <select
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            className="w-full bg-canvas border border-line rounded-[10px] px-3 py-2 font-mono text-[13px] text-ink focus:border-ink focus:outline-none"
-          >
-            {PROVIDERS[provider].models.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label={`Temperature — ${temperature.toFixed(2)}`}>
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.05}
-            value={temperature}
-            onChange={(e) => setTemperature(parseFloat(e.target.value))}
-            className="w-full accent-[var(--highlight)]"
-          />
-        </Field>
-      </div>
+      <ProviderModelTempRow
+        provider={provider}
+        model={model}
+        temperature={temperature}
+        onProviderChange={setProvider}
+        onModelChange={setModel}
+        onTemperatureChange={setTemperature}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <PersonaForm values={persona} onChange={setPersona} />
@@ -331,19 +297,3 @@ function ComposedPromptCard({
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="flex flex-col gap-1.5">
-      <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet">
-        {label}
-      </span>
-      {children}
-    </label>
-  );
-}
