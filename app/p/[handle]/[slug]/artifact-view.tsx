@@ -19,6 +19,7 @@ import {
   type ProbeResult,
 } from "@/lib/refusal";
 import { SCORE_MAX, caseScore } from "@/lib/evals";
+import { TryIt } from "@/components/artifact/try-it";
 
 type Status =
   | { kind: "loading" }
@@ -82,6 +83,7 @@ export function ArtifactView({
     <div className="flex flex-col gap-10">
       <Header artifact={a} editHref={editHref} />
       <ArtifactBody artifact={a} />
+      <TryIt artifact={a} />
       <Footer artifact={a} />
       {republished && <RepublishedToast />}
     </div>
