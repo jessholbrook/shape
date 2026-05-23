@@ -72,7 +72,7 @@ function ModuleRow({ module: m }: { module: CurriculumModule }) {
               {m.title}
               {m.italic && (
                 <>
-                  {" "}
+                  {m.title && " "}
                   <span className="italic">{m.italic}</span>
                 </>
               )}

@@ -504,9 +504,32 @@ A design decision worth flagging: the choreographer fires turns sequentially (no
 - Article meta header (← Learn + section number + h1 + read-time) inline in seven articles. Way overdue.
 - Cross-link from playground headers back to matching articles. Six playgrounds with paired articles now; would round out the loop.
 
+## Lift article meta header into shared kit (this session)
+
+- [x] `components/learn/article.tsx` — added `ArticleHeader` that takes a `CurriculumModule` and renders the standard meta header (← Learn back link, module-number badge, H1 with title + optional italic suffix, "X min read · pairs with …" meta line). Handles the empty-title / italic-only case (Module 6, where the entire H1 is italic) and the no-playground case (Module 5, where the meta line drops the "pairs with" suffix).
+- [x] `lib/curriculum.ts` — migrated Module 6 from `title: "Evaluation"` (with inline italic in the article) to `title: "", italic: "Evaluation"`. Cleaner data, no special-case article styling.
+- [x] `app/learn/page.tsx` — updated ModuleRow to handle empty-title rendering (skip the leading space before italic when title is empty).
+- [x] Refactored all 7 articles (`prompts-as-design`, `voice-and-tone`, `personas-for-ai`, `refusal-and-boundaries`, `output-formatting`, `evaluation`, `multi-turn-flows`) to use `<ArticleHeader module={mod} />`. Dropped the now-unused `Link` and `SectionNumber` imports from six of them (Module 5 keeps `Link` because it has an inline Diff Mode link in the closing section).
+- [x] Browser-verified: all 8 routes (the 7 articles + /learn) return 200. Module 6 renders with the whole title in italic ("*Evaluation.*") and no leading space. Module 5 meta line is "4 min read" with no "pairs with" suffix. Other articles continue to render with their distinct title splits and pair-with links.
+
+### Review
+
+Net diff is roughly -160 lines duplication, +60 lines shared. More important than the line count: the meta header is now data-driven from the curriculum module. To add a new article, you write the article body, drop in `<ArticleHeader module={mod} />`, and the meta header is correct — title + italic suffix + read time + paired-playground link all derived from the single source of truth.
+
+The Module 6 migration is a small but pleasant cleanup. Before, the article hard-coded `<span className="italic">Evaluation</span>` because the data model couldn't express "whole title is italic." Now the data model handles it cleanly via `title: "", italic: "Evaluation"`. Same approach scales to any future single-word italic title.
+
+This is the second extraction in the article work (after `components/learn/article.tsx` in PR #14 lifted the body components). The two together turn a Shape article from "a unique file" into "prose + a few config props."
+
+### Known follow-ups (non-blocking)
+
+- Cross-link from playground headers back to matching articles ("Read the concept →"). Six playgrounds with paired articles now; one-line addition per playground.
+- Module 8 (Studio) — last curriculum entry, different surface.
+- TOC component for articles once any one exceeds ~10 minutes (none do yet).
+- Possibly extract the trailing `<NextModuleFooter />`-only wrapper into the same ArticleHeader-style helper if/when we add anything else to the article footer (related links, share button, etc.).
+
 ## Next session
 
 Pick one:
-1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. The five draft shapes are stable; this is the portfolio-loop work.
-2. **Lift article meta header into shared kit** — seven articles in, identical inline header. ~30-line refactor that pays off the next time anyone writes an article.
-3. **Module 8 / Studio scaffold** — last curriculum entry. Different shape (guided multi-step project, not concept article). Larger scope.
+1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Portfolio loop. Multi-session.
+2. **Module 8 / Studio scaffold** — last curriculum entry. Different shape (guided multi-step project), larger scope.
+3. **Cross-link playgrounds back to articles** — six playgrounds now have paired articles; add a "Read the concept →" link in each playground's header. Tiny.

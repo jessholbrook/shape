@@ -1,5 +1,56 @@
 import Link from "next/link";
+import { SectionNumber } from "@/components/section-number";
 import type { CurriculumModule } from "@/lib/curriculum";
+
+/**
+ * The standard article meta header: ← Learn back link, module-number badge,
+ * H1 (title + optional italic suffix), and the "X min read · pairs with …"
+ * meta line. Handles modules whose entire H1 is italic (empty `title` +
+ * `italic` set) and modules without a paired playground (no "pairs with"
+ * suffix).
+ */
+export function ArticleHeader({ module: mod }: { module: CurriculumModule }) {
+  return (
+    <>
+      <Link
+        href="/learn"
+        className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+      >
+        ← Learn
+      </Link>
+
+      <div className="mt-10">
+        <SectionNumber label={`Module ${mod.num}`}>{mod.num}</SectionNumber>
+      </div>
+
+      <h1 className="font-display text-[56px] md:text-[80px] leading-[0.98] tracking-tight text-ink mt-6">
+        {mod.title}
+        {mod.italic && (
+          <>
+            {mod.title && " "}
+            <span className="italic">{mod.italic}</span>
+          </>
+        )}
+        .
+      </h1>
+
+      <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
+        {mod.readMinutes} min read
+        {mod.playground && (
+          <>
+            {" · pairs with "}
+            <Link
+              href={mod.playground.href}
+              className="text-ink underline decoration-highlight underline-offset-4 decoration-2"
+            >
+              {mod.playground.label}
+            </Link>
+          </>
+        )}
+      </p>
+    </>
+  );
+}
 
 export function Lede({ children }: { children: React.ReactNode }) {
   return (
