@@ -1,11 +1,35 @@
 import type { Metadata } from "next";
 import { Shell } from "@/components/shell";
+import { getHandleArtifactsForMeta } from "@/lib/supabase/server-artifacts";
 import { ProfileView } from "./profile-view";
 
-export const metadata: Metadata = {
-  title: "Profile — Shape",
-  description: "Public artifacts published from a Shape handle.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ handle: string }>;
+}): Promise<Metadata> {
+  const { handle } = await params;
+  const artifacts = await getHandleArtifactsForMeta(handle);
+  const count = artifacts.length;
+  const description =
+    count === 0
+      ? `Public artifacts published from @${handle} on Shape.`
+      : `${count} public ${count === 1 ? "artifact" : "artifacts"} published from @${handle} on Shape.`;
+  return {
+    title: `@${handle} — Shape`,
+    description,
+    openGraph: {
+      title: `@${handle}`,
+      description,
+      type: "profile",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `@${handle}`,
+      description,
+    },
+  };
+}
 
 export default async function HandleProfilePage({
   params,
