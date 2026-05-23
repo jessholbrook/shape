@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDrafts } from "@/lib/hooks/use-drafts";
+import { usePublishedArtifacts } from "@/lib/hooks/use-published-artifacts";
+import type { Artifact } from "@/lib/artifacts";
 import {
   deleteDraft,
   duplicateDraft,
@@ -29,6 +31,7 @@ type PendingDelete = {
 
 export function Notebook() {
   const { drafts, hydrated } = useDrafts();
+  const { artifacts, byDraftId } = usePublishedArtifacts();
   const router = useRouter();
   const [pending, setPending] = useState<PendingDelete[]>([]);
   const [importing, setImporting] = useState(false);
@@ -121,6 +124,12 @@ export function Notebook() {
         </div>
       )}
 
+      {artifacts.length > 0 && (
+        <div className="mb-12">
+          <PublishedSection artifacts={artifacts} />
+        </div>
+      )}
+
       {noDrafts ? (
         <EmptyState />
       ) : (
@@ -131,6 +140,7 @@ export function Notebook() {
                 <DraftRow
                   key={d.id}
                   draft={d}
+                  published={byDraftId.get(d.id) ?? null}
                   onDuplicate={() => handleDuplicate(d)}
                   onExport={() => handleExport(d)}
                   onDelete={() => handleDelete(d)}
@@ -146,6 +156,7 @@ export function Notebook() {
                 <DraftRow
                   key={d.id}
                   draft={d}
+                  published={byDraftId.get(d.id) ?? null}
                   onDuplicate={() => handleDuplicate(d)}
                   onExport={() => handleExport(d)}
                   onDelete={() => handleDelete(d)}
@@ -161,6 +172,7 @@ export function Notebook() {
                 <DraftRow
                   key={d.id}
                   draft={d}
+                  published={byDraftId.get(d.id) ?? null}
                   onDuplicate={() => handleDuplicate(d)}
                   onExport={() => handleExport(d)}
                   onDelete={() => handleDelete(d)}
@@ -176,6 +188,7 @@ export function Notebook() {
                 <DraftRow
                   key={d.id}
                   draft={d}
+                  published={byDraftId.get(d.id) ?? null}
                   onDuplicate={() => handleDuplicate(d)}
                   onExport={() => handleExport(d)}
                   onDelete={() => handleDelete(d)}
@@ -191,6 +204,7 @@ export function Notebook() {
                 <DraftRow
                   key={d.id}
                   draft={d}
+                  published={byDraftId.get(d.id) ?? null}
                   onDuplicate={() => handleDuplicate(d)}
                   onExport={() => handleExport(d)}
                   onDelete={() => handleDelete(d)}
@@ -206,6 +220,7 @@ export function Notebook() {
                 <DraftRow
                   key={d.id}
                   draft={d}
+                  published={byDraftId.get(d.id) ?? null}
                   onDuplicate={() => handleDuplicate(d)}
                   onExport={() => handleExport(d)}
                   onDelete={() => handleDelete(d)}
@@ -227,6 +242,72 @@ export function Notebook() {
       )}
     </>
   );
+}
+
+function PublishedSection({ artifacts }: { artifacts: Artifact[] }) {
+  const handle = artifacts[0]?.handle;
+  return (
+    <div>
+      <div className="flex items-baseline gap-3 mb-4">
+        <h2 className="font-display text-[26px] leading-[1.15] text-ink">
+          Published
+        </h2>
+        {handle && (
+          <Link
+            href={`/p/${handle}`}
+            className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+          >
+            /p/{handle}
+          </Link>
+        )}
+        <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
+          {artifacts.length}
+        </span>
+      </div>
+      <div className="flex flex-col gap-3">
+        {artifacts.map((a) => (
+          <PublishedRow key={a.id} artifact={a} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PublishedRow({ artifact: a }: { artifact: Artifact }) {
+  return (
+    <Link
+      href={`/p/${a.handle}/${a.slug}`}
+      className="group bg-surface border border-line rounded-[14px] p-4 hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-shadow"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-highlight-ink bg-highlight-soft rounded-full px-2 py-0.5">
+            {pillForKind(a.kind)}
+          </span>
+          <span className="font-display text-[18px] leading-[1.2] text-ink truncate">
+            {a.title}
+          </span>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <code className="font-mono text-[11px] text-ink-quiet truncate max-w-[260px]">
+            /p/{a.handle}/{a.slug}
+          </code>
+          <span className="font-mono text-[12px] text-ink group-hover:text-highlight transition-colors">
+            Open →
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function pillForKind(kind: Artifact["kind"]): string {
+  if (kind === "diff") return "Diff";
+  if (kind === "tone") return "Tone";
+  if (kind === "persona") return "Persona";
+  if (kind === "refusal") return "Refusal";
+  if (kind === "evals") return "Evals";
+  return "Flow";
 }
 
 function Section({
@@ -273,12 +354,14 @@ function pillFor(draft: Draft): string {
 
 function DraftRow({
   draft,
+  published,
   onDuplicate,
   onExport,
   onDelete,
   onPublish,
 }: {
   draft: Draft;
+  published: Artifact | null;
   onDuplicate: () => void;
   onExport: () => void;
   onDelete: () => void;
@@ -298,6 +381,19 @@ function DraftRow({
             <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
               {formatRelative(draft.updatedAt)}
             </span>
+            {published && (
+              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+                ·{" "}
+                <Link
+                  href={`/p/${published.handle}/${published.slug}`}
+                  className="text-ink underline decoration-highlight underline-offset-4 decoration-2"
+                >
+                  {published.visibility === "private"
+                    ? "Published · private"
+                    : "Published"}
+                </Link>
+              </span>
+            )}
           </div>
           <h3 className="font-display text-[22px] leading-[1.2] text-ink truncate">
             {draft.title || "Untitled"}
@@ -316,7 +412,7 @@ function DraftRow({
             onClick={onPublish}
             className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink hover:text-highlight-ink"
           >
-            Publish
+            {published ? "Republish" : "Publish"}
           </button>
           <button
             type="button"
