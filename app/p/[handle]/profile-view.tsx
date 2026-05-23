@@ -7,6 +7,7 @@ import {
   getArtifactBackend,
   type Artifact,
 } from "@/lib/artifacts";
+import { KindPill } from "@/components/kind-pill";
 
 type Status =
   | { kind: "loading" }
@@ -147,28 +148,6 @@ function EmptyState({ handle }: { handle: string }) {
         </Link>
       </div>
     </div>
-  );
-}
-
-function KindPill({ kind }: { kind: Artifact["kind"] }) {
-  const label =
-    kind === "diff"
-      ? "Diff Log"
-      : kind === "tone"
-      ? "Behavior Spec"
-      : kind === "persona"
-      ? "Persona Card"
-      : kind === "refusal"
-      ? "Refusal Scorecard"
-      : kind === "evals"
-      ? "Eval Scorecard"
-      : kind === "case-study"
-      ? "Case Study"
-      : "Conversation";
-  return (
-    <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-highlight-ink bg-highlight-soft rounded-full px-2 py-0.5">
-      {label}
-    </span>
   );
 }
 
