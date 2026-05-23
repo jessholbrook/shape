@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftHydration } from "@/lib/hooks/use-draft-hydration";
@@ -23,6 +22,7 @@ import {
   DraftSaveBar,
   type DraftSaveStatus,
 } from "@/components/play/draft-save-bar";
+import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
 
 function emptyResults(probes: Probe[]): Record<string, ProbeResult> {
@@ -202,23 +202,11 @@ export function RefusalLab() {
 
   return (
     <div className="flex flex-col gap-6">
-      {hydrated && !ready && (
-        <div className="bg-highlight-soft border border-highlight/40 rounded-[12px] p-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="font-sans text-[14px] text-ink">
-            You&apos;re missing a key for{" "}
-            <span className="font-mono text-[13px]">
-              {PROVIDERS[provider].name}
-            </span>
-            . Add one to run the panel.
-          </p>
-          <Link
-            href="/settings/keys"
-            className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink underline decoration-highlight underline-offset-4 decoration-2"
-          >
-            Set up keys →
-          </Link>
-        </div>
-      )}
+      <MissingKeyBanner
+        show={hydrated && !ready}
+        providerName={PROVIDERS[provider].name}
+        action="run the panel"
+      />
 
       {/* Provider / model / temperature */}
       <ProviderModelTempRow
