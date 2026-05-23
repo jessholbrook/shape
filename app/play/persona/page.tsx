@@ -1,5 +1,6 @@
 import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
+import { ConceptLink } from "@/components/play/concept-link";
 import { PersonaWorkshop } from "./persona-workshop";
 
 export const metadata = {
@@ -23,6 +24,8 @@ export default function PersonaPage() {
             watch the model embody them.
           </p>
         </div>
+
+        <ConceptLink playgroundHref="/play/persona" />
 
         <div className="mt-12">
           <PersonaWorkshop />

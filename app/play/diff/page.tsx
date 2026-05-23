@@ -1,5 +1,6 @@
 import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
+import { ConceptLink } from "@/components/play/concept-link";
 import { DiffMode } from "./diff-mode";
 
 export const metadata = {
@@ -23,6 +24,8 @@ export default function DiffPage() {
             feel how prompts shape outputs.
           </p>
         </div>
+
+        <ConceptLink playgroundHref="/play/diff" />
 
         <div className="mt-12">
           <DiffMode />

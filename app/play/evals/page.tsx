@@ -1,5 +1,6 @@
 import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
+import { ConceptLink } from "@/components/play/concept-link";
 import { EvalsWorkshop } from "./evals-workshop";
 
 export const metadata = {
@@ -23,6 +24,8 @@ export default function EvalsPage() {
             Same shape as a usability rubric, applied to behavior.
           </p>
         </div>
+
+        <ConceptLink playgroundHref="/play/evals" />
 
         <div className="mt-12">
           <EvalsWorkshop />

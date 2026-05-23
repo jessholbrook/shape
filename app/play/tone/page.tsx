@@ -1,5 +1,6 @@
 import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
+import { ConceptLink } from "@/components/play/concept-link";
 import { ToneDial } from "./tone-dial";
 
 export const metadata = {
@@ -23,6 +24,8 @@ export default function TonePage() {
             compose itself, then run it and feel the shift.
           </p>
         </div>
+
+        <ConceptLink playgroundHref="/play/tone" />
 
         <div className="mt-12">
           <ToneDial />
