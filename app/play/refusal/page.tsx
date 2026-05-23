@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
 import { ConceptLink } from "@/components/play/concept-link";
@@ -28,7 +29,15 @@ export default function RefusalPage() {
         <ConceptLink playgroundHref="/play/refusal" />
 
         <div className="mt-12">
-          <RefusalLab />
+          <Suspense
+            fallback={
+              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
+                Loading playground…
+              </p>
+            }
+          >
+            <RefusalLab />
+          </Suspense>
         </div>
       </section>
     </Shell>
