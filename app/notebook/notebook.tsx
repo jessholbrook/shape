@@ -704,11 +704,11 @@ function EmptyState() {
         No drafts yet
       </p>
       <h2 className="font-display text-[28px] md:text-[34px] leading-[1.15] text-ink mt-3">
-        Save something from a playground.
+        Save something from a playground or studio.
       </h2>
       <p className="font-sans text-[14px] text-ink-muted mt-4 max-w-md mx-auto">
-        Every playground has a Save draft action at the bottom. Anything you
-        save shows up here, ready to reopen.
+        Every playground and studio has a Save draft action at the bottom.
+        Anything you save shows up here, ready to reopen or publish.
       </p>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
         <Link
@@ -719,10 +719,18 @@ function EmptyState() {
           <span className="text-highlight">→</span>
         </Link>
         <Link
-          href="/play/tone"
+          href="/build/research-interview-assistant"
           className="inline-flex items-center gap-2 border border-ink text-ink rounded-[10px] px-4 py-2 font-sans text-[14px] hover:bg-ink hover:text-canvas transition-colors"
         >
-          Open Tone Dial
+          Open a Studio
+        </Link>
+      </div>
+      <div className="mt-4 flex items-center justify-center gap-4 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
+        <Link href="/play" className="hover:text-ink">
+          All playgrounds →
+        </Link>
+        <Link href="/build" className="hover:text-ink">
+          All studios →
         </Link>
       </div>
     </div>
