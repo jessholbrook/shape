@@ -21,6 +21,7 @@ import { evaluateMatch } from "@/lib/refusal";
 import { aggregateScore, SCORE_MAX } from "@/lib/evals";
 import { ImportPanel } from "@/components/notebook/import-panel";
 import { PublishDialog } from "@/components/notebook/publish-dialog";
+import { KindPill } from "@/components/kind-pill";
 
 const UNDO_WINDOW_MS = 6000;
 
@@ -305,9 +306,7 @@ function PublishedRow({ artifact: a }: { artifact: Artifact }) {
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-highlight-ink bg-highlight-soft rounded-full px-2 py-0.5">
-            {pillForKind(a.kind)}
-          </span>
+          <KindPill kind={a.kind} variant="short" />
           <span className="font-display text-[18px] leading-[1.2] text-ink truncate">
             {a.title}
           </span>
@@ -323,16 +322,6 @@ function PublishedRow({ artifact: a }: { artifact: Artifact }) {
       </div>
     </Link>
   );
-}
-
-function pillForKind(kind: Artifact["kind"]): string {
-  if (kind === "diff") return "Diff";
-  if (kind === "tone") return "Tone";
-  if (kind === "persona") return "Persona";
-  if (kind === "refusal") return "Refusal";
-  if (kind === "evals") return "Evals";
-  if (kind === "case-study") return "Case Study";
-  return "Flow";
 }
 
 function Section({
@@ -359,16 +348,6 @@ function Section({
   );
 }
 
-function pillFor(draft: Draft): string {
-  if (draft.kind === "diff") return "Diff";
-  if (draft.kind === "tone") return "Tone";
-  if (draft.kind === "persona") return "Persona";
-  if (draft.kind === "refusal") return "Refusal";
-  if (draft.kind === "evals") return "Evals";
-  if (draft.kind === "case-study") return "Case Study";
-  return "Flow";
-}
-
 function DraftRow({
   draft,
   published,
@@ -385,16 +364,13 @@ function DraftRow({
   onPublish: () => void;
 }) {
   const href = draftEditorHref(draft);
-  const pill = pillFor(draft);
 
   return (
     <div className="group bg-surface border border-line rounded-[14px] p-5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-shadow">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-highlight-ink bg-highlight-soft rounded-full px-2 py-0.5">
-              {pill}
-            </span>
+            <KindPill kind={draft.kind} variant="short" />
             <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
               {formatRelative(draft.updatedAt)}
             </span>
