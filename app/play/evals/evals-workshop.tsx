@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
+import { useDraftHydration } from "@/lib/hooks/use-draft-hydration";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDER_LIST, PROVIDERS, type ProviderId } from "@/lib/providers";
@@ -19,7 +20,7 @@ import {
   type EvalCase,
   type Score,
 } from "@/lib/evals";
-import { getDraft, saveDraft, suggestTitle } from "@/lib/drafts";
+import { saveDraft, suggestTitle, type EvalsDraft } from "@/lib/drafts";
 import { RubricEditor } from "@/components/play/rubric-editor";
 import { EvalCaseRow } from "@/components/play/eval-case-row";
 import {
@@ -54,33 +55,26 @@ export function EvalsWorkshop() {
   const [title, setTitle] = useState("");
   const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle");
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hydratedDraftIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!initialDraftId || hydratedDraftIdRef.current === initialDraftId) {
-      return;
+  const hydrateFromDraft = useCallback((draft: EvalsDraft) => {
+    setProvider(draft.provider);
+    setModel(draft.model);
+    setTemperature(draft.temperature);
+    setSystemPrompt(draft.systemPrompt);
+    setRubric(draft.rubric);
+    setCases(draft.cases);
+    const filled: Record<string, CaseResult> = {};
+    for (const c of draft.cases) {
+      filled[c.id] = draft.results[c.id] ?? {
+        ...EMPTY_CASE_RESULT,
+        scores: {},
+      };
     }
-    const draft = getDraft(initialDraftId);
-    if (draft && draft.kind === "evals") {
-      setProvider(draft.provider);
-      setModel(draft.model);
-      setTemperature(draft.temperature);
-      setSystemPrompt(draft.systemPrompt);
-      setRubric(draft.rubric);
-      setCases(draft.cases);
-      const filled: Record<string, CaseResult> = {};
-      for (const c of draft.cases) {
-        filled[c.id] = draft.results[c.id] ?? {
-          ...EMPTY_CASE_RESULT,
-          scores: {},
-        };
-      }
-      setResults(filled);
-      setTitle(draft.title);
-      setDraftId(draft.id);
-      hydratedDraftIdRef.current = draft.id;
-    }
-  }, [initialDraftId]);
+    setResults(filled);
+    setTitle(draft.title);
+    setDraftId(draft.id);
+  }, []);
+  useDraftHydration(initialDraftId, "evals", hydrateFromDraft);
 
   const ready = hydrated && !!keys[provider];
 

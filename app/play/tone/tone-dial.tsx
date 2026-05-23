@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
+import { useDraftHydration } from "@/lib/hooks/use-draft-hydration";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDER_LIST, PROVIDERS, type ProviderId } from "@/lib/providers";
@@ -13,7 +14,7 @@ import {
   composeToneBlock,
   type ToneValues,
 } from "@/lib/tone";
-import { getDraft, saveDraft, suggestTitle } from "@/lib/drafts";
+import { saveDraft, suggestTitle, type ToneDraft } from "@/lib/drafts";
 import { ToneDialControls } from "@/components/play/tone-dial-controls";
 import { OutputPanel, type OutputState } from "@/components/play/output-panel";
 import type { ConfigState } from "@/components/play/config-panel";
@@ -55,28 +56,21 @@ export function ToneDial() {
   const [title, setTitle] = useState("");
   const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle");
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hydratedDraftIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!initialDraftId || hydratedDraftIdRef.current === initialDraftId) {
-      return;
+  const hydrateFromDraft = useCallback((draft: ToneDraft) => {
+    setProvider(draft.provider);
+    setModel(draft.model);
+    setTemperature(draft.temperature);
+    setBrief(draft.brief);
+    setTone(draft.tone);
+    setUserMessage(draft.lastUserMessage);
+    setTitle(draft.title);
+    setDraftId(draft.id);
+    if (draft.lastOutput) {
+      setOutput({ ...EMPTY_OUTPUT, text: draft.lastOutput, status: "done" });
     }
-    const draft = getDraft(initialDraftId);
-    if (draft && draft.kind === "tone") {
-      setProvider(draft.provider);
-      setModel(draft.model);
-      setTemperature(draft.temperature);
-      setBrief(draft.brief);
-      setTone(draft.tone);
-      setUserMessage(draft.lastUserMessage);
-      setTitle(draft.title);
-      setDraftId(draft.id);
-      if (draft.lastOutput) {
-        setOutput({ ...EMPTY_OUTPUT, text: draft.lastOutput, status: "done" });
-      }
-      hydratedDraftIdRef.current = draft.id;
-    }
-  }, [initialDraftId]);
+  }, []);
+  useDraftHydration(initialDraftId, "tone", hydrateFromDraft);
 
   function handleSaveDraft() {
     setSaveStatus("saving");

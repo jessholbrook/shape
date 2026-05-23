@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
+import { useDraftHydration } from "@/lib/hooks/use-draft-hydration";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDER_LIST, PROVIDERS, type ProviderId } from "@/lib/providers";
@@ -16,7 +17,7 @@ import {
   type ProbeResult,
   type ProbeVerdict,
 } from "@/lib/refusal";
-import { getDraft, saveDraft, suggestTitle } from "@/lib/drafts";
+import { saveDraft, suggestTitle, type RefusalDraft } from "@/lib/drafts";
 import { ProbeRow } from "@/components/play/probe-row";
 import {
   DraftSaveBar,
@@ -49,30 +50,22 @@ export function RefusalLab() {
   const [title, setTitle] = useState("");
   const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle");
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hydratedDraftIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!initialDraftId || hydratedDraftIdRef.current === initialDraftId) {
-      return;
+  const hydrateFromDraft = useCallback((draft: RefusalDraft) => {
+    setProvider(draft.provider);
+    setModel(draft.model);
+    setTemperature(draft.temperature);
+    setGuidelines(draft.guidelines);
+    setProbes(draft.probes);
+    const filled: Record<string, ProbeResult> = {};
+    for (const p of draft.probes) {
+      filled[p.id] = draft.results[p.id] ?? { ...EMPTY_RESULT };
     }
-    const draft = getDraft(initialDraftId);
-    if (draft && draft.kind === "refusal") {
-      setProvider(draft.provider);
-      setModel(draft.model);
-      setTemperature(draft.temperature);
-      setGuidelines(draft.guidelines);
-      setProbes(draft.probes);
-      // Fill in any missing per-probe slots so rendering is always safe.
-      const filled: Record<string, ProbeResult> = {};
-      for (const p of draft.probes) {
-        filled[p.id] = draft.results[p.id] ?? { ...EMPTY_RESULT };
-      }
-      setResults(filled);
-      setTitle(draft.title);
-      setDraftId(draft.id);
-      hydratedDraftIdRef.current = draft.id;
-    }
-  }, [initialDraftId]);
+    setResults(filled);
+    setTitle(draft.title);
+    setDraftId(draft.id);
+  }, []);
+  useDraftHydration(initialDraftId, "refusal", hydrateFromDraft);
 
   const ready = hydrated && !!keys[provider];
 

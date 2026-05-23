@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
+import { useDraftHydration } from "@/lib/hooks/use-draft-hydration";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDER_LIST, PROVIDERS, type ProviderId } from "@/lib/providers";
@@ -13,7 +14,7 @@ import {
   isPersonaEmpty,
   type PersonaValues,
 } from "@/lib/persona";
-import { getDraft, saveDraft, suggestTitle } from "@/lib/drafts";
+import { saveDraft, suggestTitle, type PersonaDraft } from "@/lib/drafts";
 import { PersonaForm } from "@/components/play/persona-form";
 import { OutputPanel, type OutputState } from "@/components/play/output-panel";
 import type { ConfigState } from "@/components/play/config-panel";
@@ -51,14 +52,9 @@ export function PersonaWorkshop() {
   const [title, setTitle] = useState("");
   const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle");
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hydratedDraftIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!initialDraftId || hydratedDraftIdRef.current === initialDraftId) {
-      return;
-    }
-    const draft = getDraft(initialDraftId);
-    if (draft && draft.kind === "persona") {
+  const hydrateFromDraft = useCallback(
+    (draft: PersonaDraft) => {
       setProvider(draft.provider);
       setModel(draft.model);
       setTemperature(draft.temperature);
@@ -69,9 +65,10 @@ export function PersonaWorkshop() {
       if (draft.lastOutput) {
         setOutput({ ...EMPTY_OUTPUT, text: draft.lastOutput, status: "done" });
       }
-      hydratedDraftIdRef.current = draft.id;
-    }
-  }, [initialDraftId]);
+    },
+    [],
+  );
+  useDraftHydration(initialDraftId, "persona", hydrateFromDraft);
 
   const composedSystem = useMemo(
     () => composePersonaPrompt(persona),
