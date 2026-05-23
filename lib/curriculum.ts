@@ -60,14 +60,15 @@ export const MODULES: CurriculumModule[] = [
   {
     num: "03",
     slug: "personas-for-ai",
-    title: "Personas for AI",
+    title: "Personas",
+    italic: "for AI",
     kicker: "Concept",
     blurb:
       "Character design isn't decoration. Backstory, beliefs, and blind spots shape every response.",
     playground: { label: "Persona Workshop", href: "/play/persona" },
     artifact: "Persona Card",
-    href: "#",
-    status: "soon",
+    href: "/learn/personas-for-ai",
+    status: "ready",
     readMinutes: 7,
   },
   {

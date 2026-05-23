@@ -427,9 +427,32 @@ This brings the curriculum to 5 of 9 modules live. The remaining four (Personas,
 - Article meta header (← Learn link + section number + h1 + read-time line) is still inline in each article. Four articles in, lifting it is overdue.
 - Cross-link from each playground header back to the matching article ("Read the concept →"). One-line addition per playground; not yet done.
 
+## Module 3 article — Personas for AI (this session)
+
+- [x] `app/learn/personas-for-ai/page.tsx` — built on the shared kit. Lede framing personas as character (not job title), 5 H2 sections (familiar move → lesson → example → why foundation → rubric), A/B example contrasting "Job title" ("You are a helpful research assistant.") with "Character" (Iris with 10-year backstory + opinionated belief + voice texture). Per-card "Read" annotations name what each output is doing. Mid-article Persona Workshop CTA. Next-module footer points to Module 4 — which is *ready*, so it links through to the article instead of /learn for the first time in this curriculum.
+- [x] `lib/curriculum.ts` — Module 3 status soon → ready, href set, title split into "Personas" + italic "for AI".
+- [x] Browser-verified: /learn shows 6 of 9 modules live, Module 3 row clickable, article hero renders ("Personas *for AI*."), A/B example uses custom "Persona" label override (new vocabulary, no shared-kit changes), next-module footer correctly links to `/learn/refusal-and-boundaries` since Module 4 is ready, all 6 learn routes 200.
+
+### Review
+
+First time a next-module footer actually walks the reader into another live article. The curriculum is starting to feel like a path instead of a directory.
+
+The A/B example carries more weight in this article than usual. Personas are the most "mystified" lever in AI work — designers feel like the model is doing something they can't see. Showing a job title vs. a character (same task, two outputs, the difference legible) demystifies it without much prose effort. The "Read" annotations on each card make the implicit critique explicit ("vending machine" vs. "someone with a perspective").
+
+This brings the curriculum to **6 of 9 live**. Remaining:
+- Module 5 (Output formatting) — no playground pairing in spec; first article without a Try-it CTA. Could use a different terminal structure or just skip the CTA section.
+- Module 7 (Multi-turn flows) pairs with Conversation Choreographer — neither exists yet.
+- Module 8 (Putting it together) — studio project, different surface.
+
+### Known follow-ups (non-blocking)
+
+- Article meta header (← Learn + SectionNumber + h1 + read-time) is still inline in five articles now. Lifting is overdue.
+- Cross-link from each playground back to the matching article ("Read the concept →"). Five articles now have paired playgrounds; one-line change per playground.
+- Article TOC component (jump to sections within the article) once any article passes ~10 minutes.
+
 ## Next session
 
 Pick one:
 1. **Saveable artifacts (Supabase backend)** — Publish flow + `/p/<user>/<slug>` public pages + PDF export. Multi-session.
-2. **Module 3 article — Personas for AI** — cheap follow-up; pairs with Persona Workshop (already shipped). 6 of 9 live after this.
-3. **Lift the article meta header into the shared kit** — four articles in, the ← Learn + SectionNumber + h1 + read-time line is identical in every article. Cheap.
+2. **Module 5 article — Output formatting** — last "easy" article. No playground pairing; would establish the no-Try-it variant of the article structure.
+3. **Lift article meta header into shared kit** — five articles in, identical header still inline. Pull into `ArticleHeader` taking the module.
