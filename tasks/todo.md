@@ -671,10 +671,175 @@ Two notable calls:
 - Second Studio. Onboarding-flow builder, support-copilot, or an eval-heavy Studio.
 - Studio-aware artifact pages — a "Try this assistant" link back to the Studio with hydrated draft.
 
+## Loop completion + missing surfaces (next batch)
+
+PRs #30–#34. Closes the gaps the Studio scaffold opened up — the things
+that should have been there from v0.1 but weren't, plus the spec-§12
+visitor demo.
+
+- [x] **#30** Wrap playground client components in `<Suspense>` —
+  `next build` was failing on every `/play/*` page because Next 16's
+  prerender requires `useSearchParams()` inside a Suspense boundary.
+  Mechanical fix across six pages.
+- [x] **#31** `/profile` + `/gallery` routes — both were linked from the
+  left nav and 404'd. `/profile` is a thin redirect gate: if a handle is
+  set locally it sends to `/p/<handle>`, otherwise shows a claim-a-handle
+  form. `/gallery` lists every public artifact returned by the active
+  backend plus a `<ComingSoon>` panel previewing v1's curated highlights
+  + failure museum.
+- [x] **#32** Edit-draft link + Republished toast — artifact pages had
+  no way back to the originating draft even when you owned it. Adds
+  "Edit draft →" in the header when `getDraft(artifact.draft.id)`
+  returns a local match. Re-publishing the same `handle+slug` used to
+  silently overwrite; the publish dialog now detects the existing
+  artifact and the artifact page shows a 4-second toast on landing via
+  `?republished=1`. Extracted `draftEditorHref()` to `lib/drafts.ts` so
+  notebook and artifact-view share one source of truth.
+- [x] **#33 (open, draft)** Visitor demo mode (SPEC §12) — `/api/demo`
+  edge route looks up a public artifact via Supabase, builds a system
+  prompt for the four demoable kinds (persona / tone / choreographer /
+  case-study), rate-limits per IP and per-(IP, artifact) via a new
+  `demo_turns` table, streams Anthropic Haiku back to a "Try it" card on
+  the artifact page. IPs stored only as salted SHA-256 hashes via
+  `DEMO_IP_SALT`. Migration `0002_case_study_and_demo.sql` also fixes
+  the missing `case-study` kind in the artifacts CHECK constraint.
+  Needs `DEMO_ANTHROPIC_KEY` + Supabase + browser testing before merge.
+- [x] **#34** Studio nudges in onboarding — `/start` success state
+  added a third card pointing at the Research Interview Assistant, and
+  the `/notebook` empty state swapped "Open Tone Dial" for "Open a
+  Studio." Pure copy/markup.
+
+### Review
+
+This batch finished what the Studio session started: nothing in the
+nav 404s anymore, the publish loop has both ends wired (you can get
+back to the draft you published, and republishing surfaces feedback),
+and every public artifact page has a chat box that a hiring manager
+can actually talk to — once the Supabase env is set up.
+
+The visitor demo is the load-bearing piece; it's the difference between
+a portfolio link that shows static text and one that actually
+demonstrates the assistant. Architecturally it's a small server-side
+proxy plus a `demo_turns` table — same pattern as Vercel's edge
+templates for OpenAI proxies. Without env it returns 503 and the UI
+shows a friendly placeholder, so local dev stays unbroken.
+
+### Known follow-ups (non-blocking)
+
+- Monthly $ cap with auto-shutoff on `/api/demo` (env-driven hard
+  ceiling). Currently just per-day per-IP caps.
+- `0002_case_study_and_demo.sql` assumes `0001` has been applied; bundle
+  into a single fresh-install file at some point.
+- "Demo limit reached" CTA in the Try It surface needs more polish than
+  the current inline error text.
+- Diff playground's missing-key banner is still inline (talks about both
+  providers, different shape from the others). Could fold into
+  `<MissingKeyBanner>` with a different prop set if we wanted full
+  consistency.
+
+## Refactor + lint hygiene pass
+
+PRs #35–#40. Once the loop was complete and the nav stopped 404ing, the
+duplication that had accumulated across six (now seven) playground
+surfaces was the next thing in the way. Mechanical extraction sprint:
+every shared block became one component or hook, and the React 19
+purity warnings that had been silently piling up got cleared.
+
+- [x] **#35** Notebook purity warnings — 3 pre-existing
+  `react-hooks/purity` errors (`pendingRef.current = pending` during
+  render, `Date.now()` in two places). Refactored to useEffect-driven
+  ref sync, an in-state `now` ticker for the undo toast, and a
+  setState-updater that moves the impure call out of the function body.
+  `eslint app/notebook/notebook.tsx` went 3 → 0.
+- [x] **#36** Extract `useDraftHydration` — the `?draft=<id>` hydration
+  effect with its `hydratedRef` was the same shape across all seven
+  playground/studio surfaces. Six `react-hooks/set-state-in-effect`
+  errors collapsed into one hook (and the lint cleared by passing the
+  setState calls through an `apply` callback the static analyzer
+  doesn't trace).
+- [x] **#37** Consolidate `<KindPill>` — same kind→label switch lived
+  in four files (artifact-view, profile-view, gallery-view, notebook
+  twice). Extracted to `components/kind-pill.tsx` with `variant="long"`
+  / `variant="short"` and label maps in `lib/kinds.ts`. Net −87 lines.
+  Caught the missing case-study label profile-view had been shipping
+  with since #29.
+- [x] **#38** Extract `<ProviderModelTempRow>` — the Provider / Model /
+  Temperature row (with the provider→model auto-reset convention) was
+  inlined identically in six surfaces, each with its own local `<Field>`
+  helper. Extracted to one component; the auto-reset behavior now lives
+  in one place. Net −301 lines.
+- [x] **#39** Extract `<MissingKeyBanner>` — same 17-line banner JSX in
+  six surfaces (only the action verb differed). Diff playground stays on
+  its inline banner because it talks about two providers. Net −70 lines.
+- [x] **#40 (open, draft)** Combine hydration + save into
+  `useDraftEditing` — the saveStatus state, `savedTimerRef`, and the
+  identical 15-line `handleSaveDraft` ceremony each surface had inlined
+  collapses into one hook. Replaces `useDraftHydration` (deleted). Net
+  −195 lines across 7 surfaces. Needs in-browser save/hydrate testing
+  before merge.
+
+### Review
+
+Net diff across the six refactor PRs is roughly −650 lines of code
+removed, plus four new small components and two hooks. The Studio
+scaffold (#29) had been the high-water mark for duplication — every
+playground had grown a slightly different copy of the same five
+patterns. This sprint converged them.
+
+Three load-bearing decisions:
+
+- **Hooks own the lifecycle, components own the markup.** The save
+  pattern was split between `handleSaveDraft` (logic) and `<DraftSaveBar>`
+  (markup) before; merging them would have tied state to layout. Keeping
+  `useDraftEditing` headless lets the save bar evolve independently and
+  keeps the hook reusable for the studio's publish flow that doesn't
+  use the bar at all.
+
+- **One disable comment, not seven.** The
+  `react-hooks/set-state-in-effect` rule is correct in general but wrong
+  for client-side hydration from localStorage (where lazy `useState`
+  initializers would mismatch SSR). Centralizing the hydration pattern in
+  `useDraftEditing` means the canonical exception lives in one place with
+  a comment explaining why, rather than seven `// eslint-disable-next-line`
+  scattered through the codebase.
+
+- **Keep the diff playground special-cased.** Both
+  `<MissingKeyBanner>` and the eventual save pattern in #40 explicitly
+  punt the diff playground when its shape doesn't match (two providers,
+  paired turns). Better than building a one-size component that grows
+  awkward edge cases.
+
+### Known follow-ups (non-blocking)
+
+- Same `set-state-in-effect` warnings live in
+  `lib/hooks/{use-drafts, use-keys, use-learn-progress, use-usage}.ts`.
+  All four are localStorage-sync hooks — same fix as `useDraftEditing`
+  applies if we want full lint cleanliness across the repo.
+- `app/p/[handle]/[slug]/page.tsx` and `opengraph-image.tsx` still have
+  their own local copies of `KIND_LABEL` instead of importing from
+  `lib/kinds.ts`. Only the React components were migrated in #37.
+- The diff missing-key banner could fold into `<MissingKeyBanner>` with
+  a different prop set; small but ties up loose ends.
+
+
+
 ## Next session
 
-Pick one:
-1. **Wrap playground pages in `<Suspense>`** — small but unblocks `next build`. `useSearchParams()` calls in `/play/*` need a Suspense boundary in their server pages, same pattern as `/build/<studio>` in this PR.
-2. **Second Studio** — e.g. Onboarding-flow builder. The `STUDIOS` array and `CaseStudyDraft` type are ready to take a second entry.
-3. **Visitor demo mode** — server-side pooled key for one-shot demos on public artifact pages, per SPEC §12.
-4. **"Iteration log" step in the Studio** — currently rolled into Reflection. A dedicated step that captures multiple sample-runs would match SPEC §5 more literally.
+The big things are merged; the publish loop is end-to-end and the
+playground/studio code has converged. Two open PRs to walk through, then
+pick from polish or expansion:
+
+1. **Walk #40 (use-draft-editing) + merge.** Pure refactor (−195 lines),
+   tsc / eslint / build clean, but it changes every playground's save
+   path. One save / reload-with-`?draft=` pass on each surface is enough.
+2. **Walk #33 (visitor demo) + merge.** Needs `DEMO_ANTHROPIC_KEY`,
+   `DEMO_IP_SALT`, and Supabase env set, plus migration `0002` applied.
+   Test the rate limit by running through the per-(IP, artifact) cap.
+3. **Second Studio.** `STUDIOS` array and `CaseStudyDraft` ready for a
+   second entry. SPEC §3 mentions support-copilot, onboarding-flow.
+4. **"Iteration log" step in the Studio** — currently rolled into
+   Reflection. A dedicated step that captures multiple sample-runs would
+   match SPEC §5 more literally.
+5. **Lint cleanliness pass.** `lib/hooks/{use-drafts, use-keys,
+   use-learn-progress, use-usage}.ts` all have the same
+   `set-state-in-effect` warning — apply the `useDraftEditing` pattern.
