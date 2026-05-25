@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ShapeMark } from "./shape-mark";
 import { CostMeter } from "./cost-meter";
 
@@ -6,11 +9,10 @@ type NavItem = {
   num: string;
   label: string;
   href: string;
-  active?: boolean;
 };
 
 const navItems: NavItem[] = [
-  { num: "01", label: "Home", href: "/", active: true },
+  { num: "01", label: "Home", href: "/" },
   { num: "02", label: "Play", href: "/play" },
   { num: "03", label: "Build", href: "/build" },
   { num: "04", label: "Learn", href: "/learn" },
@@ -22,7 +24,13 @@ const personalItems: NavItem[] = [
   { num: "07", label: "Profile", href: "/profile" },
 ];
 
+function isActive(href: string, pathname: string): boolean {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
 export function Shell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname() ?? "/";
   return (
     <div className="min-h-screen">
       {/* Mobile top bar (visible below md) */}
@@ -66,7 +74,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
           <ul className="space-y-1">
             {navItems.map((item) => (
-              <NavRow key={item.num} item={item} />
+              <NavRow
+                key={item.num}
+                item={item}
+                active={isActive(item.href, pathname)}
+              />
             ))}
           </ul>
         </div>
@@ -78,7 +90,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
           <ul className="space-y-1">
             {personalItems.map((item) => (
-              <NavRow key={item.num} item={item} />
+              <NavRow
+                key={item.num}
+                item={item}
+                active={isActive(item.href, pathname)}
+              />
             ))}
           </ul>
         </div>
@@ -109,32 +125,31 @@ export function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function NavRow({ item }: { item: NavItem }) {
+function NavRow({ item, active }: { item: NavItem; active: boolean }) {
   return (
     <li>
       <Link
         href={item.href}
+        aria-current={active ? "page" : undefined}
         className={`group flex items-center gap-3 rounded-[8px] px-2 py-1.5 -mx-2 transition-colors ${
-          item.active
+          active
             ? "text-ink"
             : "text-ink-muted hover:text-ink hover:bg-line/40"
         }`}
       >
         <span
           className={`font-mono text-[11px] tracking-[0.08em] ${
-            item.active ? "text-highlight" : "text-ink-quiet"
+            active ? "text-highlight" : "text-ink-quiet"
           }`}
         >
           {item.num}
         </span>
         <span
-          className={`font-sans text-[14px] ${
-            item.active ? "font-medium" : ""
-          }`}
+          className={`font-sans text-[14px] ${active ? "font-medium" : ""}`}
         >
           {item.label}
         </span>
-        {item.active && (
+        {active && (
           <span className="ml-auto w-1 h-1 rounded-full bg-highlight" />
         )}
       </Link>
