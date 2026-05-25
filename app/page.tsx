@@ -130,7 +130,7 @@ export default function Home() {
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
         <SectionNumber label="How it works">04</SectionNumber>
         <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
-          Three steps to a portfolio piece.
+          Three steps to get going.
         </h2>
 
         <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
