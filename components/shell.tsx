@@ -14,11 +14,11 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { num: "01", label: "Home", href: "/" },
-  { num: "02", label: "Play", href: "/play" },
+  { num: "02", label: "Learn", href: "/learn" },
+  { num: "03", label: "Play", href: "/play" },
   ...(BUILD_ENABLED
-    ? [{ num: "03", label: "Build", href: "/build" } as NavItem]
+    ? [{ num: "04", label: "Build", href: "/build" } as NavItem]
     : []),
-  { num: BUILD_ENABLED ? "04" : "03", label: "Learn", href: "/learn" },
 ];
 
 const personalItems: NavItem[] = [
