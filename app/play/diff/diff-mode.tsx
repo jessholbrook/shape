@@ -1,14 +1,13 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
-import { useDraftHydration } from "@/lib/hooks/use-draft-hydration";
+import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import {
-  saveDraft,
   suggestTitle,
   type DiffDraft,
   type DiffTurn,
@@ -16,10 +15,7 @@ import {
 } from "@/lib/drafts";
 import { ConfigPanel, type ConfigState } from "@/components/play/config-panel";
 import { TurnRow } from "@/components/play/turn-row";
-import {
-  DraftSaveBar,
-  type DraftSaveStatus,
-} from "@/components/play/draft-save-bar";
+import { DraftSaveBar } from "@/components/play/draft-save-bar";
 
 const INITIAL_A: ConfigState = {
   provider: "anthropic",
@@ -47,7 +43,6 @@ function newTurnId(): string {
 
 export function DiffMode() {
   const { keys, hydrated } = useKeys();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const initialDraftId = searchParams.get("draft");
 
@@ -58,21 +53,19 @@ export function DiffMode() {
   const [running, setRunning] = useState(false);
   const [highlightDiff, setHighlightDiff] = useState(false);
 
-  const [draftId, setDraftId] = useState<string | null>(initialDraftId);
-  const [title, setTitle] = useState("");
-  const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle");
-  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const hydrateFromDraft = useCallback((draft: DiffDraft) => {
     setConfigA(draft.configA);
     setConfigB(draft.configB);
     setTurns(draft.turns);
-    setTitle(draft.title);
-    setDraftId(draft.id);
     const lastTurn = draft.turns[draft.turns.length - 1];
     if (lastTurn) setPendingMessage(lastTurn.userMessage);
   }, []);
-  useDraftHydration(initialDraftId, "diff", hydrateFromDraft);
+  const { draftId, title, setTitle, saveStatus, save } = useDraftEditing({
+    initialDraftId,
+    editorRoute: "/play/diff",
+    kind: "diff",
+    apply: hydrateFromDraft,
+  });
 
   const aReady = hydrated && !!keys[configA.provider];
   const bReady = hydrated && !!keys[configB.provider];
@@ -202,10 +195,7 @@ export function DiffMode() {
   }
 
   function handleSaveDraft() {
-    setSaveStatus("saving");
-    const saved = saveDraft({
-      id: draftId ?? undefined,
-      kind: "diff",
+    save({
       title:
         title.trim() ||
         suggestTitle(
@@ -216,14 +206,6 @@ export function DiffMode() {
       configB,
       turns,
     });
-    setDraftId(saved.id);
-    setTitle(saved.title);
-    setSaveStatus("saved");
-    if (!searchParams.get("draft")) {
-      router.replace(`/play/diff?draft=${saved.id}`, { scroll: false });
-    }
-    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-    savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
   }
 
   return (
@@ -342,10 +324,7 @@ export function DiffMode() {
 
       <DraftSaveBar
         title={title}
-        onTitleChange={(next) => {
-          setTitle(next);
-          if (saveStatus === "saved") setSaveStatus("idle");
-        }}
+        onTitleChange={setTitle}
         status={saveStatus}
         draftId={draftId}
         onSave={handleSaveDraft}

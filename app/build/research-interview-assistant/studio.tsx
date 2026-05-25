@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
-import { useDraftHydration } from "@/lib/hooks/use-draft-hydration";
+import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, type ProviderId } from "@/lib/providers";
@@ -11,7 +11,6 @@ import { composePersonaPrompt, type PersonaValues } from "@/lib/persona";
 import { composeToneBlock, type ToneValues } from "@/lib/tone";
 import {
   getDraft,
-  saveDraft,
   suggestTitle,
   type CaseStudyDraft,
   type Draft,
@@ -19,10 +18,7 @@ import {
 import { STUDIO_STEPS, type Studio, type StudioStepId } from "@/lib/studio";
 import { PersonaForm } from "@/components/play/persona-form";
 import { ToneDialControls } from "@/components/play/tone-dial-controls";
-import {
-  DraftSaveBar,
-  type DraftSaveStatus,
-} from "@/components/play/draft-save-bar";
+import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
 import { PublishDialog } from "@/components/notebook/publish-dialog";
@@ -39,7 +35,6 @@ type StreamStatus = "idle" | "running" | "done" | "error";
 
 export function Studio({ studio }: { studio: Studio }) {
   const { keys, hydrated } = useKeys();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const initialDraftId = searchParams.get("draft");
 
@@ -61,11 +56,6 @@ export function Studio({ studio }: { studio: Studio }) {
   const [streamStatus, setStreamStatus] = useState<StreamStatus>("idle");
   const [streamError, setStreamError] = useState<string | null>(null);
 
-  const [draftId, setDraftId] = useState<string | null>(initialDraftId);
-  const [title, setTitle] = useState("");
-  const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle");
-  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const [publishing, setPublishing] = useState(false);
 
   const hydrateFromDraft = useCallback((d: CaseStudyDraft) => {
@@ -84,10 +74,13 @@ export function Studio({ studio }: { studio: Studio }) {
       costUsd: d.sample.costUsd,
     });
     setReflection(d.reflection);
-    setTitle(d.title);
-    setDraftId(d.id);
   }, []);
-  useDraftHydration(initialDraftId, "case-study", hydrateFromDraft);
+  const { draftId, title, setTitle, saveStatus, save } = useDraftEditing({
+    initialDraftId,
+    editorRoute: `/build/${studio.id}`,
+    kind: "case-study",
+    apply: hydrateFromDraft,
+  });
 
   const composedSystem = useMemo(() => {
     const personaPart = composePersonaPrompt(persona);
@@ -100,9 +93,8 @@ export function Studio({ studio }: { studio: Studio }) {
   const personaReady = !!persona.name.trim() && !!persona.role.trim();
   const briefReady = brief.trim().length > 20;
 
-  function buildDraftPayload() {
-    return {
-      kind: "case-study" as const,
+  function persistDraft() {
+    return save({
       studioId: studio.id,
       title:
         title.trim() ||
@@ -116,31 +108,7 @@ export function Studio({ studio }: { studio: Studio }) {
       tone,
       sample,
       reflection,
-    };
-  }
-
-  function persistDraft() {
-    const payload = buildDraftPayload();
-    const saved = saveDraft({
-      ...payload,
-      id: draftId ?? undefined,
     });
-    setDraftId(saved.id);
-    setTitle(saved.title);
-    if (!searchParams.get("draft")) {
-      router.replace(`/build/${studio.id}?draft=${saved.id}`, {
-        scroll: false,
-      });
-    }
-    return saved;
-  }
-
-  function handleSaveDraft() {
-    setSaveStatus("saving");
-    persistDraft();
-    setSaveStatus("saved");
-    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-    savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
   }
 
   async function runSample() {
@@ -284,13 +252,10 @@ export function Studio({ studio }: { studio: Studio }) {
 
       <DraftSaveBar
         title={title}
-        onTitleChange={(next) => {
-          setTitle(next);
-          if (saveStatus === "saved") setSaveStatus("idle");
-        }}
+        onTitleChange={setTitle}
         status={saveStatus}
         draftId={draftId}
-        onSave={handleSaveDraft}
+        onSave={persistDraft}
       />
 
       {publishingDraft && (

@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
-import { useDraftHydration } from "@/lib/hooks/use-draft-hydration";
+import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, type ProviderId } from "@/lib/providers";
@@ -19,13 +19,10 @@ import {
   type EvalCase,
   type Score,
 } from "@/lib/evals";
-import { saveDraft, suggestTitle, type EvalsDraft } from "@/lib/drafts";
+import { suggestTitle, type EvalsDraft } from "@/lib/drafts";
 import { RubricEditor } from "@/components/play/rubric-editor";
 import { EvalCaseRow } from "@/components/play/eval-case-row";
-import {
-  DraftSaveBar,
-  type DraftSaveStatus,
-} from "@/components/play/draft-save-bar";
+import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
 
@@ -37,7 +34,6 @@ function emptyResults(cases: EvalCase[]): Record<string, CaseResult> {
 
 export function EvalsWorkshop() {
   const { keys, hydrated } = useKeys();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const initialDraftId = searchParams.get("draft");
 
@@ -51,11 +47,6 @@ export function EvalsWorkshop() {
     emptyResults(SEED_CASES),
   );
   const [running, setRunning] = useState(false);
-
-  const [draftId, setDraftId] = useState<string | null>(initialDraftId);
-  const [title, setTitle] = useState("");
-  const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle");
-  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hydrateFromDraft = useCallback((draft: EvalsDraft) => {
     setProvider(draft.provider);
@@ -72,10 +63,13 @@ export function EvalsWorkshop() {
       };
     }
     setResults(filled);
-    setTitle(draft.title);
-    setDraftId(draft.id);
   }, []);
-  useDraftHydration(initialDraftId, "evals", hydrateFromDraft);
+  const { draftId, title, setTitle, saveStatus, save } = useDraftEditing({
+    initialDraftId,
+    editorRoute: "/play/evals",
+    kind: "evals",
+    apply: hydrateFromDraft,
+  });
 
   const ready = hydrated && !!keys[provider];
 
@@ -191,10 +185,7 @@ export function EvalsWorkshop() {
   }
 
   function handleSaveDraft() {
-    setSaveStatus("saving");
-    const saved = saveDraft({
-      id: draftId ?? undefined,
-      kind: "evals",
+    save({
       title:
         title.trim() ||
         suggestTitle(
@@ -209,14 +200,6 @@ export function EvalsWorkshop() {
       cases,
       results,
     });
-    setDraftId(saved.id);
-    setTitle(saved.title);
-    setSaveStatus("saved");
-    if (!searchParams.get("draft")) {
-      router.replace(`/play/evals?draft=${saved.id}`, { scroll: false });
-    }
-    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-    savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
   }
 
   return (
@@ -306,10 +289,7 @@ export function EvalsWorkshop() {
 
       <DraftSaveBar
         title={title}
-        onTitleChange={(next) => {
-          setTitle(next);
-          if (saveStatus === "saved") setSaveStatus("idle");
-        }}
+        onTitleChange={setTitle}
         status={saveStatus}
         draftId={draftId}
         onSave={handleSaveDraft}
