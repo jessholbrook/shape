@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
+import {
+  DiffPreview,
+  PersonaPreview,
+  TonePreview,
+} from "@/components/home/playground-previews";
 
 export default function Home() {
   return (
@@ -52,7 +57,7 @@ export default function Home() {
         </h2>
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-5 max-w-2xl">
           The skills you use every day are the foundation of shaping AI.
-          Shape just gives them somewhere to land.
+          This site helps you make the connections and try it out.
         </p>
 
         <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -104,6 +109,7 @@ export default function Home() {
             italic="mode"
             blurb="One prompt, two configs, side by side. Feel how prompts shape outputs."
             artifact="Diff Log"
+            preview={<DiffPreview />}
           />
           <PlaygroundCard
             num="02"
@@ -112,6 +118,7 @@ export default function Home() {
             italic="dial"
             blurb="Style as a design token. Move dials, watch the prompt rewrite itself."
             artifact="Behavior Spec"
+            preview={<TonePreview />}
           />
           <PlaygroundCard
             num="03"
@@ -120,6 +127,7 @@ export default function Home() {
             italic="workshop"
             blurb="Character design for AI. Build a backstory, voice, and blind spots."
             artifact="Persona Card"
+            preview={<PersonaPreview />}
           />
         </div>
       </section>
@@ -205,6 +213,7 @@ function PlaygroundCard({
   italic,
   blurb,
   artifact,
+  preview,
 }: {
   num: string;
   href: string;
@@ -212,6 +221,7 @@ function PlaygroundCard({
   italic: string;
   blurb: string;
   artifact: string;
+  preview?: React.ReactNode;
 }) {
   return (
     <Link
@@ -229,6 +239,7 @@ function PlaygroundCard({
       <h3 className="font-display text-[28px] md:text-[34px] leading-[1.1] tracking-tight text-ink mt-6">
         {title} <span className="italic">{italic}</span>
       </h3>
+      {preview && <div className="mt-4">{preview}</div>}
       <p className="font-sans text-[14px] leading-[1.55] text-ink-muted mt-3">
         {blurb}
       </p>

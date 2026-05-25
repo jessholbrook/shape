@@ -14,14 +14,11 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { num: "01", label: "Home", href: "/" },
-  { num: "02", label: "Play", href: "/play" },
+  { num: "02", label: "Learn", href: "/learn" },
+  { num: "03", label: "Play", href: "/play" },
   ...(BUILD_ENABLED
-    ? [{ num: "03", label: "Build", href: "/build" } as NavItem]
+    ? [{ num: "04", label: "Build", href: "/build" } as NavItem]
     : []),
-  { num: BUILD_ENABLED ? "04" : "03", label: "Learn", href: "/learn" },
-];
-
-const personalItems: NavItem[] = [
   { num: BUILD_ENABLED ? "05" : "04", label: "Notebook", href: "/notebook" },
 ];
 
@@ -68,29 +65,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
 
-        {/* Workspace section */}
+        {/* Nav */}
         <div className="px-8 mt-4">
-          <div className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-quiet mb-3">
-            Workspace
-          </div>
           <ul className="space-y-1">
             {navItems.map((item) => (
-              <NavRow
-                key={item.num}
-                item={item}
-                active={isActive(item.href, pathname)}
-              />
-            ))}
-          </ul>
-        </div>
-
-        {/* Personal section */}
-        <div className="px-8 mt-8">
-          <div className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-quiet mb-3">
-            Personal
-          </div>
-          <ul className="space-y-1">
-            {personalItems.map((item) => (
               <NavRow
                 key={item.num}
                 item={item}
