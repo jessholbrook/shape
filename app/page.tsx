@@ -85,8 +85,7 @@ export default function Home() {
           <div>
             <SectionNumber label="Playgrounds">03</SectionNumber>
             <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
-              Small tools.{" "}
-              <span className="italic">Sharp lessons.</span>
+              Play and learn.
             </h2>
           </div>
           <Link
