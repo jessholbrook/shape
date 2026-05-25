@@ -1,3 +1,5 @@
+import { BUILD_ENABLED } from "./flags";
+
 export type ModuleStatus = "ready" | "soon";
 
 export type CurriculumModule = {
@@ -134,13 +136,15 @@ export const MODULES: CurriculumModule[] = [
     kicker: "Studio",
     blurb:
       "End-to-end project. Brief → persona → tone → sample → reflection. The case study is the deliverable.",
-    playground: {
-      label: "Research Interview Assistant",
-      href: "/build/research-interview-assistant",
-    },
+    playground: BUILD_ENABLED
+      ? {
+          label: "Research Interview Assistant",
+          href: "/build/research-interview-assistant",
+        }
+      : undefined,
     artifact: "Case Study",
-    href: "/learn/putting-it-together",
-    status: "ready",
+    href: BUILD_ENABLED ? "/learn/putting-it-together" : "#",
+    status: BUILD_ENABLED ? "ready" : "soon",
     readMinutes: 6,
   },
 ];
