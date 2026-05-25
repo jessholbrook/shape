@@ -93,7 +93,7 @@ export default function PlayPage() {
 
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-8 max-w-2xl">
           Playgrounds are small, focused tools that isolate one design lever at
-          a time. Each one produces a portfolio artifact you can publish.
+          a time. Each one produces an artifact you can download.
         </p>
 
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-5">

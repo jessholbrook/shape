@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ShapeMark } from "./shape-mark";
 import { CostMeter } from "./cost-meter";
+import { BUILD_ENABLED } from "@/lib/flags";
 
 type NavItem = {
   num: string;
@@ -14,12 +15,14 @@ type NavItem = {
 const navItems: NavItem[] = [
   { num: "01", label: "Home", href: "/" },
   { num: "02", label: "Play", href: "/play" },
-  { num: "03", label: "Build", href: "/build" },
-  { num: "04", label: "Learn", href: "/learn" },
+  ...(BUILD_ENABLED
+    ? [{ num: "03", label: "Build", href: "/build" } as NavItem]
+    : []),
+  { num: BUILD_ENABLED ? "04" : "03", label: "Learn", href: "/learn" },
 ];
 
 const personalItems: NavItem[] = [
-  { num: "05", label: "Notebook", href: "/notebook" },
+  { num: BUILD_ENABLED ? "05" : "04", label: "Notebook", href: "/notebook" },
 ];
 
 function isActive(href: string, pathname: string): boolean {

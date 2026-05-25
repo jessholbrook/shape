@@ -6,19 +6,19 @@ export default function Home() {
   return (
     <Shell>
       {/* HERO */}
-      <section className="mx-auto max-w-[1280px] px-6 md:px-12 pt-16 md:pt-24 pb-32 md:pb-40">
+      <section className="mx-auto max-w-[1280px] px-6 md:px-12 pt-16 md:pt-24 pb-16 md:pb-20">
         <SectionNumber label="The pitch">01</SectionNumber>
 
         <h1 className="font-display text-[64px] sm:text-[88px] md:text-[120px] leading-[0.95] tracking-tight text-ink mt-8 max-w-5xl">
           Shape <span className="italic">model</span> behavior.
         </h1>
 
-        <p className="font-sans text-[18px] md:text-[22px] leading-[1.5] text-ink-muted mt-10 max-w-2xl">
-          The behavior design playground for UX designers and researchers.
-          Learn the craft. Build a portfolio.
+        <p className="font-sans text-[18px] md:text-[22px] leading-[1.5] text-ink-muted mt-8 max-w-2xl">
+          A playground for people in UX to learn how to shape AI model
+          behaviors. Learn by doing. Create artifacts you can use later.
         </p>
 
-        <div className="mt-12 flex flex-wrap items-center gap-4">
+        <div className="mt-8 flex flex-wrap items-center gap-4">
           <Link
             href="/start"
             className="group inline-flex items-center gap-2 bg-ink text-canvas rounded-[12px] px-6 py-3 font-sans text-[15px] hover:gap-3 transition-all"
@@ -36,26 +36,26 @@ export default function Home() {
           </Link>
         </div>
 
-        <p className="mt-16 font-mono text-[12px] uppercase tracking-[0.08em] text-ink-quiet max-w-md">
-          Bring your own key —{" "}
-          <span className="text-ink">stays in your browser, never ours.</span>
+        <p className="mt-10 font-mono text-[12px] uppercase tracking-[0.08em] text-ink-quiet max-w-md">
+          Bring your own key,{" "}
+          <span className="text-ink">everything stays in your browser.</span>
         </p>
       </section>
 
       <Divider />
 
       {/* BRIDGE */}
-      <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-24 md:py-32">
+      <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
         <SectionNumber label="The frame">02</SectionNumber>
-        <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-8 max-w-3xl">
+        <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
           You already think like a behavior designer.
         </h2>
-        <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-6 max-w-2xl">
+        <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-5 max-w-2xl">
           The skills you use every day are the foundation of shaping AI.
           Shape just gives them somewhere to land.
         </p>
 
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
           <BridgeCard
             kicker="You define personas."
             statement="Now design one for the model itself."
@@ -80,13 +80,12 @@ export default function Home() {
       <Divider />
 
       {/* FEATURED PLAYGROUNDS */}
-      <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-24 md:py-32">
+      <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <div>
             <SectionNumber label="Playgrounds">03</SectionNumber>
-            <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-8 max-w-3xl">
-              Small tools.{" "}
-              <span className="italic">Sharp lessons.</span>
+            <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
+              Play and learn.
             </h2>
           </div>
           <Link
@@ -97,7 +96,7 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-5">
           <PlaygroundCard
             num="01"
             href="/play/diff"
@@ -128,13 +127,13 @@ export default function Home() {
       <Divider />
 
       {/* HOW IT WORKS */}
-      <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-24 md:py-32">
+      <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
         <SectionNumber label="How it works">04</SectionNumber>
-        <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-8 max-w-3xl">
-          Three steps to a portfolio piece.
+        <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
+          Three steps to get going.
         </h2>
 
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
           <StepCard
             num="01"
             title="Bring your key."
@@ -148,13 +147,13 @@ export default function Home() {
           <StepCard
             num="03"
             title="Save it to your notebook."
-            body="Every draft persists locally — reopen, duplicate, export as JSON. Publish lands next."
+            body="Every draft persists locally — reopen, duplicate, export as JSON."
           />
         </div>
       </section>
 
       {/* Bottom breathing room so floating nav doesn't sit on content */}
-      <div className="h-40" />
+      <div className="h-20" />
     </Shell>
   );
 }
