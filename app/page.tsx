@@ -19,7 +19,7 @@ export default function Home() {
         </h1>
 
         <p className="font-sans text-[18px] md:text-[22px] leading-[1.5] text-ink-muted mt-8 max-w-2xl">
-          A playground for people to learn how to shape AI model
+          A playground for people in UX to learn how to shape AI model
           behaviors. Learn by doing. Create artifacts you can use later.
         </p>
 
