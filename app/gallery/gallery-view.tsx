@@ -86,14 +86,7 @@ function GalleryCard({ artifact: a }: { artifact: Artifact }) {
       )}
       <div className="mt-6 pt-4 border-t border-line flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
         <span>
-          by{" "}
-          <Link
-            href={`/p/${a.handle}`}
-            className="text-ink hover:underline decoration-highlight underline-offset-4 decoration-2"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {a.handle}
-          </Link>
+          by <span className="text-ink">{a.handle}</span>
         </span>
         <span className="font-mono text-[12px] text-ink group-hover:text-highlight transition-colors">
           Open →
