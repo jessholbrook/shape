@@ -16,12 +16,10 @@ const navItems: NavItem[] = [
   { num: "02", label: "Play", href: "/play" },
   { num: "03", label: "Build", href: "/build" },
   { num: "04", label: "Learn", href: "/learn" },
-  { num: "05", label: "Gallery", href: "/gallery" },
 ];
 
 const personalItems: NavItem[] = [
-  { num: "06", label: "Notebook", href: "/notebook" },
-  { num: "07", label: "Profile", href: "/profile" },
+  { num: "05", label: "Notebook", href: "/notebook" },
 ];
 
 function isActive(href: string, pathname: string): boolean {
