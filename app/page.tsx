@@ -57,7 +57,7 @@ export default function Home() {
         </h2>
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-5 max-w-2xl">
           The skills you use every day are the foundation of shaping AI.
-          Shape just gives them somewhere to land.
+          This site helps you make the connections and try it out.
         </p>
 
         <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
