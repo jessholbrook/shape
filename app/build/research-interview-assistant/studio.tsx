@@ -9,19 +9,13 @@ import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, type ProviderId } from "@/lib/providers";
 import { composePersonaPrompt, type PersonaValues } from "@/lib/persona";
 import { composeToneBlock, type ToneValues } from "@/lib/tone";
-import {
-  getDraft,
-  suggestTitle,
-  type CaseStudyDraft,
-  type Draft,
-} from "@/lib/drafts";
+import { suggestTitle, type CaseStudyDraft } from "@/lib/drafts";
 import { STUDIO_STEPS, type Studio, type StudioStepId } from "@/lib/studio";
 import { PersonaForm } from "@/components/play/persona-form";
 import { ToneDialControls } from "@/components/play/tone-dial-controls";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
-import { PublishDialog } from "@/components/notebook/publish-dialog";
 
 type Sample = {
   userMessage: string;
@@ -55,8 +49,6 @@ export function Studio({ studio }: { studio: Studio }) {
 
   const [streamStatus, setStreamStatus] = useState<StreamStatus>("idle");
   const [streamError, setStreamError] = useState<string | null>(null);
-
-  const [publishing, setPublishing] = useState(false);
 
   const hydrateFromDraft = useCallback((d: CaseStudyDraft) => {
     setProvider(d.provider);
@@ -173,14 +165,6 @@ export function Studio({ studio }: { studio: Studio }) {
     }
   }
 
-  function ensureDraftThenPublish() {
-    persistDraft();
-    setPublishing(true);
-  }
-
-  const publishingDraft: Draft | null =
-    publishing && draftId ? (getDraft(draftId) as Draft | null) : null;
-
   return (
     <div className="flex flex-col gap-6">
       <MissingKeyBanner
@@ -244,7 +228,7 @@ export function Studio({ studio }: { studio: Studio }) {
           personaReady={personaReady}
           hasSample={!!sample.output}
           onReflectionChange={setReflection}
-          onPublish={ensureDraftThenPublish}
+          onSave={persistDraft}
         />
       )}
 
@@ -257,13 +241,6 @@ export function Studio({ studio }: { studio: Studio }) {
         draftId={draftId}
         onSave={persistDraft}
       />
-
-      {publishingDraft && (
-        <PublishDialog
-          draft={publishingDraft}
-          onClose={() => setPublishing(false)}
-        />
-      )}
     </div>
   );
 }
@@ -592,20 +569,20 @@ function ReflectStep({
   personaReady,
   hasSample,
   onReflectionChange,
-  onPublish,
+  onSave,
 }: {
   reflection: string;
   briefReady: boolean;
   personaReady: boolean;
   hasSample: boolean;
   onReflectionChange: (v: string) => void;
-  onPublish: () => void;
+  onSave: () => void;
 }) {
   const ready = briefReady && personaReady && hasSample;
   return (
     <StepShell
       num={STUDIO_STEPS[3].num}
-      label="Reflect, then publish"
+      label="Reflect and save"
       blurb={STUDIO_STEPS[3].blurb}
     >
       <div className="bg-surface border border-line rounded-[16px] p-5">
@@ -627,7 +604,7 @@ function ReflectStep({
 
       <div className="bg-surface border border-line rounded-[16px] p-5">
         <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet mb-3">
-          Ready to publish?
+          Ready to keep?
         </p>
         <ul className="flex flex-col gap-2 font-mono text-[12px]">
           <Check ok={briefReady}>Brief is at least a couple sentences</Check>
@@ -639,15 +616,15 @@ function ReflectStep({
         </ul>
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
           <p className="font-mono text-[11px] text-ink-quiet">
-            Publishing creates a public Case Study page at /p/&lt;handle&gt;/&lt;slug&gt;.
+            Saves to your Notebook. Export from there.
           </p>
           <button
             type="button"
-            onClick={onPublish}
+            onClick={onSave}
             disabled={!ready}
             className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ink/90 transition-colors"
           >
-            Publish as Case Study
+            Save Case Study
             <span className="text-highlight">→</span>
           </button>
         </div>
