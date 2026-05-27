@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ShapeMark } from "./shape-mark";
 import { CostMeter } from "./cost-meter";
+import { FeedbackButton } from "./feedback-button";
 import { BUILD_ENABLED } from "@/lib/flags";
 
 type NavItem = {
@@ -100,6 +101,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
       {/* Page content */}
       <main className="md:ml-[240px]">{children}</main>
+
+      <FeedbackButton />
     </div>
   );
 }
