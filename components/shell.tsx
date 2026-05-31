@@ -41,10 +41,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </span>
         </Link>
         <Link
-          href="/login"
-          className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink underline decoration-highlight underline-offset-4 decoration-2"
+          href="/settings/keys"
+          className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
         >
-          Sign in
+          Keys
         </Link>
       </div>
 
@@ -79,21 +79,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </ul>
         </div>
 
-        {/* Bottom: cost meter + auth */}
+        {/* Bottom: cost meter + keys */}
         <div className="mt-auto px-6 pb-6 space-y-3">
           <CostMeter />
-          <div className="flex items-center justify-between px-2">
+          <div className="px-2">
             <Link
               href="/settings/keys"
               className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
             >
               Keys
-            </Link>
-            <Link
-              href="/login"
-              className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink underline decoration-highlight underline-offset-4 decoration-2"
-            >
-              Sign in
             </Link>
           </div>
         </div>
