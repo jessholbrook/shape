@@ -17,7 +17,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 const SLUG = "prompts-as-design";
 
 export const metadata = {
-  title: "Prompts as design — Shape",
+  title: "Prompts as design",
   description:
     "A prompt is a design variable. Treat it like a brand-voice swatch, not a magic spell.",
 };

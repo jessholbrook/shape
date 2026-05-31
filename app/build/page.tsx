@@ -4,7 +4,7 @@ import { SectionNumber } from "@/components/section-number";
 import { STUDIOS, type Studio } from "@/lib/studio";
 
 export const metadata = {
-  title: "Build — Shape",
+  title: "Build",
   description:
     "Studios. Longer guided projects that produce a portfolio-grade case study.",
 };

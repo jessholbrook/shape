@@ -5,7 +5,7 @@ import { ConceptLink } from "@/components/play/concept-link";
 import { PersonaWorkshop } from "./persona-workshop";
 
 export const metadata = {
-  title: "Persona Workshop — Shape",
+  title: "Persona Workshop",
   description:
     "Character design for AI. Build a persona — name, role, voice, blind spots — and watch the model embody them.",
 };

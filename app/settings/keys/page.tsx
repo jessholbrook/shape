@@ -3,7 +3,7 @@ import { SectionNumber } from "@/components/section-number";
 import { KeySetupForm } from "@/components/key-setup-form";
 
 export const metadata = {
-  title: "Keys — Shape",
+  title: "Keys",
   description: "Bring your own keys. They stay in your browser.",
 };
 

@@ -3,7 +3,7 @@ import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
 
 export const metadata = {
-  title: "Play — Shape",
+  title: "Play",
   description:
     "Small, focused playgrounds for shaping AI behavior. Diff prompts, tune tone, design personas.",
 };

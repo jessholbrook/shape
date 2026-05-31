@@ -3,7 +3,7 @@ import { SectionNumber } from "@/components/section-number";
 import { Notebook } from "./notebook";
 
 export const metadata = {
-  title: "Notebook — Shape",
+  title: "Notebook",
   description: "Your in-progress work — drafts of every playground session.",
 };
 

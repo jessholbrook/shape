@@ -5,7 +5,7 @@ import { ConceptLink } from "@/components/play/concept-link";
 import { RefusalLab } from "./refusal-lab";
 
 export const metadata = {
-  title: "Refusal Lab — Shape",
+  title: "Refusal Lab",
   description:
     "Boundary design with a panel of edge cases. Tune refusal guidelines and score the model against expected behavior.",
 };

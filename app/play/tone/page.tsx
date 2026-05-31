@@ -5,7 +5,7 @@ import { ConceptLink } from "@/components/play/concept-link";
 import { ToneDial } from "./tone-dial";
 
 export const metadata = {
-  title: "Tone Dial — Shape",
+  title: "Tone Dial",
   description:
     "Style as a design token. Tune voice dials and watch the system prompt — and the model's behavior — shift.",
 };

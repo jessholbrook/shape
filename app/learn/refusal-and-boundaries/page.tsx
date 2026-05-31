@@ -17,7 +17,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 const SLUG = "refusal-and-boundaries";
 
 export const metadata = {
-  title: "Refusal & boundaries — Shape",
+  title: "Refusal & boundaries",
   description:
     "Where the model says no is a design surface. Over- and under-refusal both fail users.",
 };

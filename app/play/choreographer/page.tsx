@@ -5,7 +5,7 @@ import { ConceptLink } from "@/components/play/concept-link";
 import { Choreographer } from "./choreographer-page";
 
 export const metadata = {
-  title: "Conversation Choreographer — Shape",
+  title: "Conversation Choreographer",
   description:
     "Multi-turn flow design. Script a conversation, run it end-to-end, watch how the model holds the thread.",
 };

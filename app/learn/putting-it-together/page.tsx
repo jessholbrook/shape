@@ -15,7 +15,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 const SLUG = "putting-it-together";
 
 export const metadata = {
-  title: "Putting it together — Shape",
+  title: "Putting it together",
   description:
     "End-to-end project. Brief, persona, voice, sample, reflection — the case study is the deliverable.",
 };

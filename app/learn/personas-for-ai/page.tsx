@@ -17,7 +17,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 const SLUG = "personas-for-ai";
 
 export const metadata = {
-  title: "Personas for AI — Shape",
+  title: "Personas for AI",
   description:
     "Character design isn't decoration. Backstory, beliefs, and blind spots shape every response.",
 };

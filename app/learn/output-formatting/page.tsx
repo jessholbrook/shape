@@ -17,7 +17,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 const SLUG = "output-formatting";
 
 export const metadata = {
-  title: "Output formatting — Shape",
+  title: "Output formatting",
   description:
     "Lists, headings, JSON, paragraphs. Format is part of voice; pick one on purpose.",
 };
