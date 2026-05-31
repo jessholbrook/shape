@@ -3,7 +3,7 @@ import { SectionNumber } from "@/components/section-number";
 import { LearnIndex } from "@/components/learn/learn-index";
 
 export const metadata = {
-  title: "Learn — Shape",
+  title: "Learn",
   description:
     "Eight modules from Behavior Designer 101 to 301. Concept articles paired with playgrounds.",
 };

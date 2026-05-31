@@ -17,7 +17,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 const SLUG = "evaluation";
 
 export const metadata = {
-  title: "Evaluation — Shape",
+  title: "Evaluation",
   description:
     "A rubric makes good behavior something you can build, not something you sense.",
 };

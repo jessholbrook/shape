@@ -5,7 +5,7 @@ import { ConceptLink } from "@/components/play/concept-link";
 import { DiffMode } from "./diff-mode";
 
 export const metadata = {
-  title: "Diff Mode — Shape",
+  title: "Diff Mode",
   description:
     "Run the same prompt through two configurations side-by-side. See how prompts shape outputs.",
 };

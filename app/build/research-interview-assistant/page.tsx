@@ -8,7 +8,7 @@ import { Studio } from "./studio";
 const STUDIO_ID = "research-interview-assistant";
 
 export const metadata = {
-  title: "Research Interview Assistant — Shape",
+  title: "Research Interview Assistant",
   description:
     "End-to-end Studio. Frame the brief, design the assistant, test it, reflect — produce a Case Study artifact.",
 };

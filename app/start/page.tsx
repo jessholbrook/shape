@@ -3,7 +3,7 @@ import { SectionNumber } from "@/components/section-number";
 import { StartFlow } from "./start-flow";
 
 export const metadata = {
-  title: "Start — Shape",
+  title: "Start",
   description:
     "Module 0 — bring your own key, take it for a drive. The first five minutes of Shape.",
 };

@@ -17,7 +17,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 const SLUG = "multi-turn-flows";
 
 export const metadata = {
-  title: "Multi-turn flows — Shape",
+  title: "Multi-turn flows",
   description:
     "Conversations have shape. Choreograph turns the way you'd choreograph an onboarding.",
 };

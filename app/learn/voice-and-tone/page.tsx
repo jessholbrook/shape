@@ -17,7 +17,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 const SLUG = "voice-and-tone";
 
 export const metadata = {
-  title: "Voice & tone — Shape",
+  title: "Voice & tone",
   description:
     "Style is composable. Move warmth, verbosity, energy, directness as independent dials.",
 };

@@ -5,7 +5,7 @@ import { ConceptLink } from "@/components/play/concept-link";
 import { EvalsWorkshop } from "./evals-workshop";
 
 export const metadata = {
-  title: "Eval Workshop — Shape",
+  title: "Eval Workshop",
   description:
     "Rubric-based evaluation. Define what good looks like, run a panel of cases, score each output against your rubric.",
 };
