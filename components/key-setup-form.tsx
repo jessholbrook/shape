@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Provider, PROVIDER_LIST, ProviderId } from "@/lib/providers";
+import { Provider, BYOK_PROVIDERS, ProviderId } from "@/lib/providers";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { maskKey, validateKey } from "@/lib/keys";
 import { testConnection } from "@/lib/providers/index";
@@ -17,7 +17,7 @@ export function KeySetupForm() {
 
   return (
     <div className="space-y-6">
-      {PROVIDER_LIST.map((p) => (
+      {BYOK_PROVIDERS.map((p) => (
         <ProviderRow
           key={p.id}
           provider={p}

@@ -6,7 +6,7 @@ import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
-import { PROVIDERS, type ProviderId } from "@/lib/providers";
+import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
 import {
   DEFAULT_REFUSAL_GUIDELINES,
   EMPTY_RESULT,
@@ -33,8 +33,8 @@ export function RefusalLab() {
   const searchParams = useSearchParams();
   const initialDraftId = searchParams.get("draft");
 
-  const [provider, setProvider] = useState<ProviderId>("anthropic");
-  const [model, setModel] = useState<string>(PROVIDERS.anthropic.defaultModel);
+  const [provider, setProvider] = useState<ProviderId>("webllm");
+  const [model, setModel] = useState<string>(PROVIDERS.webllm.defaultModel);
   const [temperature, setTemperature] = useState(0.3);
   const [guidelines, setGuidelines] = useState(DEFAULT_REFUSAL_GUIDELINES);
   const [probes, setProbes] = useState<Probe[]>(SEED_PROBES);
@@ -62,7 +62,7 @@ export function RefusalLab() {
     apply: hydrateFromDraft,
   });
 
-  const ready = hydrated && !!keys[provider];
+  const ready = hydrated && (!providerNeedsKey(provider) || !!keys[provider]);
 
   const score = useMemo(() => {
     let matched = 0;
@@ -82,7 +82,7 @@ export function RefusalLab() {
 
   async function runOne(probe: Probe) {
     const apiKey = keys[provider];
-    if (!apiKey) {
+    if (providerNeedsKey(provider) && !apiKey) {
       updateResult(probe.id, () => ({
         ...EMPTY_RESULT,
         status: "error",

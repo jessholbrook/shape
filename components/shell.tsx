@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ShapeMark } from "./shape-mark";
 import { CostMeter } from "./cost-meter";
 import { FeedbackButton } from "./feedback-button";
+import { WebLLMStatusBanner } from "./webllm-status-banner";
 import { BUILD_ENABLED } from "@/lib/flags";
 
 type NavItem = {
@@ -97,6 +98,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <main className="md:ml-[240px]">{children}</main>
 
       <FeedbackButton />
+      <WebLLMStatusBanner />
     </div>
   );
 }

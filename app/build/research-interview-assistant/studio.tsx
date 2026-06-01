@@ -6,7 +6,7 @@ import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
-import { PROVIDERS, type ProviderId } from "@/lib/providers";
+import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
 import { composePersonaPrompt, type PersonaValues } from "@/lib/persona";
 import { composeToneBlock, type ToneValues } from "@/lib/tone";
 import { suggestTitle, type CaseStudyDraft } from "@/lib/drafts";
@@ -34,8 +34,8 @@ export function Studio({ studio }: { studio: Studio }) {
 
   const [stepId, setStepId] = useState<StudioStepId>("brief");
 
-  const [provider, setProvider] = useState<ProviderId>("anthropic");
-  const [model, setModel] = useState<string>(PROVIDERS.anthropic.defaultModel);
+  const [provider, setProvider] = useState<ProviderId>("webllm");
+  const [model, setModel] = useState<string>(PROVIDERS.webllm.defaultModel);
   const [temperature, setTemperature] = useState(0.7);
 
   const [brief, setBrief] = useState(studio.defaults.brief);
@@ -80,7 +80,7 @@ export function Studio({ studio }: { studio: Studio }) {
     return [personaPart, tonePart].filter(Boolean).join("\n\n");
   }, [persona, tone]);
 
-  const ready = hydrated && !!keys[provider];
+  const ready = hydrated && (!providerNeedsKey(provider) || !!keys[provider]);
 
   const personaReady = !!persona.name.trim() && !!persona.role.trim();
   const briefReady = brief.trim().length > 20;
@@ -105,7 +105,7 @@ export function Studio({ studio }: { studio: Studio }) {
 
   async function runSample() {
     const apiKey = keys[provider];
-    if (!apiKey) return;
+    if (providerNeedsKey(provider) && !apiKey) return;
     const userMessage = sample.userMessage.trim();
     if (!userMessage) return;
 

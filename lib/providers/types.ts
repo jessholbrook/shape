@@ -12,7 +12,8 @@ export type ChatCall = {
   messages: ChatMessage[];
   temperature: number;
   maxTokens?: number;
-  apiKey: string;
+  /** Required for BYOK providers (Anthropic, OpenAI). Ignored for `webllm`. */
+  apiKey?: string;
 };
 
 export type ChatUsage = {

@@ -7,6 +7,7 @@ import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
+import { providerNeedsKey } from "@/lib/providers";
 import {
   suggestTitle,
   type DiffDraft,
@@ -18,17 +19,17 @@ import { TurnRow } from "@/components/play/turn-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 
 const INITIAL_A: ConfigState = {
-  provider: "anthropic",
-  model: "claude-sonnet-4-6",
+  provider: "webllm",
+  model: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
   system: "You are a thoughtful UX writer. Be warm and concise.",
   temperature: 0.7,
 };
 
 const INITIAL_B: ConfigState = {
-  provider: "openai",
-  model: "gpt-4o",
-  system: "You are a thoughtful UX writer. Be warm and concise.",
-  temperature: 0.7,
+  provider: "webllm",
+  model: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+  system: "You are a thoughtful UX writer. Be playful — wordplay welcome.",
+  temperature: 0.9,
 };
 
 const DEFAULT_MESSAGE =
@@ -67,8 +68,12 @@ export function DiffMode() {
     apply: hydrateFromDraft,
   });
 
-  const aReady = hydrated && !!keys[configA.provider];
-  const bReady = hydrated && !!keys[configB.provider];
+  const aReady =
+    hydrated &&
+    (!providerNeedsKey(configA.provider) || !!keys[configA.provider]);
+  const bReady =
+    hydrated &&
+    (!providerNeedsKey(configB.provider) || !!keys[configB.provider]);
   const canRun = aReady && bReady && pendingMessage.trim() && !running;
 
   function updateTurnOutput(
@@ -92,7 +97,7 @@ export function DiffMode() {
     userMessage: string,
   ) {
     const apiKey = keys[config.provider];
-    if (!apiKey) {
+    if (providerNeedsKey(config.provider) && !apiKey) {
       updateTurnOutput(turnId, which, () => ({
         text: "",
         status: "error",

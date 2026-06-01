@@ -6,7 +6,7 @@ import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
-import { PROVIDERS, type ProviderId } from "@/lib/providers";
+import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
 import {
   DEFAULT_CHOREOGRAPHER_PROMPT,
   EMPTY_ASSISTANT,
@@ -30,8 +30,8 @@ export function Choreographer() {
   const searchParams = useSearchParams();
   const initialDraftId = searchParams.get("draft");
 
-  const [provider, setProvider] = useState<ProviderId>("anthropic");
-  const [model, setModel] = useState<string>(PROVIDERS.anthropic.defaultModel);
+  const [provider, setProvider] = useState<ProviderId>("webllm");
+  const [model, setModel] = useState<string>(PROVIDERS.webllm.defaultModel);
   const [temperature, setTemperature] = useState(0.7);
   const [systemPrompt, setSystemPrompt] = useState(DEFAULT_CHOREOGRAPHER_PROMPT);
   const [turns, setTurns] = useState<ChoreographedTurn[]>(SEED_TURNS);
@@ -51,7 +51,7 @@ export function Choreographer() {
     apply: hydrateFromDraft,
   });
 
-  const ready = hydrated && !!keys[provider];
+  const ready = hydrated && (!providerNeedsKey(provider) || !!keys[provider]);
   const completed = completedTurnCount(turns);
 
   function updateTurn(
@@ -99,7 +99,7 @@ export function Choreographer() {
 
   async function runFlow() {
     const apiKey = keys[provider];
-    if (!apiKey) return;
+    if (providerNeedsKey(provider) && !apiKey) return;
     setRunning(true);
 
     // Reset all turns to running/idle first so we have a clean slate.

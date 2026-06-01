@@ -2,16 +2,21 @@ import type { ProviderId } from "../providers";
 import { PROVIDERS } from "../providers";
 import { anthropicChat, pingAnthropic } from "./anthropic";
 import { openaiChat, pingOpenAI } from "./openai";
+import { webllmChat } from "./webllm";
 import type { ChatCall, ChatEvent } from "./types";
 
 export type { ChatCall, ChatEvent, ChatMessage, ChatUsage } from "./types";
 
+function dispatch(call: ChatCall): AsyncIterable<ChatEvent> {
+  if (call.provider === "webllm") return webllmChat(call);
+  if (call.provider === "anthropic") return anthropicChat(call);
+  return openaiChat(call);
+}
+
 export async function* runChat(call: ChatCall): AsyncIterable<ChatEvent> {
   let sentDone = false;
   try {
-    const gen =
-      call.provider === "anthropic" ? anthropicChat(call) : openaiChat(call);
-    for await (const event of gen) {
+    for await (const event of dispatch(call)) {
       if (event.type === "done") sentDone = true;
       yield event;
     }
@@ -31,6 +36,7 @@ export async function testConnection(
   providerId: ProviderId,
   apiKey: string,
 ): Promise<TestResult> {
+  if (providerId === "webllm") return { ok: true };
   const provider = PROVIDERS[providerId];
   const defaultModel = provider.defaultModel;
   try {

@@ -1,4 +1,4 @@
-export type ProviderId = "anthropic" | "openai";
+export type ProviderId = "webllm" | "anthropic" | "openai";
 
 export type Provider = {
   id: ProviderId;
@@ -22,6 +22,24 @@ export type ModelMeta = {
 };
 
 export const PROVIDERS: Record<ProviderId, Provider> = {
+  webllm: {
+    id: "webllm",
+    name: "Free (in browser)",
+    keyPrefix: "",
+    keyMinLength: 0,
+    signupUrl: "",
+    consoleUrl: "",
+    defaultModel: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+    models: [
+      {
+        id: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+        name: "Llama 3.2 1B (in browser)",
+        inputPer1M: 0,
+        outputPer1M: 0,
+        tier: "fast",
+      },
+    ],
+  },
   anthropic: {
     id: "anthropic",
     name: "Anthropic",
@@ -83,6 +101,19 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
 
 export const PROVIDER_LIST: Provider[] = Object.values(PROVIDERS);
 
+/** Providers that require an API key. WebLLM is excluded. */
+export const BYOK_PROVIDERS: Provider[] = PROVIDER_LIST.filter(
+  (p) => p.id !== "webllm",
+);
+
 export function getModel(providerId: ProviderId, modelId: string): ModelMeta | undefined {
   return PROVIDERS[providerId].models.find((m) => m.id === modelId);
+}
+
+/**
+ * Whether this provider requires the user to bring their own API key. WebLLM
+ * runs entirely in the browser; everything else needs auth.
+ */
+export function providerNeedsKey(provider: ProviderId): boolean {
+  return provider !== "webllm";
 }

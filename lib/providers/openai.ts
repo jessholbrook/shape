@@ -10,6 +10,9 @@ import { readSse } from "./sse";
 const PROXY_URL = "/api/proxy/openai";
 
 export async function* openaiChat(call: ChatCall): AsyncIterable<ChatEvent> {
+  if (!call.apiKey) {
+    throw new Error("OpenAI provider requires an API key.");
+  }
   const res = await fetch(PROXY_URL, {
     method: "POST",
     headers: {

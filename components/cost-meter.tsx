@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { useUsage } from "@/lib/hooks/use-usage";
-import { PROVIDER_LIST } from "@/lib/providers";
+import { BYOK_PROVIDERS } from "@/lib/providers";
 
 function formatUsd(n: number): string {
   if (n === 0) return "$0.00";
@@ -69,7 +69,7 @@ export function CostMeter() {
         {formatUsd(summary.totalCost)}
       </div>
       <div className="mt-2 flex items-center gap-1.5">
-        {PROVIDER_LIST.map((p) => {
+        {BYOK_PROVIDERS.map((p) => {
           const connected = !!keys[p.id];
           const hasUsage = !!summary.byProvider[p.id]?.calls;
           return (
