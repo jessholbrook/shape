@@ -2,7 +2,7 @@
 
 **Shape model behavior.** A playground for people in UX to learn how to shape AI model behaviors. Learn by doing. Create artifacts you can use later.
 
-Bring your own key. Everything stays in your browser.
+Free in your browser — no key needed to start. Bring your own Anthropic or OpenAI key when you want bigger models.
 
 ![Shape — home page](docs/screenshots/home.png)
 
@@ -33,7 +33,7 @@ The audience is UX designers and researchers, not engineers. Token counters and 
 | **Eval Workshop** | Rubric-based evaluation. Define what good looks like, score against it. | Eval Rubric + Scorecard |
 | **Conversation Choreographer** | Multi-turn flow design. Script user turns, run the conversation end-to-end. | Behavior Spec |
 
-Each playground includes a composed system-prompt preview, streaming output from the model you select (Anthropic or OpenAI), save-to-Notebook as a draft, and export to portable JSON.
+Each playground includes a composed system-prompt preview, streaming output from the selected model, save-to-Notebook as a draft, and export to portable JSON.
 
 **Diff Mode** — one prompt, two configurations, output streamed side by side:
 
@@ -42,6 +42,32 @@ Each playground includes a composed system-prompt preview, streaming output from
 **Refusal Lab** — design the boundary, then test it against a panel of probes:
 
 ![Refusal Lab with refusal guidelines and a probe panel](docs/screenshots/refusal-lab.png)
+
+## Free in your browser
+
+Shape ships four small open models that run **entirely in your browser** via [WebLLM](https://github.com/mlc-ai/web-llm) and WebGPU. No keys, no server, no per-token costs. The first run downloads the model once and caches it in IndexedDB; later runs are instant.
+
+| Model | Size | Family | Best for |
+|---|---|---|---|
+| **Qwen 2.5 0.5B** | ~280MB | Alibaba | Fastest first download. See something happen now. |
+| **Llama 3.2 1B** ⭐ | ~1GB | Meta | Balanced default. Recommended. |
+| **Llama 3.2 3B** | ~2GB | Meta | Best free-tier quality. |
+| **Phi 3.5 Mini** | ~2.2GB | Microsoft | Different family — meaningful diversity for Diff Mode. |
+
+**Caveats:**
+- **WebGPU required.** Chrome and Edge work fully. Safari has partial support; Firefox is behind a flag. Without WebGPU you'll see a fallback message and need a BYOK key.
+- **Quality is real but lower** than frontier models — fine for "feel the playgrounds," but tone/persona/eval responses will read clunkier than Claude or GPT.
+- **First-run download is real.** ~280MB to 2.2GB depending on the model. The status banner shows progress.
+
+## Bring your own key (optional)
+
+For better output quality, bring your own Anthropic or OpenAI key. We never see it.
+
+- **Anthropic** calls go directly browser → API, using Anthropic's `anthropic-dangerous-direct-browser-access` header. The key never leaves your machine.
+- **OpenAI** is blocked from direct browser calls by Cloudflare bot management; we proxy through a Next.js edge route (`/api/proxy/openai`). The key flows through in memory only — never logged, persisted, or echoed. Same trust posture, one hop through Vercel Edge.
+- All drafts live in `localStorage`. No server-side artifact storage.
+
+Set keys at **Keys** (bottom of the sidebar) or during onboarding at `/start`.
 
 ## The Notebook
 
@@ -67,16 +93,6 @@ Eight modules. Each pairs a short reading with a playground and a mini-project. 
 | 07 | Multi-turn flows | Conversation Choreographer |
 | 08 | Putting it together | *(Studio project, behind a flag)* |
 
-## Bring your own key
-
-Shape is **BYOK** — bring your own Anthropic or OpenAI key. We never see it.
-
-- **Anthropic** calls go directly browser → API, using Anthropic's `anthropic-dangerous-direct-browser-access` header. The key never leaves your machine.
-- **OpenAI** is blocked from direct browser calls by Cloudflare bot management; we proxy through a Next.js edge route (`/api/proxy/openai`). The key flows through in memory only — never logged, persisted, or echoed. Same trust posture, one hop through Vercel Edge.
-- All drafts live in `localStorage`. No server-side artifact storage.
-
-Set keys at **Keys** (bottom of the sidebar) or during onboarding at `/start`.
-
 ## Running locally
 
 ```bash
@@ -88,6 +104,8 @@ npm run dev
 ```
 
 No env required for the app to work. The Feedback button requires two Linear env vars; without them it returns 503 gracefully.
+
+A modern Chromium-based browser (Chrome, Edge, Brave, Arc) is recommended for the in-browser free models — they need WebGPU.
 
 ### `.env.local` (optional)
 
@@ -116,17 +134,22 @@ Set `LINEAR_API_KEY` and `LINEAR_TEAM_ID` to wire it up.
 - **React 19**
 - **Tailwind CSS v4** with hand-rolled design tokens (`--canvas`, `--ink`, `--highlight`)
 - **Fonts:** Fraunces (display) + Inter (body) + Geist Mono (code)
+- **In-browser inference:** [@mlc-ai/web-llm](https://github.com/mlc-ai/web-llm) via WebGPU
 - **Routing:** App Router, all client/server boundaries explicit
 - **State:** localStorage for drafts and keys; no server-side persistence
 - **Streaming:** native `fetch` + SSE; no provider SDKs (smaller bundle)
 
 ## Architecture notes
 
-- `lib/providers/` — thin adapters around Anthropic + OpenAI. One signature, `runChat(call): AsyncIterable<ChatEvent>`. Provider differences live here, not in the playgrounds.
+- `lib/providers/` — thin adapters around Anthropic, OpenAI, and WebLLM. One signature, `runChat(call): AsyncIterable<ChatEvent>`. Provider differences live here, not in the playgrounds.
+- `lib/providers/webllm.ts` — dynamic import of `@mlc-ai/web-llm` so the 14MB package is only shipped to users running the in-browser model.
+- `lib/webllm-engine.ts` — singleton MLCEngine with `reload(modelId)` for switching between the four free models. Exposes a subscribable status (idle / loading / ready / error / unsupported) consumed by the global status banner.
 - `lib/drafts.ts` — typed `Draft` union, `localStorage` CRUD, import/export.
 - `lib/hooks/use-draft-editing.ts` — combined hydration + save state machine that every playground and the studio uses. One source of truth for the `?draft=<id>` URL ↔ state dance.
+- `lib/providers.ts` — `BYOK_PROVIDERS` filters webllm out of BYOK-specific surfaces (key setup, cost meter, `/start`); `providerNeedsKey(id)` gates the "missing key" banner per playground.
 - `lib/flags.ts` — feature flags. Currently a single `BUILD_ENABLED` toggle.
 - `components/play/*` — shared playground primitives (provider/model/temperature row, missing-key banner, draft-save bar, output panel).
+- `components/webllm-status-banner.tsx` — bottom-pinned global banner with model-download progress.
 - `components/feedback-button.tsx` — the floating Feedback widget; mounted once in `Shell`.
 - `app/api/proxy/openai/route.ts` — edge proxy for browser → OpenAI.
 - `app/api/feedback/route.ts` — edge route that forwards submissions to Linear.
@@ -175,21 +198,30 @@ components/
   home/playground-previews.tsx  # animated home cards
   play/                      # shared playground primitives
   shell.tsx                  # left nav + chrome
+  webllm-status-banner.tsx   # in-browser model download banner
 lib/
   drafts.ts                  # Draft union + localStorage CRUD
   flags.ts                   # feature flags
   hooks/
     use-draft-editing.ts     # save + hydrate state machine
     use-keys.ts
+    use-webllm-status.ts     # subscribe to in-browser engine state
     ...
+  providers.ts               # PROVIDERS / BYOK_PROVIDERS / providerNeedsKey
   providers/
     anthropic.ts             # direct browser fetch
     openai.ts                # via /api/proxy/openai
+    webllm.ts                # in-browser via @mlc-ai/web-llm
     index.ts                 # runChat dispatch
+  webllm-engine.ts           # singleton MLCEngine + status state
   curriculum.ts              # module list
   ...
 ```
 
 ## Status
 
-Active iteration. The product shape settled in a recent pivot away from hosted artifact pages — Shape is now keys-in-browser + portable artifact export, no public URLs, no profile pages. Studios (the longer guided projects) are paused behind a flag while the playground side stabilizes.
+Active iteration. Recent pivots:
+
+1. Shape moved away from hosted artifact pages — no public URLs, no profile pages. Artifacts now export as portable JSON from the Notebook.
+2. In-browser models became the default entrance via WebLLM. BYOK is the upgrade path for bigger models.
+3. Studios (longer guided projects) are paused behind a flag while the playground side stabilizes.
