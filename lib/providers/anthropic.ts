@@ -5,6 +5,9 @@ const API_URL = "https://api.anthropic.com/v1/messages";
 const API_VERSION = "2023-06-01";
 
 export async function* anthropicChat(call: ChatCall): AsyncIterable<ChatEvent> {
+  if (!call.apiKey) {
+    throw new Error("Anthropic provider requires an API key.");
+  }
   const res = await fetch(API_URL, {
     method: "POST",
     headers: {

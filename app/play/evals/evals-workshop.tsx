@@ -6,7 +6,7 @@ import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
-import { PROVIDERS, type ProviderId } from "@/lib/providers";
+import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
 import {
   DEFAULT_EVAL_SYSTEM_PROMPT,
   EMPTY_CASE_RESULT,
@@ -37,8 +37,8 @@ export function EvalsWorkshop() {
   const searchParams = useSearchParams();
   const initialDraftId = searchParams.get("draft");
 
-  const [provider, setProvider] = useState<ProviderId>("anthropic");
-  const [model, setModel] = useState<string>(PROVIDERS.anthropic.defaultModel);
+  const [provider, setProvider] = useState<ProviderId>("webllm");
+  const [model, setModel] = useState<string>(PROVIDERS.webllm.defaultModel);
   const [temperature, setTemperature] = useState(0.5);
   const [systemPrompt, setSystemPrompt] = useState(DEFAULT_EVAL_SYSTEM_PROMPT);
   const [rubric, setRubric] = useState<Criterion[]>(SEED_CRITERIA);
@@ -71,7 +71,7 @@ export function EvalsWorkshop() {
     apply: hydrateFromDraft,
   });
 
-  const ready = hydrated && !!keys[provider];
+  const ready = hydrated && (!providerNeedsKey(provider) || !!keys[provider]);
 
   const aggregate = useMemo(
     () => aggregateScore(rubric, cases, results),
@@ -87,7 +87,7 @@ export function EvalsWorkshop() {
 
   async function runOne(evalCase: EvalCase) {
     const apiKey = keys[provider];
-    if (!apiKey) {
+    if (providerNeedsKey(provider) && !apiKey) {
       updateResult(evalCase.id, () => ({
         ...EMPTY_CASE_RESULT,
         status: "error",

@@ -42,8 +42,8 @@ export default function Home() {
         </div>
 
         <p className="mt-10 font-mono text-[12px] uppercase tracking-[0.08em] text-ink-quiet max-w-md">
-          Bring your own key,{" "}
-          <span className="text-ink">everything stays in your browser.</span>
+          Free in your browser —{" "}
+          <span className="text-ink">no key needed to start.</span>
         </p>
       </section>
 
@@ -144,8 +144,8 @@ export default function Home() {
         <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
           <StepCard
             num="01"
-            title="Bring your key."
-            body="Plug in an Anthropic or OpenAI key. It stays in your browser — we never see it."
+            title="Start free."
+            body="A small open model runs right in your browser — no key required. Bring an Anthropic or OpenAI key when you want bigger models."
           />
           <StepCard
             num="02"

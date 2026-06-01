@@ -1,4 +1,4 @@
-export type ProviderId = "anthropic" | "openai";
+export type ProviderId = "webllm" | "anthropic" | "openai";
 
 export type Provider = {
   id: ProviderId;
@@ -19,9 +19,60 @@ export type ModelMeta = {
   /** Cost per 1M output tokens, USD */
   outputPer1M: number;
   tier: "frontier" | "balanced" | "fast";
+  /** Approximate first-run download size in MB. WebLLM only. */
+  downloadMb?: number;
+  /** Optional one-line description shown in the model picker. */
+  blurb?: string;
 };
 
 export const PROVIDERS: Record<ProviderId, Provider> = {
+  webllm: {
+    id: "webllm",
+    name: "Free (in browser)",
+    keyPrefix: "",
+    keyMinLength: 0,
+    signupUrl: "",
+    consoleUrl: "",
+    defaultModel: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+    models: [
+      {
+        id: "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
+        name: "Qwen 2.5 0.5B",
+        inputPer1M: 0,
+        outputPer1M: 0,
+        tier: "fast",
+        downloadMb: 280,
+        blurb: "Alibaba · smallest · fastest first run",
+      },
+      {
+        id: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+        name: "Llama 3.2 1B",
+        inputPer1M: 0,
+        outputPer1M: 0,
+        tier: "balanced",
+        downloadMb: 1100,
+        blurb: "Meta · balanced default · recommended",
+      },
+      {
+        id: "Llama-3.2-3B-Instruct-q4f16_1-MLC",
+        name: "Llama 3.2 3B",
+        inputPer1M: 0,
+        outputPer1M: 0,
+        tier: "frontier",
+        downloadMb: 2000,
+        blurb: "Meta · best free tier quality",
+      },
+      {
+        id: "Phi-3.5-mini-instruct-q4f16_1-MLC",
+        name: "Phi 3.5 Mini",
+        inputPer1M: 0,
+        outputPer1M: 0,
+        tier: "frontier",
+        downloadMb: 2200,
+        blurb: "Microsoft · different family for diff-mode comparison",
+      },
+    ],
+  },
   anthropic: {
     id: "anthropic",
     name: "Anthropic",
@@ -83,6 +134,19 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
 
 export const PROVIDER_LIST: Provider[] = Object.values(PROVIDERS);
 
+/** Providers that require an API key. WebLLM is excluded. */
+export const BYOK_PROVIDERS: Provider[] = PROVIDER_LIST.filter(
+  (p) => p.id !== "webllm",
+);
+
 export function getModel(providerId: ProviderId, modelId: string): ModelMeta | undefined {
   return PROVIDERS[providerId].models.find((m) => m.id === modelId);
+}
+
+/**
+ * Whether this provider requires the user to bring their own API key. WebLLM
+ * runs entirely in the browser; everything else needs auth.
+ */
+export function providerNeedsKey(provider: ProviderId): boolean {
+  return provider !== "webllm";
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { PROVIDER_LIST, PROVIDERS, type ProviderId } from "@/lib/providers";
+import { BYOK_PROVIDERS, PROVIDERS, type ProviderId } from "@/lib/providers";
 import { BUILD_ENABLED } from "@/lib/flags";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { validateKey } from "@/lib/keys";
@@ -79,7 +79,7 @@ function KeyEntry({
           Step 1 — Pick a provider
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {PROVIDER_LIST.map((p) => (
+          {BYOK_PROVIDERS.map((p) => (
             <ProviderCard
               key={p.id}
               providerId={p.id}
@@ -231,9 +231,9 @@ function ProviderCard({
 }
 
 function SuccessState({ keys }: { keys: Partial<Record<ProviderId, string>> }) {
-  const connectedProviders = PROVIDER_LIST.filter((p) => keys[p.id]);
+  const connectedProviders = BYOK_PROVIDERS.filter((p) => keys[p.id]);
   const connectedNames = connectedProviders.map((p) => p.name).join(" and ");
-  const missing = PROVIDER_LIST.filter((p) => !keys[p.id]);
+  const missing = BYOK_PROVIDERS.filter((p) => !keys[p.id]);
 
   return (
     <div className="flex flex-col gap-8">
