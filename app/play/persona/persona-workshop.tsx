@@ -14,6 +14,7 @@ import {
   type PersonaValues,
 } from "@/lib/persona";
 import { suggestTitle, type PersonaDraft } from "@/lib/drafts";
+import { slugify } from "@/lib/download";
 import { PersonaForm } from "@/components/play/persona-form";
 import { OutputPanel, type OutputState } from "@/components/play/output-panel";
 import type { ConfigState } from "@/components/play/config-panel";
@@ -218,7 +219,12 @@ export function PersonaWorkshop() {
         </div>
       </div>
 
-      <OutputPanel label="Output" config={config} output={output} />
+      <OutputPanel
+        label="Output"
+        config={config}
+        output={output}
+        filenameStem={`persona-${slugify(persona.name || persona.role || title || "output", "output")}`}
+      />
 
       <DraftSaveBar
         title={title}

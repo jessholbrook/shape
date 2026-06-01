@@ -14,6 +14,7 @@ import {
   type ToneValues,
 } from "@/lib/tone";
 import { suggestTitle, type ToneDraft } from "@/lib/drafts";
+import { slugify } from "@/lib/download";
 import { ToneDialControls } from "@/components/play/tone-dial-controls";
 import { OutputPanel, type OutputState } from "@/components/play/output-panel";
 import type { ConfigState } from "@/components/play/config-panel";
@@ -249,7 +250,12 @@ export function ToneDial() {
         </div>
       </div>
 
-      <OutputPanel label="Output" config={config} output={output} />
+      <OutputPanel
+        label="Output"
+        config={config}
+        output={output}
+        filenameStem={`tone-${slugify(title || brief, "output")}`}
+      />
 
       <DraftSaveBar
         title={title}
