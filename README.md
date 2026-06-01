@@ -4,7 +4,7 @@
 
 Bring your own key. Everything stays in your browser.
 
-![Home page](docs/screenshots/01-home.png)
+![Shape — home page](docs/screenshots/home.png)
 
 ## What it is
 
@@ -20,7 +20,7 @@ The audience is UX designers and researchers, not engineers. Token counters and 
 
 (There's a `/build` section for longer Studio projects, currently behind a feature flag. See *Feature flags* below.)
 
-![Left nav and home hero](docs/screenshots/02-nav.png)
+![Featured playgrounds and the three-step onboarding pitch on the home page](docs/screenshots/play-and-learn.png)
 
 ## Playgrounds
 
@@ -33,13 +33,15 @@ The audience is UX designers and researchers, not engineers. Token counters and 
 | **Eval Workshop** | Rubric-based evaluation. Define what good looks like, score against it. | Eval Rubric + Scorecard |
 | **Conversation Choreographer** | Multi-turn flow design. Script user turns, run the conversation end-to-end. | Behavior Spec |
 
-![Tone Dial in action](docs/screenshots/03-tone-dial.png)
+Each playground includes a composed system-prompt preview, streaming output from the model you select (Anthropic or OpenAI), save-to-Notebook as a draft, and export to portable JSON.
 
-Each playground includes:
-- A composed system-prompt preview that updates as you tune controls
-- Streaming output from the model you select (Anthropic or OpenAI)
-- Save as draft → lands in the Notebook
-- Export to portable JSON
+**Diff Mode** — one prompt, two configurations, output streamed side by side:
+
+![Diff Mode playground with two provider/model configurations](docs/screenshots/diff-mode.png)
+
+**Refusal Lab** — design the boundary, then test it against a panel of probes:
+
+![Refusal Lab with refusal guidelines and a probe panel](docs/screenshots/refusal-lab.png)
 
 ## The Notebook
 
@@ -49,8 +51,6 @@ Drafts persist to `localStorage` — close the tab, come back, your work is stil
 - **Duplicate** to fork
 - **Export JSON** to download a portable artifact
 - **Delete** (with a 6-second undo toast)
-
-![Notebook with several drafts](docs/screenshots/04-notebook.png)
 
 ## Curriculum
 
@@ -67,8 +67,6 @@ Eight modules. Each pairs a short reading with a playground and a mini-project. 
 | 07 | Multi-turn flows | Conversation Choreographer |
 | 08 | Putting it together | *(Studio project, behind a flag)* |
 
-![Learn index showing modules](docs/screenshots/05-learn.png)
-
 ## Bring your own key
 
 Shape is **BYOK** — bring your own Anthropic or OpenAI key. We never see it.
@@ -78,8 +76,6 @@ Shape is **BYOK** — bring your own Anthropic or OpenAI key. We never see it.
 - All drafts live in `localStorage`. No server-side artifact storage.
 
 Set keys at **Keys** (bottom of the sidebar) or during onboarding at `/start`.
-
-![Key setup flow](docs/screenshots/06-keys.png)
 
 ## Running locally
 
@@ -91,7 +87,7 @@ npm run dev
 # → http://localhost:3000
 ```
 
-No env required for the app to work. The Feedback button (see below) requires two Linear env vars; without them it returns 503 gracefully.
+No env required for the app to work. The Feedback button requires two Linear env vars; without them it returns 503 gracefully.
 
 ### `.env.local` (optional)
 
@@ -111,8 +107,6 @@ NEXT_PUBLIC_SITE_URL=  # e.g. shape.example.com
 A floating **Feedback** button in the bottom-right opens a modal (General / Bug / Idea + textarea). Submissions POST to `/api/feedback`, which calls Linear's `issueCreate` GraphQL mutation and returns the new ticket identifier.
 
 Each submission auto-attaches the current URL, viewport, user-agent, and timestamp.
-
-![Feedback modal](docs/screenshots/07-feedback.png)
 
 Set `LINEAR_API_KEY` and `LINEAR_TEAM_ID` to wire it up.
 
@@ -199,17 +193,3 @@ lib/
 ## Status
 
 Active iteration. The product shape settled in a recent pivot away from hosted artifact pages — Shape is now keys-in-browser + portable artifact export, no public URLs, no profile pages. Studios (the longer guided projects) are paused behind a flag while the playground side stabilizes.
-
----
-
-## Screenshots to capture
-
-The placeholders above expect these files under `docs/screenshots/`. Each at 2× / Retina for crispness, JPEG or PNG, ideally cropped to the relevant area rather than the full window:
-
-- **`01-home.png`** — Home hero with the H1 ("Shape model behavior.") and the three featured playground cards visible. The animated card previews should be mid-cycle if possible.
-- **`02-nav.png`** — Left nav with all four sections visible (Home / Learn / Play / Notebook), one of them highlighted as active.
-- **`03-tone-dial.png`** — Tone Dial playground with dials moved off-neutral and the composed system prompt visible on the right.
-- **`04-notebook.png`** — Notebook with three or four drafts of mixed kinds, each row showing kind pill + title + relative time.
-- **`05-learn.png`** — `/learn` page with the eight module rows visible.
-- **`06-keys.png`** — `/settings/keys` (or the `/start` page) showing the key setup form.
-- **`07-feedback.png`** — Feedback button open: the modal with the kind chips and textarea, ideally with a sample message typed.
