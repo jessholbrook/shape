@@ -4,6 +4,7 @@ import {
   PROVIDER_LIST,
   PROVIDERS,
   getModel,
+  type ModelMeta,
   type ProviderId,
 } from "@/lib/providers";
 import { InfoTip } from "@/components/info-tip";
@@ -35,9 +36,10 @@ export function ProviderModelTempRow({
         label="Provider"
         tip={
           <>
-            Which company&apos;s model to call. <strong>Anthropic</strong> ships
-            Claude; <strong>OpenAI</strong> ships GPT. Pick whichever key you
-            have — outputs differ in style but the playgrounds work either way.
+            <strong>Free (in browser)</strong> runs small open models via WebGPU
+            — no key, no server. <strong>Anthropic</strong> + <strong>OpenAI</strong>{" "}
+            need a key but unlock bigger models. First webllm run downloads the
+            model once (~280MB to 2GB depending on choice).
           </>
         }
       >
@@ -60,12 +62,21 @@ export function ProviderModelTempRow({
       <Field
         label="Model"
         tip={
-          <>
-            <strong>Frontier</strong> = top quality, slow, pricier.{" "}
-            <strong>Balanced</strong> = good quality, fast, recommended for most
-            playgrounds. <strong>Fast</strong> = cheap and quick, fine for
-            iteration. Selected: <em>{selectedModel?.name ?? model}</em>.
-          </>
+          provider === "webllm" ? (
+            <>
+              Each model is downloaded once and cached. Bigger = better quality
+              but a slower first run.{" "}
+              <strong>{selectedModel?.name ?? model}</strong>
+              {selectedModel?.blurb && <> — {selectedModel.blurb}</>}.
+            </>
+          ) : (
+            <>
+              <strong>Frontier</strong> = top quality, slow, pricier.{" "}
+              <strong>Balanced</strong> = good quality, fast, recommended for
+              most playgrounds. <strong>Fast</strong> = cheap and quick.
+              Selected: <em>{selectedModel?.name ?? model}</em>.
+            </>
+          )
         }
       >
         <select
@@ -75,7 +86,7 @@ export function ProviderModelTempRow({
         >
           {PROVIDERS[provider].models.map((m) => (
             <option key={m.id} value={m.id}>
-              {m.name} — {tierLabel(m.tier)}
+              {m.name} — {modelDescriptor(m)}
             </option>
           ))}
         </select>
@@ -109,6 +120,20 @@ function tierLabel(tier: "frontier" | "balanced" | "fast"): string {
   if (tier === "frontier") return "frontier";
   if (tier === "balanced") return "balanced (recommended)";
   return "fast";
+}
+
+function modelDescriptor(m: ModelMeta): string {
+  if (typeof m.downloadMb === "number") {
+    return `${formatSize(m.downloadMb)} free${
+      m.tier === "balanced" ? " · recommended" : ""
+    }`;
+  }
+  return tierLabel(m.tier);
+}
+
+function formatSize(mb: number): string {
+  if (mb >= 1024) return `${(mb / 1024).toFixed(1)}GB`;
+  return `${mb}MB`;
 }
 
 function Field({

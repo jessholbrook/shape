@@ -1,20 +1,21 @@
 "use client";
 
-import type { MLCEngine, InitProgressReport } from "@mlc-ai/web-llm";
+import type {
+  MLCEngine,
+  InitProgressReport,
+} from "@mlc-ai/web-llm";
 
 /**
- * Default WebLLM model. Llama 3.2 1B Instruct (q4f16_1) is ~1GB on disk,
- * downloads in ~1-2 min on broadband, and produces output good enough to feel
- * the playgrounds. Larger models exist (Llama 3.2 3B, Phi-3 mini) but the
- * download is enough of a one-time cost that we want the smallest model that
- * doesn't embarrass itself.
+ * Default WebLLM model. Llama 3.2 1B Instruct (q4f16_1) is ~1GB on disk and
+ * downloads in ~1-2 min on broadband. The full set of registered free models
+ * lives in `lib/providers.ts` under PROVIDERS.webllm.models.
  */
 export const DEFAULT_WEBLLM_MODEL = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
 
 export type WebLLMStatus =
   | { kind: "unsupported" }
   | { kind: "idle" }
-  | { kind: "loading"; progress: number; message: string }
+  | { kind: "loading"; modelId: string; progress: number; message: string }
   | { kind: "ready"; model: string }
   | { kind: "error"; message: string };
 
@@ -22,7 +23,8 @@ type Listener = (status: WebLLMStatus) => void;
 
 let status: WebLLMStatus = detectInitialStatus();
 let engine: MLCEngine | null = null;
-let enginePromise: Promise<MLCEngine> | null = null;
+let currentModelId: string | null = null;
+let pendingPromise: Promise<MLCEngine> | null = null;
 const listeners = new Set<Listener>();
 
 function detectInitialStatus(): WebLLMStatus {
@@ -51,50 +53,64 @@ export function isWebLLMSupported(): boolean {
 }
 
 /**
- * Lazy-load WebLLM and initialize the engine for the default model. Multiple
- * concurrent callers share the same in-flight promise. Reports progress to all
- * subscribers via setStatus.
+ * Lazy-load WebLLM and initialize (or reload) the engine for the requested
+ * model. The singleton engine is reused across model switches via
+ * `engine.reload(modelId)`. Multiple concurrent callers share the same
+ * in-flight promise.
  */
-export async function getEngine(): Promise<MLCEngine> {
-  if (engine) return engine;
-  if (enginePromise) return enginePromise;
+export async function getEngine(modelId: string): Promise<MLCEngine> {
+  if (engine && currentModelId === modelId && status.kind === "ready") {
+    return engine;
+  }
+  if (pendingPromise) {
+    await pendingPromise;
+    if (engine && currentModelId === modelId) return engine;
+  }
   if (!isWebLLMSupported()) {
     throw new Error(
       "WebGPU is not available in this browser. Bring your own API key to use the playgrounds.",
     );
   }
 
-  enginePromise = (async () => {
+  const onProgress = (report: InitProgressReport) => {
     setStatus({
       kind: "loading",
+      modelId,
+      progress: report.progress ?? 0,
+      message: report.text ?? "Loading…",
+    });
+  };
+
+  pendingPromise = (async () => {
+    setStatus({
+      kind: "loading",
+      modelId,
       progress: 0,
       message: "Preparing the in-browser model…",
     });
-
-    // Dynamic import so the @mlc-ai/web-llm bundle isn't shipped to users who
-    // bring their own keys.
-    const { CreateMLCEngine } = await import("@mlc-ai/web-llm");
-
     try {
-      const created = await CreateMLCEngine(DEFAULT_WEBLLM_MODEL, {
-        initProgressCallback: (report: InitProgressReport) => {
-          setStatus({
-            kind: "loading",
-            progress: report.progress ?? 0,
-            message: report.text ?? "Loading…",
-          });
-        },
-      });
-      engine = created;
-      setStatus({ kind: "ready", model: DEFAULT_WEBLLM_MODEL });
-      return created;
+      if (!engine) {
+        const { CreateMLCEngine } = await import("@mlc-ai/web-llm");
+        engine = await CreateMLCEngine(modelId, {
+          initProgressCallback: onProgress,
+        });
+      } else {
+        engine.setInitProgressCallback(onProgress);
+        await engine.reload(modelId);
+      }
+      currentModelId = modelId;
+      setStatus({ kind: "ready", model: modelId });
+      return engine;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setStatus({ kind: "error", message });
-      enginePromise = null;
       throw err;
     }
   })();
 
-  return enginePromise;
+  try {
+    return await pendingPromise;
+  } finally {
+    pendingPromise = null;
+  }
 }

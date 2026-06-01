@@ -7,7 +7,7 @@ import { getEngine } from "../webllm-engine";
  * Streaming follows the OpenAI chat-completions shape that WebLLM mirrors.
  */
 export async function* webllmChat(call: ChatCall): AsyncIterable<ChatEvent> {
-  const engine = await getEngine();
+  const engine = await getEngine(call.model);
 
   const messages: { role: "system" | "user" | "assistant"; content: string }[] =
     [];

@@ -19,6 +19,10 @@ export type ModelMeta = {
   /** Cost per 1M output tokens, USD */
   outputPer1M: number;
   tier: "frontier" | "balanced" | "fast";
+  /** Approximate first-run download size in MB. WebLLM only. */
+  downloadMb?: number;
+  /** Optional one-line description shown in the model picker. */
+  blurb?: string;
 };
 
 export const PROVIDERS: Record<ProviderId, Provider> = {
@@ -32,11 +36,40 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
     defaultModel: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
     models: [
       {
-        id: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
-        name: "Llama 3.2 1B (in browser)",
+        id: "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
+        name: "Qwen 2.5 0.5B",
         inputPer1M: 0,
         outputPer1M: 0,
         tier: "fast",
+        downloadMb: 280,
+        blurb: "Alibaba · smallest · fastest first run",
+      },
+      {
+        id: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+        name: "Llama 3.2 1B",
+        inputPer1M: 0,
+        outputPer1M: 0,
+        tier: "balanced",
+        downloadMb: 1100,
+        blurb: "Meta · balanced default · recommended",
+      },
+      {
+        id: "Llama-3.2-3B-Instruct-q4f16_1-MLC",
+        name: "Llama 3.2 3B",
+        inputPer1M: 0,
+        outputPer1M: 0,
+        tier: "frontier",
+        downloadMb: 2000,
+        blurb: "Meta · best free tier quality",
+      },
+      {
+        id: "Phi-3.5-mini-instruct-q4f16_1-MLC",
+        name: "Phi 3.5 Mini",
+        inputPer1M: 0,
+        outputPer1M: 0,
+        tier: "frontier",
+        downloadMb: 2200,
+        blurb: "Microsoft · different family for diff-mode comparison",
       },
     ],
   },
