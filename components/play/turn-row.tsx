@@ -96,6 +96,8 @@ function TurnOutput({
     output.startMs && output.endMs
       ? ((output.endMs - output.startMs) / 1000).toFixed(1) + "s"
       : null;
+  const [showPrompt, setShowPrompt] = useState(false);
+  const hasPrompt = !!config.system.trim();
 
   return (
     <div className="flex flex-col gap-2 min-w-0">
@@ -107,9 +109,33 @@ function TurnOutput({
           <span className="font-mono text-[10px] bg-highlight-soft text-highlight-ink rounded-full px-2 py-0.5 truncate">
             {modelName}
           </span>
+          <span className="font-mono text-[10px] text-ink-quiet shrink-0">
+            T {config.temperature.toFixed(1)}
+          </span>
+          {hasPrompt && (
+            <button
+              type="button"
+              onClick={() => setShowPrompt((v) => !v)}
+              aria-expanded={showPrompt}
+              className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink shrink-0"
+            >
+              {showPrompt ? "Hide prompt" : "Prompt"}
+            </button>
+          )}
         </div>
         <StatusDot status={output.status} />
       </div>
+
+      {showPrompt && hasPrompt && (
+        <div className="bg-canvas border border-line rounded-[8px] p-2.5">
+          <p className="font-mono text-[9px] uppercase tracking-[0.08em] text-ink-quiet mb-1">
+            System prompt
+          </p>
+          <p className="font-mono text-[11px] leading-[1.55] text-ink whitespace-pre-wrap">
+            {config.system}
+          </p>
+        </div>
+      )}
 
       <div className="font-mono text-[13px] leading-[1.55] text-ink whitespace-pre-wrap break-words min-h-[80px]">
         {output.error ? (

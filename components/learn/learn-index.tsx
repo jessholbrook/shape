@@ -75,7 +75,8 @@ export function LearnIndex() {
             </Link>
           ) : (
             <div className="bg-surface border border-line rounded-[16px] p-6 md:p-7 hatched">
-              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-highlight-ink">
+              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-success inline-flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-success" />
                 Curriculum complete
               </p>
               <h2 className="font-display text-[28px] md:text-[32px] leading-[1.1] text-ink mt-3">

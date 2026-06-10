@@ -9,6 +9,7 @@ import {
   Lede,
   NextModuleFooter,
   P,
+  Template,
   TryItCTA,
   UL,
 } from "@/components/learn/article";
@@ -36,6 +37,38 @@ export default function PersonasForAIPage() {
           backstory, beliefs, blind spots — are what make the model sound
           like someone, not something.
         </Lede>
+
+        <H2>Why this is the foundation</H2>
+        <P>
+          Voice and tone (Module 2) decide how the model speaks. Persona
+          decides who&apos;s speaking. Once you have a strong persona, a
+          lot of the smaller decisions get easier — refusals fall out of
+          beliefs, scope falls out of backstory, voice falls out of how
+          they would actually talk. You&apos;re not maintaining a long
+          list of rules; you&apos;re consulting a character.
+        </P>
+        <P>
+          Three things to put real weight on when you author one:
+        </P>
+        <UL>
+          <LI>
+            <strong>A specific backstory.</strong> Not &ldquo;has lots of
+            experience.&rdquo; Ten years doing ethnographic research,
+            then product. The specifics give the model something to
+            reach for.
+          </LI>
+          <LI>
+            <strong>At least one belief.</strong> Something they&apos;d
+            push back on. Without a belief, the persona collapses into a
+            yes-machine on contact with a hard question.
+          </LI>
+          <LI>
+            <strong>A blind spot named out loud.</strong> What does this
+            persona <em>not</em> do? Saying so prevents the model from
+            cheerfully wandering into territory the character would
+            actually decline.
+          </LI>
+        </UL>
 
         <H2>The familiar move</H2>
         <P>
@@ -98,37 +131,25 @@ export default function PersonasForAIPage() {
           you wrote the character or left the model to imagine one.
         </P>
 
-        <H2>Why this is the foundation</H2>
+        <H2>A scaffold to start from</H2>
         <P>
-          Voice and tone (Module 2) decide how the model speaks. Persona
-          decides who&apos;s speaking. Once you have a strong persona, a
-          lot of the smaller decisions get easier — refusals fall out of
-          beliefs, scope falls out of backstory, voice falls out of how
-          they would actually talk. You&apos;re not maintaining a long
-          list of rules; you&apos;re consulting a character.
+          When you sit down to write one, fill the blanks in this order.
+          The first sentence builds the body. The second builds the
+          point of view. The last builds the edge.
         </P>
-        <P>
-          Three things to put real weight on when you author one:
-        </P>
-        <UL>
-          <LI>
-            <strong>A specific backstory.</strong> Not &ldquo;has lots of
-            experience.&rdquo; Ten years doing ethnographic research,
-            then product. The specifics give the model something to
-            reach for.
-          </LI>
-          <LI>
-            <strong>At least one belief.</strong> Something they&apos;d
-            push back on. Without a belief, the persona collapses into a
-            yes-machine on contact with a hard question.
-          </LI>
-          <LI>
-            <strong>A blind spot named out loud.</strong> What does this
-            persona <em>not</em> do? Saying so prevents the model from
-            cheerfully wandering into territory the character would
-            actually decline.
-          </LI>
-        </UL>
+        <Template
+          checklist={[
+            "Persona — who they are and what shaped them",
+            "Beliefs — what they'd defend, what they'd push back on",
+            "Constraints — what they won't do or talk about",
+            "Tone — three or four traits that color how they speak",
+          ]}
+        >
+          {`You are ____ who's been ____ for ____.
+You believe ____ because ____.
+You won't ____ — instead you'll ____.
+Your voice is ____, ____, and ____.`}
+        </Template>
 
         <TryItCTA
           href={mod.playground?.href ?? "/play/persona"}

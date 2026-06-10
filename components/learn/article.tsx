@@ -155,6 +155,48 @@ export function ExampleCard({
 }
 
 /**
+ * A fill-in-the-blank scaffold rendered as a copyable mono block. Pass the
+ * skeleton as children (string with ___ blanks) and an optional bullet list
+ * of the parts the user is being asked to articulate.
+ */
+export function Template({
+  children,
+  checklist,
+}: {
+  children: React.ReactNode;
+  checklist?: string[];
+}) {
+  return (
+    <div className="mt-8 bg-surface border border-line rounded-[14px] p-5 md:p-6">
+      <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+        Template
+      </p>
+      <p className="mt-3 font-mono text-[13px] leading-[1.7] text-ink whitespace-pre-wrap">
+        {children}
+      </p>
+      {checklist && checklist.length > 0 && (
+        <>
+          <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+            What you&apos;re defining
+          </p>
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {checklist.map((item, i) => (
+              <li
+                key={i}
+                className="font-sans text-[14px] leading-[1.55] text-ink-muted pl-4 relative"
+              >
+                <span className="absolute left-0 top-2 w-1 h-1 rounded-full bg-ink-quiet" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
  * Mid-article "Try it in the playground" card. Pass the descriptive title as
  * children (JSX so it can include italics), the button label, and the href.
  */
