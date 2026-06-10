@@ -3,7 +3,13 @@
 import { useMemo, useState } from "react";
 import { PROVIDERS } from "@/lib/providers";
 import type { DiffTurn, DiffTurnOutput, DiffDraftConfig } from "@/lib/drafts";
-import { diffWords, type DiffSegment } from "@/lib/diff-words";
+import {
+  diffWords,
+  divergenceRatio,
+  type DiffSegment,
+} from "@/lib/diff-words";
+
+const DIVERGENCE_THRESHOLD = 0.6;
 
 export function TurnRow({
   num,
@@ -29,10 +35,18 @@ export function TurnRow({
     !!turn.outputA.text &&
     !!turn.outputB.text;
 
-  const diff = useMemo(() => {
+  const diffResult = useMemo(() => {
     if (!canDiff) return null;
-    return diffWords(turn.outputA.text, turn.outputB.text);
+    const pair = diffWords(turn.outputA.text, turn.outputB.text);
+    return { pair, divergence: divergenceRatio(pair) };
   }, [canDiff, turn.outputA.text, turn.outputB.text]);
+
+  // When outputs share little structure word-level highlights are noise —
+  // most tokens light up and the signal disappears. Suppress in that case
+  // and tell the user why.
+  const tooDivergent =
+    !!diffResult && diffResult.divergence >= DIVERGENCE_THRESHOLD;
+  const segments = diffResult && !tooDivergent ? diffResult.pair : null;
 
   return (
     <div className="bg-surface border border-line rounded-[14px] p-4 md:p-5">
@@ -58,18 +72,25 @@ export function TurnRow({
         )}
       </div>
 
+      {tooDivergent && (
+        <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+          Outputs diverge too much for word-level highlights — they&apos;d
+          paint almost everything.
+        </p>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-4">
         <TurnOutput
           label="A"
           config={configA}
           output={turn.outputA}
-          segments={diff?.left ?? null}
+          segments={segments?.left ?? null}
         />
         <TurnOutput
           label="B"
           config={configB}
           output={turn.outputB}
-          segments={diff?.right ?? null}
+          segments={segments?.right ?? null}
         />
       </div>
 

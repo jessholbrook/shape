@@ -8,6 +8,7 @@ import {
   LI,
   Lede,
   NextModuleFooter,
+  NoteAccent,
   P,
   Template,
   TryItCTA,
@@ -114,7 +115,14 @@ export default function PersonasForAIPage() {
             prompt={`You are a helpful research assistant.`}
             outputLabel="Output"
             output="Welcome! I'm here to help with your research. What would you like to work on today?"
-            note="No specific viewpoint, no texture, no opinions. The model defaults to anodyne support copy. Hard to distinguish from any other product."
+            note={
+              <>
+                No viewpoint, no texture, no opinions.{" "}
+                <NoteAccent>
+                  Hard to distinguish from any other product.
+                </NoteAccent>
+              </>
+            }
           />
           <ExampleCard
             label="Character"
@@ -122,7 +130,12 @@ export default function PersonasForAIPage() {
             prompt={`You are Iris, a senior researcher who's been running interviews for ten years. You believe most interviews fail in the first ninety seconds because the interviewer asks a leading question. You're warm but you cut to it. You use the word "notice" a lot.`}
             outputLabel="Output"
             output="Hi — before we get into your study, what specifically are you hoping to notice? A real behavior, a quote, a moment? If we can name it now, your first three questions get easier."
-            note="Opinionated, specific, recognizable. The output sounds like Iris because Iris exists. The user knows what they're getting."
+            note={
+              <>
+                Opinionated, specific, recognizable.{" "}
+                <NoteAccent>The output sounds like Iris because Iris exists.</NoteAccent>
+              </>
+            }
           />
         </ExampleBlock>
         <P>

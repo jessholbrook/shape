@@ -101,6 +101,9 @@ export function ExampleBlock({ children }: { children: React.ReactNode }) {
  * One side of a two-card example. Prompt label and output label default to
  * "System prompt" and "Output"; pass overrides per article. Note section
  * (default label "Read") only renders when `note` is provided.
+ *
+ * `note` accepts a string or JSX so an article can wrap key phrases in
+ * <NoteAccent> to direct attention.
  */
 export function ExampleCard({
   label,
@@ -117,7 +120,7 @@ export function ExampleCard({
   outputLabel?: string;
   output: string;
   noteLabel?: string;
-  note?: string;
+  note?: React.ReactNode;
 }) {
   return (
     <div className="bg-surface border border-line rounded-[14px] p-5 flex flex-col gap-3">
@@ -151,6 +154,19 @@ export function ExampleCard({
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Inline emphasis for the load-bearing phrase inside an ExampleCard `note`.
+ * Uses the soft highlight chip treatment — direct attention without painting
+ * a whole paragraph.
+ */
+export function NoteAccent({ children }: { children: React.ReactNode }) {
+  return (
+    <mark className="bg-highlight-soft text-highlight-ink rounded-sm px-1 py-0.5 font-medium not-italic">
+      {children}
+    </mark>
   );
 }
 
