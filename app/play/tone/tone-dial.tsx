@@ -9,8 +9,10 @@ import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
 import {
   DEFAULT_TONE,
+  TONE_INITIAL,
   composeSystemPrompt,
-  composeToneBlock,
+  composeToneLines,
+  type ToneLine,
   type ToneValues,
 } from "@/lib/tone";
 import { suggestTitle, type ToneDraft } from "@/lib/drafts";
@@ -85,11 +87,8 @@ export function ToneDial() {
     () => composeSystemPrompt(brief, tone),
     [brief, tone],
   );
-  const toneBlock = useMemo(() => composeToneBlock(tone), [tone]);
-  const dialsTouched = useMemo(
-    () => Object.values(tone).some((v) => v !== 0),
-    [tone],
-  );
+  const toneLines = useMemo(() => composeToneLines(tone), [tone]);
+  const dialsTouched = toneLines.length > 0;
 
   const ready = hydrated && (!providerNeedsKey(provider) || !!keys[provider]);
   const canRun = ready && userMessage.trim() && !running;
@@ -210,8 +209,8 @@ export function ToneDial() {
         {/* Right: composed prompt preview + output */}
         <div className="flex flex-col gap-4">
           <ComposedPromptCard
-            system={composedSystem}
-            toneBlock={toneBlock}
+            brief={brief}
+            toneLines={toneLines}
             dialsTouched={dialsTouched}
           />
         </div>
@@ -269,15 +268,15 @@ export function ToneDial() {
 }
 
 function ComposedPromptCard({
-  system,
-  toneBlock,
+  brief,
+  toneLines,
   dialsTouched,
 }: {
-  system: string;
-  toneBlock: string | null;
+  brief: string;
+  toneLines: ToneLine[];
   dialsTouched: boolean;
 }) {
-  const briefPart = toneBlock ? system.replace(`\n\n${toneBlock}`, "") : system;
+  const trimmedBrief = brief.trim();
 
   return (
     <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-col gap-3 min-h-[280px]">
@@ -291,20 +290,35 @@ function ComposedPromptCard({
       </div>
 
       <div className="font-mono text-[12px] leading-[1.6] text-ink whitespace-pre-wrap break-words">
-        {briefPart ? (
-          <span>{briefPart}</span>
+        {trimmedBrief ? (
+          trimmedBrief
         ) : (
           <span className="text-ink-quiet italic">No brief yet.</span>
         )}
-        {toneBlock && (
-          <>
-            {briefPart ? "\n\n" : ""}
-            <span className="text-highlight-ink">{toneBlock}</span>
-          </>
-        )}
       </div>
 
-      {!toneBlock && (
+      {dialsTouched && (
+        <div className="flex flex-col gap-2 border-t border-line pt-3">
+          <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+            Tone
+          </p>
+          {toneLines.map((line) => (
+            <div key={line.dim} className="flex items-start gap-2">
+              <span
+                className="inline-block font-mono text-[10px] font-medium leading-none w-5 h-5 rounded-full text-center pt-1 bg-ink text-canvas shrink-0"
+                aria-hidden
+              >
+                {TONE_INITIAL[line.dim]}
+              </span>
+              <p className="font-mono text-[12px] leading-[1.55] text-ink">
+                {line.text}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!dialsTouched && (
         <p className="font-mono text-[11px] text-ink-quiet">
           Move a dial off Neutral to see tone instructions stack into the prompt.
         </p>

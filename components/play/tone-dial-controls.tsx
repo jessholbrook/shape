@@ -2,6 +2,7 @@
 
 import {
   TONE_DIMENSIONS,
+  TONE_INITIAL,
   type ToneDimensionId,
   type ToneStop,
   type ToneValues,
@@ -44,12 +45,24 @@ export function ToneDialControls({
           return (
             <div key={dim.id} className="flex flex-col gap-2">
               <div className="flex items-baseline justify-between gap-2">
-                <div>
-                  <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink">
-                    {dim.label}
-                  </div>
-                  <div className="font-mono text-[10px] text-ink-quiet mt-0.5">
-                    {dim.blurb}
+                <div className="flex items-baseline gap-2">
+                  <span
+                    className={`inline-block font-mono text-[10px] font-medium leading-none w-5 h-5 rounded-full text-center pt-1 ${
+                      stop === 0
+                        ? "bg-line/60 text-ink-quiet"
+                        : "bg-ink text-canvas"
+                    }`}
+                    aria-hidden
+                  >
+                    {TONE_INITIAL[dim.id]}
+                  </span>
+                  <div>
+                    <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink">
+                      {dim.label}
+                    </div>
+                    <div className="font-mono text-[10px] text-ink-quiet mt-0.5">
+                      {dim.blurb}
+                    </div>
                   </div>
                 </div>
                 <span
