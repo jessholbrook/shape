@@ -77,6 +77,12 @@ body {
   );
 }
 
+/* Italic Inter against roman text can visually merge — nudge a hair of space */
+.max-w-prose em,
+.max-w-prose i {
+  padding-right: 0.06em;
+}
+
 /* Smooth focus rings in the ink tone instead of browser blue */
 :focus-visible {
   outline: 2px solid var(--ink);

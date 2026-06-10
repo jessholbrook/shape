@@ -78,3 +78,24 @@ export function diffWords(a: string, b: string): DiffPair {
 
   return { left, right };
 }
+
+/**
+ * Fraction of characters in non-matching segments across both sides. When
+ * outputs share little structure (e.g. two different models on the same
+ * prompt) word-level highlights become noise — most of the text lights up.
+ * Callers can use this to suppress the highlight in those cases.
+ */
+export function divergenceRatio(pair: DiffPair): number {
+  let total = 0;
+  let diff = 0;
+  for (const seg of pair.left) {
+    total += seg.text.length;
+    if (seg.kind !== "same") diff += seg.text.length;
+  }
+  for (const seg of pair.right) {
+    total += seg.text.length;
+    if (seg.kind !== "same") diff += seg.text.length;
+  }
+  if (total === 0) return 0;
+  return diff / total;
+}

@@ -3,7 +3,13 @@
 import { useMemo, useState } from "react";
 import { PROVIDERS } from "@/lib/providers";
 import type { DiffTurn, DiffTurnOutput, DiffDraftConfig } from "@/lib/drafts";
-import { diffWords, type DiffSegment } from "@/lib/diff-words";
+import {
+  diffWords,
+  divergenceRatio,
+  type DiffSegment,
+} from "@/lib/diff-words";
+
+const DIVERGENCE_THRESHOLD = 0.6;
 
 export function TurnRow({
   num,
@@ -29,10 +35,18 @@ export function TurnRow({
     !!turn.outputA.text &&
     !!turn.outputB.text;
 
-  const diff = useMemo(() => {
+  const diffResult = useMemo(() => {
     if (!canDiff) return null;
-    return diffWords(turn.outputA.text, turn.outputB.text);
+    const pair = diffWords(turn.outputA.text, turn.outputB.text);
+    return { pair, divergence: divergenceRatio(pair) };
   }, [canDiff, turn.outputA.text, turn.outputB.text]);
+
+  // When outputs share little structure word-level highlights are noise —
+  // most tokens light up and the signal disappears. Suppress in that case
+  // and tell the user why.
+  const tooDivergent =
+    !!diffResult && diffResult.divergence >= DIVERGENCE_THRESHOLD;
+  const segments = diffResult && !tooDivergent ? diffResult.pair : null;
 
   return (
     <div className="bg-surface border border-line rounded-[14px] p-4 md:p-5">
@@ -58,18 +72,25 @@ export function TurnRow({
         )}
       </div>
 
+      {tooDivergent && (
+        <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+          Outputs diverge too much for word-level highlights — they&apos;d
+          paint almost everything.
+        </p>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-4">
         <TurnOutput
           label="A"
           config={configA}
           output={turn.outputA}
-          segments={diff?.left ?? null}
+          segments={segments?.left ?? null}
         />
         <TurnOutput
           label="B"
           config={configB}
           output={turn.outputB}
-          segments={diff?.right ?? null}
+          segments={segments?.right ?? null}
         />
       </div>
 
@@ -96,6 +117,8 @@ function TurnOutput({
     output.startMs && output.endMs
       ? ((output.endMs - output.startMs) / 1000).toFixed(1) + "s"
       : null;
+  const [showPrompt, setShowPrompt] = useState(false);
+  const hasPrompt = !!config.system.trim();
 
   return (
     <div className="flex flex-col gap-2 min-w-0">
@@ -107,9 +130,33 @@ function TurnOutput({
           <span className="font-mono text-[10px] bg-highlight-soft text-highlight-ink rounded-full px-2 py-0.5 truncate">
             {modelName}
           </span>
+          <span className="font-mono text-[10px] text-ink-quiet shrink-0">
+            T {config.temperature.toFixed(1)}
+          </span>
+          {hasPrompt && (
+            <button
+              type="button"
+              onClick={() => setShowPrompt((v) => !v)}
+              aria-expanded={showPrompt}
+              className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink shrink-0"
+            >
+              {showPrompt ? "Hide prompt" : "Prompt"}
+            </button>
+          )}
         </div>
         <StatusDot status={output.status} />
       </div>
+
+      {showPrompt && hasPrompt && (
+        <div className="bg-canvas border border-line rounded-[8px] p-2.5">
+          <p className="font-mono text-[9px] uppercase tracking-[0.08em] text-ink-quiet mb-1">
+            System prompt
+          </p>
+          <p className="font-mono text-[11px] leading-[1.55] text-ink whitespace-pre-wrap">
+            {config.system}
+          </p>
+        </div>
+      )}
 
       <div className="font-mono text-[13px] leading-[1.55] text-ink whitespace-pre-wrap break-words min-h-[80px]">
         {output.error ? (

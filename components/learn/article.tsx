@@ -101,6 +101,9 @@ export function ExampleBlock({ children }: { children: React.ReactNode }) {
  * One side of a two-card example. Prompt label and output label default to
  * "System prompt" and "Output"; pass overrides per article. Note section
  * (default label "Read") only renders when `note` is provided.
+ *
+ * `note` accepts a string or JSX so an article can wrap key phrases in
+ * <NoteAccent> to direct attention.
  */
 export function ExampleCard({
   label,
@@ -117,7 +120,7 @@ export function ExampleCard({
   outputLabel?: string;
   output: string;
   noteLabel?: string;
-  note?: string;
+  note?: React.ReactNode;
 }) {
   return (
     <div className="bg-surface border border-line rounded-[14px] p-5 flex flex-col gap-3">
@@ -149,6 +152,61 @@ export function ExampleCard({
             {note}
           </p>
         </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Inline emphasis for the load-bearing phrase inside an ExampleCard `note`.
+ * Uses the soft highlight chip treatment — direct attention without painting
+ * a whole paragraph.
+ */
+export function NoteAccent({ children }: { children: React.ReactNode }) {
+  return (
+    <mark className="bg-highlight-soft text-highlight-ink rounded-sm px-1 py-0.5 font-medium not-italic">
+      {children}
+    </mark>
+  );
+}
+
+/**
+ * A fill-in-the-blank scaffold rendered as a copyable mono block. Pass the
+ * skeleton as children (string with ___ blanks) and an optional bullet list
+ * of the parts the user is being asked to articulate.
+ */
+export function Template({
+  children,
+  checklist,
+}: {
+  children: React.ReactNode;
+  checklist?: string[];
+}) {
+  return (
+    <div className="mt-8 bg-surface border border-line rounded-[14px] p-5 md:p-6">
+      <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+        Template
+      </p>
+      <p className="mt-3 font-mono text-[13px] leading-[1.7] text-ink whitespace-pre-wrap">
+        {children}
+      </p>
+      {checklist && checklist.length > 0 && (
+        <>
+          <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+            What you&apos;re defining
+          </p>
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {checklist.map((item, i) => (
+              <li
+                key={i}
+                className="font-sans text-[14px] leading-[1.55] text-ink-muted pl-4 relative"
+              >
+                <span className="absolute left-0 top-2 w-1 h-1 rounded-full bg-ink-quiet" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   );
