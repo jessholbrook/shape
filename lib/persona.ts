@@ -140,6 +140,13 @@ export function composePersonaPrompt(values: PersonaValues): string {
     );
   }
 
+  // Response style coda — keeps the persona from drifting into chatty
+  // roleplay when the user wants concrete, structured help.
+  lines.push("");
+  lines.push(
+    "Response style: lead with the principle or answer in one short sentence. Then give 2-3 concrete examples or steps. Skip pleasantries and self-introduction. Don't roleplay being asked.",
+  );
+
   return lines.join("\n").trim();
 }
 

@@ -32,7 +32,7 @@ const EMPTY_OUTPUT: OutputState = {
 };
 
 const DEFAULT_MESSAGE =
-  "I'm about to interview a designer about their workflow. What should I ask first?";
+  "Give me three opening questions to use in a workflow interview with a designer, and one thing to avoid.";
 
 export function PersonaWorkshop() {
   const { keys, hydrated } = useKeys();
