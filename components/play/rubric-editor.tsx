@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { newCriterionId, type Criterion } from "@/lib/evals";
 
 const MAX_CRITERIA = 8;
@@ -12,6 +13,20 @@ export function RubricEditor({
   criteria: Criterion[];
   onChange: (next: Criterion[]) => void;
 }) {
+  const [flashId, setFlashId] = useState<string | null>(null);
+  const nameInputs = useRef(new Map<string, HTMLInputElement>());
+
+  useEffect(() => {
+    if (!flashId) return;
+    const input = nameInputs.current.get(flashId);
+    if (input) {
+      input.focus();
+      input.select();
+    }
+    const t = window.setTimeout(() => setFlashId(null), 1400);
+    return () => window.clearTimeout(t);
+  }, [flashId]);
+
   function updateCriterion(id: string, patch: Partial<Criterion>) {
     onChange(criteria.map((c) => (c.id === id ? { ...c, ...patch } : c)));
   }
@@ -23,14 +38,16 @@ export function RubricEditor({
 
   function addCriterion() {
     if (criteria.length >= MAX_CRITERIA) return;
+    const id = newCriterionId();
     onChange([
-      ...criteria,
       {
-        id: newCriterionId(),
+        id,
         name: "New criterion",
         description: "",
       },
+      ...criteria,
     ]);
+    setFlashId(id);
   }
 
   const canAdd = criteria.length < MAX_CRITERIA;
@@ -57,7 +74,9 @@ export function RubricEditor({
         {criteria.map((c, i) => (
           <div
             key={c.id}
-            className="bg-canvas border border-line rounded-[12px] p-4"
+            className={`bg-canvas border rounded-[12px] p-4 transition-colors duration-300 ${
+              flashId === c.id ? "border-highlight" : "border-line"
+            }`}
           >
             <div className="flex items-baseline justify-between gap-3 mb-2">
               <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet shrink-0">
@@ -74,6 +93,10 @@ export function RubricEditor({
             </div>
             <input
               type="text"
+              ref={(el) => {
+                if (el) nameInputs.current.set(c.id, el);
+                else nameInputs.current.delete(c.id);
+              }}
               value={c.name}
               onChange={(e) => updateCriterion(c.id, { name: e.target.value })}
               placeholder="Criterion name"

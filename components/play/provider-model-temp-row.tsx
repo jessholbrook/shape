@@ -92,7 +92,14 @@ export function ProviderModelTempRow({
         </select>
       </Field>
       <Field
-        label={`Temperature — ${temperature.toFixed(2)}`}
+        label={
+          <>
+            Temperature — {temperature.toFixed(2)}
+            <span className="ml-1 font-mono text-[10px] uppercase tracking-[0.08em] bg-highlight-soft text-highlight-ink rounded-full px-1.5 py-0.5">
+              {temperatureRegime(temperature)}
+            </span>
+          </>
+        }
         tip={
           <>
             How much variation in the output. <strong>0</strong> = same answer
@@ -114,6 +121,12 @@ export function ProviderModelTempRow({
       </Field>
     </div>
   );
+}
+
+function temperatureRegime(t: number): string {
+  if (t <= 0.2) return "Deterministic";
+  if (t < 0.8) return "Creative";
+  return "Loose";
 }
 
 function tierLabel(tier: "frontier" | "balanced" | "fast"): string {
@@ -141,13 +154,13 @@ function Field({
   tip,
   children,
 }: {
-  label: string;
+  label: React.ReactNode;
   tip?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet inline-flex items-center gap-1.5">
+      <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet inline-flex items-center gap-1.5 flex-wrap">
         {label}
         {tip && <InfoTip>{tip}</InfoTip>}
       </span>
