@@ -11,7 +11,9 @@ import {
   DEFAULT_PERSONA,
   EMPTY_PERSONA,
   composePersonaPrompt,
+  composePersonaSections,
   isPersonaEmpty,
+  type PersonaSection,
   type PersonaValues,
 } from "@/lib/persona";
 import { suggestTitle, type PersonaDraft } from "@/lib/drafts";
@@ -66,6 +68,10 @@ export function PersonaWorkshop() {
 
   const composedSystem = useMemo(
     () => composePersonaPrompt(persona),
+    [persona],
+  );
+  const promptSections = useMemo(
+    () => composePersonaSections(persona),
     [persona],
   );
   const personaEmpty = isPersonaEmpty(persona);
@@ -239,7 +245,7 @@ export function PersonaWorkshop() {
             onChange={setPersona}
             onReset={() => setPersona(EMPTY_PERSONA)}
           />
-          <ComposedPromptCard system={composedSystem} empty={personaEmpty} />
+          <ComposedPromptCard sections={promptSections} empty={personaEmpty} />
         </div>
       </div>
 
@@ -255,10 +261,10 @@ export function PersonaWorkshop() {
 }
 
 function ComposedPromptCard({
-  system,
+  sections,
   empty,
 }: {
-  system: string;
+  sections: PersonaSection[];
   empty: boolean;
 }) {
   return (
@@ -272,9 +278,26 @@ function ComposedPromptCard({
         </span>
       </div>
 
-      {empty ? <ScaffoldHint /> : (
-        <div className="font-mono text-[12px] leading-[1.6] text-ink whitespace-pre-wrap break-words">
-          {system}
+      {empty ? (
+        <ScaffoldHint />
+      ) : (
+        <div className="flex flex-col gap-3">
+          {sections.map((s) => (
+            <div key={s.source} className="flex flex-col gap-1">
+              <span
+                className={`self-start font-mono text-[9px] uppercase tracking-[0.08em] rounded-full px-1.5 py-0.5 ${
+                  s.source === "style"
+                    ? "bg-line/60 text-ink-quiet"
+                    : "bg-highlight-soft text-highlight-ink"
+                }`}
+              >
+                {s.label}
+              </span>
+              <p className="font-mono text-[12px] leading-[1.6] text-ink whitespace-pre-wrap break-words">
+                {s.text}
+              </p>
+            </div>
+          ))}
         </div>
       )}
     </div>
