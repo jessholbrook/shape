@@ -231,6 +231,13 @@ export function PersonaWorkshop() {
         filenameStem={`persona-${slugify(persona.name || persona.role || title || "output", "output")}`}
       />
 
+      {output.status === "done" && (
+        <p className="font-mono text-[11px] text-ink-quiet leading-[1.55] -mt-3 px-2">
+          One-shot reply — the persona doesn&apos;t remember earlier turns. To
+          continue, edit the message above and ask again.
+        </p>
+      )}
+
       <DraftSaveBar
         title={title}
         onTitleChange={setTitle}
