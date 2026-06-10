@@ -9,6 +9,7 @@ import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
 import {
   DEFAULT_PERSONA,
+  EMPTY_PERSONA,
   composePersonaPrompt,
   isPersonaEmpty,
   type PersonaValues,
@@ -178,7 +179,11 @@ export function PersonaWorkshop() {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <PersonaForm values={persona} onChange={setPersona} />
+        <PersonaForm
+          values={persona}
+          onChange={setPersona}
+          onReset={() => setPersona(EMPTY_PERSONA)}
+        />
         <ComposedPromptCard system={composedSystem} empty={personaEmpty} />
       </div>
 
@@ -248,23 +253,60 @@ function ComposedPromptCard({
     <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-col gap-3 min-h-[280px]">
       <div className="flex items-center justify-between">
         <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
-          Composed system prompt
+          {empty ? "Scaffold" : "Composed system prompt"}
         </span>
         <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
-          {empty ? "Empty" : "Live"}
+          {empty ? "Fill the blanks" : "Live"}
         </span>
       </div>
 
-      <div className="font-mono text-[12px] leading-[1.6] text-ink whitespace-pre-wrap break-words">
-        {empty ? (
-          <span className="text-ink-quiet italic">
-            Fill in name + role to compose a prompt.
-          </span>
-        ) : (
-          system
-        )}
+      {empty ? <ScaffoldHint /> : (
+        <div className="font-mono text-[12px] leading-[1.6] text-ink whitespace-pre-wrap break-words">
+          {system}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScaffoldHint() {
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="font-sans text-[13px] leading-[1.55] text-ink-muted">
+        A persona is more than a name and a role. Fill these in left and the
+        prompt composes here.
+      </p>
+      <div className="font-mono text-[12px] leading-[1.7] text-ink">
+        <ScaffoldLine>
+          You are <Blank label="Name" /> who&apos;s been{" "}
+          <Blank label="Backstory" /> for <Blank label="Backstory" />.
+        </ScaffoldLine>
+        <ScaffoldLine>
+          You believe <Blank label="Beliefs" /> because{" "}
+          <Blank label="Beliefs" />.
+        </ScaffoldLine>
+        <ScaffoldLine>
+          You won&apos;t <Blank label="Won't discuss" /> — instead you&apos;ll{" "}
+          <Blank label="Strengths" />.
+        </ScaffoldLine>
+        <ScaffoldLine>
+          Your voice is <Blank label="Voice" />, <Blank label="Voice" />,
+          and <Blank label="Voice" />.
+        </ScaffoldLine>
       </div>
     </div>
+  );
+}
+
+function ScaffoldLine({ children }: { children: React.ReactNode }) {
+  return <p className="mb-1">{children}</p>;
+}
+
+function Blank({ label }: { label: string }) {
+  return (
+    <span className="bg-highlight-soft text-highlight-ink rounded-sm px-1.5 py-0.5 font-sans text-[11px] uppercase tracking-[0.08em]">
+      {label}
+    </span>
   );
 }
 

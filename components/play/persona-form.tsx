@@ -5,14 +5,28 @@ import { PERSONA_FIELDS, type PersonaValues } from "@/lib/persona";
 export function PersonaForm({
   values,
   onChange,
+  onReset,
 }: {
   values: PersonaValues;
   onChange: (next: PersonaValues) => void;
+  onReset?: () => void;
 }) {
+  const anyFilled = Object.values(values).some((v) => v.trim().length > 0);
   return (
     <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-col gap-5">
-      <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
-        Persona
+      <div className="flex items-center justify-between">
+        <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
+          Persona
+        </div>
+        {onReset && anyFilled && (
+          <button
+            type="button"
+            onClick={onReset}
+            className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet hover:text-danger"
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col gap-5">
