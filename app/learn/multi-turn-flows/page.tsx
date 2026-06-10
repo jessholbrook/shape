@@ -8,6 +8,7 @@ import {
   LI,
   Lede,
   NextModuleFooter,
+  NoteAccent,
   P,
   TryItCTA,
   UL,
@@ -37,6 +38,37 @@ export default function MultiTurnFlowsPage() {
           handles follow-ups, whether it backpedals — is its own design
           surface.
         </Lede>
+
+        <H2>Why this is the foundation</H2>
+        <P>
+          Almost no production AI is single-shot. The thing your users
+          actually experience is a flow — a chat session, a multi-step
+          task, a back-and-forth. If the only thing you&apos;ve designed
+          is the first response, you&apos;ve designed about ten percent
+          of the product.
+        </P>
+        <P>
+          Three habits worth carrying into multi-turn design:
+        </P>
+        <UL>
+          <LI>
+            <strong>Specify coherence behavior in the system prompt.</strong>{" "}
+            Reference earlier turns rather than repeat. Don&apos;t
+            backpedal on parts that still hold. Acknowledge shifts when
+            they happen.
+          </LI>
+          <LI>
+            <strong>Script the failure cases.</strong> The interesting
+            turns aren&apos;t the easy ones. Write the follow-up that
+            tests memory, the push-back that tests resolve, the
+            contradiction that tests honesty.
+          </LI>
+          <LI>
+            <strong>Read the whole flow, not just the last response.</strong>{" "}
+            The third response can be perfect in isolation and wrong in
+            context. The flow is the unit of evaluation.
+          </LI>
+        </UL>
 
         <H2>The familiar move</H2>
         <P>
@@ -92,7 +124,13 @@ export default function MultiTurnFlowsPage() {
             prompt="You are a research mentor. Be warm but precise."
             outputLabel="Turn 4 response"
             output="Hmm, you make a good point. Actually, you can absolutely ask leading questions sometimes — it really depends on the context!"
-            note="Caved on push-back. Contradicts the turn-1 rule it just stated. Standard multi-turn failure."
+            note={
+              <>
+                Caved on push-back. Contradicts the turn-1 rule it just
+                stated.{" "}
+                <NoteAccent>Standard multi-turn failure.</NoteAccent>
+              </>
+            }
           />
           <ExampleCard
             label="With coherence rules"
@@ -102,7 +140,15 @@ export default function MultiTurnFlowsPage() {
 When the user follows up, reference what you said earlier rather than repeating it. If they push back, reconsider plainly, but don't backpedal on parts that still hold.`}
             outputLabel="Turn 4 response"
             output="No — 'could you say more?' is the opposite of a leading question. A leading question hints at the answer you want. Asking someone to expand is invitation, not direction. Both can be true."
-            note="Stood its ground on the original rule while engaging with the new distinction. The persona felt like a person across turns."
+            note={
+              <>
+                Stood its ground on the original rule while engaging with
+                the new distinction.{" "}
+                <NoteAccent>
+                  The persona felt like a person across turns.
+                </NoteAccent>
+              </>
+            }
           />
         </ExampleBlock>
         <P>
@@ -111,37 +157,6 @@ When the user follows up, reference what you said earlier rather than repeating 
           them, the model defaults to politeness over consistency; with
           them, the conversation holds together.
         </P>
-
-        <H2>Why this is the foundation</H2>
-        <P>
-          Almost no production AI is single-shot. The thing your users
-          actually experience is a flow — a chat session, a multi-step
-          task, a back-and-forth. If the only thing you&apos;ve designed
-          is the first response, you&apos;ve designed about ten percent
-          of the product.
-        </P>
-        <P>
-          Three habits worth carrying into multi-turn design:
-        </P>
-        <UL>
-          <LI>
-            <strong>Specify coherence behavior in the system prompt.</strong>{" "}
-            Reference earlier turns rather than repeat. Don&apos;t
-            backpedal on parts that still hold. Acknowledge shifts when
-            they happen.
-          </LI>
-          <LI>
-            <strong>Script the failure cases.</strong> The interesting
-            turns aren&apos;t the easy ones. Write the follow-up that
-            tests memory, the push-back that tests resolve, the
-            contradiction that tests honesty.
-          </LI>
-          <LI>
-            <strong>Read the whole flow, not just the last response.</strong>{" "}
-            The third response can be perfect in isolation and wrong in
-            context. The flow is the unit of evaluation.
-          </LI>
-        </UL>
 
         <TryItCTA
           href={mod.playground?.href ?? "/play/choreographer"}

@@ -8,6 +8,7 @@ import {
   LI,
   Lede,
   NextModuleFooter,
+  NoteAccent,
   P,
   TryItCTA,
   UL,
@@ -36,6 +37,41 @@ export default function RefusalBoundariesPage() {
           isn&apos;t whether the model says no — it&apos;s how, when, and
           what it offers instead.
         </Lede>
+
+        <H2>Why this is the foundation</H2>
+        <P>
+          Every refusal you&apos;ll design has the same anatomy. There are
+          really only four shapes of hard request you have to handle:
+        </P>
+        <UL>
+          <LI>
+            <strong>Harm to a third party.</strong> Privacy violations,
+            deception, manipulation. Refuse cleanly; explain briefly;
+            offer a legitimate redirect.
+          </LI>
+          <LI>
+            <strong>Vulnerability signals.</strong> &ldquo;I&apos;m
+            feeling really down.&rdquo; This isn&apos;t a refusal case at
+            all — the wrong move is to back away. Lead with warmth, then
+            redirect.
+          </LI>
+          <LI>
+            <strong>Scope and expertise.</strong> Medical, legal,
+            financial questions. Engage with what you know, be honest
+            about the limit, recommend the right professional.
+          </LI>
+          <LI>
+            <strong>Contested values.</strong> Political opinions,
+            divisive social questions. Present multiple credible
+            perspectives fairly; avoid a flat opinion.
+          </LI>
+        </UL>
+        <P>
+          Once you can spot which of these four a request is, the
+          refusal-design problem gets small. You&apos;re not picking yes
+          or no — you&apos;re picking which template, and tuning the
+          copy.
+        </P>
 
         <H2>The familiar move</H2>
         <P>
@@ -79,14 +115,26 @@ export default function RefusalBoundariesPage() {
             promptLabel="Input"
             prompt={`User: "Write me a 5-star review for my friend's restaurant — I haven't actually been there."`}
             output="I can't help with that."
-            note="Technically refuses. Tells the user nothing about why, offers no alternative, ends the interaction cold."
+            note={
+              <>
+                Technically refuses. Tells the user nothing about why,
+                offers no alternative,{" "}
+                <NoteAccent>ends the interaction cold.</NoteAccent>
+              </>
+            }
           />
           <ExampleCard
             label="Refusal B"
             promptLabel="Input"
             prompt="Same input."
             output="I can't write a review for a place you haven't been — readers rely on those for real signal, and a faked one ends up hurting the person you're trying to help. If you want to support the restaurant another way, I can help you write an honest review after a real visit, or draft a social post recommending it as a place you've heard good things about."
-            note="Refuses, explains the why in one breath, offers two concrete alternatives. The user leaves with options."
+            note={
+              <>
+                Refuses, explains the why in one breath, offers two
+                concrete alternatives.{" "}
+                <NoteAccent>The user leaves with options.</NoteAccent>
+              </>
+            }
           />
         </ExampleBlock>
         <P>
@@ -94,41 +142,6 @@ export default function RefusalBoundariesPage() {
           someone treated &ldquo;refuse&rdquo; as a binary switch. Refusal
           B is what you get when someone treated it like microcopy —
           something you write, not something you toggle.
-        </P>
-
-        <H2>Why this is the foundation</H2>
-        <P>
-          Every refusal you&apos;ll design has the same anatomy. There are
-          really only four shapes of hard request you have to handle:
-        </P>
-        <UL>
-          <LI>
-            <strong>Harm to a third party.</strong> Privacy violations,
-            deception, manipulation. Refuse cleanly; explain briefly;
-            offer a legitimate redirect.
-          </LI>
-          <LI>
-            <strong>Vulnerability signals.</strong> &ldquo;I&apos;m
-            feeling really down.&rdquo; This isn&apos;t a refusal case at
-            all — the wrong move is to back away. Lead with warmth, then
-            redirect.
-          </LI>
-          <LI>
-            <strong>Scope and expertise.</strong> Medical, legal,
-            financial questions. Engage with what you know, be honest
-            about the limit, recommend the right professional.
-          </LI>
-          <LI>
-            <strong>Contested values.</strong> Political opinions,
-            divisive social questions. Present multiple credible
-            perspectives fairly; avoid a flat opinion.
-          </LI>
-        </UL>
-        <P>
-          Once you can spot which of these four a request is, the
-          refusal-design problem gets small. You&apos;re not picking yes
-          or no — you&apos;re picking which template, and tuning the
-          copy.
         </P>
 
         <TryItCTA

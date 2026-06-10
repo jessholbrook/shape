@@ -8,6 +8,7 @@ import {
   LI,
   Lede,
   NextModuleFooter,
+  NoteAccent,
   P,
   TryItCTA,
   UL,
@@ -36,6 +37,37 @@ export default function EvaluationPage() {
           something you sense. Once it&apos;s on the page, you can argue
           with it — and so can the rest of your team.
         </Lede>
+
+        <H2>Why this is the foundation</H2>
+        <P>
+          Once you have a rubric, every other design move gets cheaper.
+          Comparing two prompts? Run both against the rubric and look at
+          the deltas. Comparing models? Same. Convincing a stakeholder
+          that v3 is better than v2? Show them the scorecard. The rubric
+          is what turns &ldquo;trust me, it&apos;s better&rdquo; into
+          something they can read.
+        </P>
+        <P>
+          Three things to watch for when you write one:
+        </P>
+        <UL>
+          <LI>
+            <strong>Criteria that aren&apos;t criteria.</strong>{" "}
+            &ldquo;Good&rdquo; isn&apos;t a criterion. Neither is{" "}
+            &ldquo;sounds AI-generated.&rdquo; Replace with the specific
+            quality you mean.
+          </LI>
+          <LI>
+            <strong>Overlap.</strong> If two criteria almost always
+            move together, you&apos;ve written one criterion twice.
+            Merge them.
+          </LI>
+          <LI>
+            <strong>Missing the boring middle.</strong> Most outputs
+            aren&apos;t terrible or excellent — they&apos;re 3s. A 1-5
+            scale captures the middle. Pass/fail doesn&apos;t.
+          </LI>
+        </UL>
 
         <H2>The familiar move</H2>
         <P>
@@ -77,7 +109,13 @@ export default function EvaluationPage() {
             prompt={`"Write good empty-state copy."`}
             outputLabel="What you can say"
             output="Was it clear? I guess? Did it match the brand voice? Sort of. Actionable? Maybe."
-            note="Every grader scores it differently because the criteria are still in their heads. You can't iterate against this."
+            note={
+              <>
+                Every grader scores it differently because the criteria
+                are still in their heads.{" "}
+                <NoteAccent>You can&apos;t iterate against this.</NoteAccent>
+              </>
+            }
           />
           <ExampleCard
             label="Specific rubric"
@@ -88,44 +126,18 @@ Actionability — user knows what to do next.
 Each scored 1-5.`}
             outputLabel="What you can say"
             output="Clarity 5. Tone 3 (a hair too enthusiastic). Actionability 4. Total 12/15."
-            note="The 3 on tone is the design surface. You know exactly where to push next."
+            note={
+              <>
+                The 3 on tone is the design surface.{" "}
+                <NoteAccent>You know exactly where to push next.</NoteAccent>
+              </>
+            }
           />
         </ExampleBlock>
         <P>
           Same output, two rubrics, different conversations. The first
           ends in a shrug. The second ends in a list of things to try.
         </P>
-
-        <H2>Why this is the foundation</H2>
-        <P>
-          Once you have a rubric, every other design move gets cheaper.
-          Comparing two prompts? Run both against the rubric and look at
-          the deltas. Comparing models? Same. Convincing a stakeholder
-          that v3 is better than v2? Show them the scorecard. The rubric
-          is what turns &ldquo;trust me, it&apos;s better&rdquo; into
-          something they can read.
-        </P>
-        <P>
-          Three things to watch for when you write one:
-        </P>
-        <UL>
-          <LI>
-            <strong>Criteria that aren&apos;t criteria.</strong>{" "}
-            &ldquo;Good&rdquo; isn&apos;t a criterion. Neither is{" "}
-            &ldquo;sounds AI-generated.&rdquo; Replace with the specific
-            quality you mean.
-          </LI>
-          <LI>
-            <strong>Overlap.</strong> If two criteria almost always
-            move together, you&apos;ve written one criterion twice.
-            Merge them.
-          </LI>
-          <LI>
-            <strong>Missing the boring middle.</strong> Most outputs
-            aren&apos;t terrible or excellent — they&apos;re 3s. A 1-5
-            scale captures the middle. Pass/fail doesn&apos;t.
-          </LI>
-        </UL>
 
         <TryItCTA
           href={mod.playground?.href ?? "/play/evals"}

@@ -9,6 +9,7 @@ import {
   LI,
   Lede,
   NextModuleFooter,
+  NoteAccent,
   P,
   UL,
 } from "@/components/learn/article";
@@ -36,6 +37,45 @@ export default function OutputFormattingPage() {
           the same content but a different relationship with the reader.
           Format is part of voice.
         </Lede>
+
+        <H2>Why this is the foundation</H2>
+        <P>
+          Format composes with everything else you&apos;ve been designing.
+          A warm persona giving you a bulleted list still feels distant
+          because the format is doing the wrong work. A blunt persona
+          writing flowing prose feels less blunt because the format
+          softens it. Format and tone aren&apos;t separable — they reach
+          the reader together.
+        </P>
+        <P>
+          A few specific moves that pay off:
+        </P>
+        <UL>
+          <LI>
+            <strong>Say &ldquo;no lists&rdquo; when you mean it.</strong>{" "}
+            The model defaults to lists for almost anything that could be
+            structured. If you want prose, the easiest fix is one
+            sentence in the system prompt.
+          </LI>
+          <LI>
+            <strong>Specify length, not just shape.</strong> &ldquo;Short
+            paragraph&rdquo; is more useful than &ldquo;short.&rdquo;
+            &ldquo;Three sentences&rdquo; is more useful than &ldquo;short
+            paragraph.&rdquo;
+          </LI>
+          <LI>
+            <strong>Match the format to the channel.</strong> A toast
+            notification, a long-form email, and a chat reply have
+            different shapes. The system prompt should know which one
+            it&apos;s producing.
+          </LI>
+          <LI>
+            <strong>Read what comes out, not what you asked for.</strong>{" "}
+            If the model keeps reaching for headings when you asked for
+            prose, the rule went into the system prompt softly. Make it
+            louder.
+          </LI>
+        </UL>
 
         <H2>The familiar move</H2>
         <P>
@@ -81,7 +121,13 @@ export default function OutputFormattingPage() {
 - Avoid leading or compound questions
 - Let silence do work
 - Take notes by hand if you can`}
-            note="Scannable, list-shaped. Reads more like a checklist than a conversation. Fine for a doc; cold for a chat."
+            note={
+              <>
+                Scannable, list-shaped. Reads more like a checklist than a
+                conversation. Fine for a doc;{" "}
+                <NoteAccent>cold for a chat.</NoteAccent>
+              </>
+            }
           />
           <ExampleCard
             label="Prose, on purpose"
@@ -89,7 +135,14 @@ export default function OutputFormattingPage() {
             prompt="Reply in one short paragraph. No lists."
             outputLabel="Output"
             output="Before you walk in: lead with rapport, not the first question. Keep questions short and one-at-a-time, and let silence do some of the work — most people fill it with the thing they actually wanted to say. Take notes by hand if you can; it changes how you listen."
-            note="Same four points, different relationship with the reader. Sounds like advice from someone, not a checklist."
+            note={
+              <>
+                Same four points, different relationship with the reader.{" "}
+                <NoteAccent>
+                  Sounds like advice from someone, not a checklist.
+                </NoteAccent>
+              </>
+            }
           />
         </ExampleBlock>
         <P>
@@ -97,45 +150,6 @@ export default function OutputFormattingPage() {
           work of moving the output from &ldquo;a list of tips&rdquo; to
           &ldquo;something a person said.&rdquo;
         </P>
-
-        <H2>Why this is the foundation</H2>
-        <P>
-          Format composes with everything else you&apos;ve been designing.
-          A warm persona giving you a bulleted list still feels distant
-          because the format is doing the wrong work. A blunt persona
-          writing flowing prose feels less blunt because the format
-          softens it. Format and tone aren&apos;t separable — they reach
-          the reader together.
-        </P>
-        <P>
-          A few specific moves that pay off:
-        </P>
-        <UL>
-          <LI>
-            <strong>Say &ldquo;no lists&rdquo; when you mean it.</strong>{" "}
-            The model defaults to lists for almost anything that could be
-            structured. If you want prose, the easiest fix is one
-            sentence in the system prompt.
-          </LI>
-          <LI>
-            <strong>Specify length, not just shape.</strong> &ldquo;Short
-            paragraph&rdquo; is more useful than &ldquo;short.&rdquo;
-            &ldquo;Three sentences&rdquo; is more useful than &ldquo;short
-            paragraph.&rdquo;
-          </LI>
-          <LI>
-            <strong>Match the format to the channel.</strong> A toast
-            notification, a long-form email, and a chat reply have
-            different shapes. The system prompt should know which one
-            it&apos;s producing.
-          </LI>
-          <LI>
-            <strong>Read what comes out, not what you asked for.</strong>{" "}
-            If the model keeps reaching for headings when you asked for
-            prose, the rule went into the system prompt softly. Make it
-            louder.
-          </LI>
-        </UL>
 
         <H2>Try it in your own work</H2>
         <P>
