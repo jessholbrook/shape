@@ -178,15 +178,6 @@ export function PersonaWorkshop() {
         onTemperatureChange={setTemperature}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <PersonaForm
-          values={persona}
-          onChange={setPersona}
-          onReset={() => setPersona(EMPTY_PERSONA)}
-        />
-        <ComposedPromptCard system={composedSystem} empty={personaEmpty} />
-      </div>
-
       <div className="bg-surface border border-line rounded-[16px] p-5">
         <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet block mb-2">
           Ask the persona
@@ -218,7 +209,7 @@ export function PersonaWorkshop() {
           </button>
           {personaEmpty && (
             <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
-              Add a name or role first
+              Add a name or role below first
             </span>
           )}
         </div>
@@ -237,6 +228,20 @@ export function PersonaWorkshop() {
           continue, edit the message above and ask again.
         </p>
       )}
+
+      <div className="pt-2">
+        <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet mb-3">
+          Design surface
+        </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <PersonaForm
+            values={persona}
+            onChange={setPersona}
+            onReset={() => setPersona(EMPTY_PERSONA)}
+          />
+          <ComposedPromptCard system={composedSystem} empty={personaEmpty} />
+        </div>
+      </div>
 
       <DraftSaveBar
         title={title}

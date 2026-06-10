@@ -166,8 +166,32 @@ export const TONE_BY_ID: Record<ToneDimensionId, ToneDimension> =
     return acc;
   }, {} as Record<ToneDimensionId, ToneDimension>);
 
+/** Single-letter accent for each dimension. Used to color-link dials to the
+ *  composed-prompt lines they produced. */
+export const TONE_INITIAL: Record<ToneDimensionId, string> = {
+  warmth: "W",
+  verbosity: "V",
+  energy: "E",
+  directness: "D",
+  concreteness: "C",
+};
+
 export function stopLabel(id: ToneDimensionId, stop: ToneStop): string {
   return TONE_BY_ID[id].stops[stop + 2].label;
+}
+
+export type ToneLine = { dim: ToneDimensionId; text: string };
+
+/** Return per-dial lines that make up the tone block, in stable order. Empty
+ *  if all dials are at neutral. The line text is the raw instruction, no list
+ *  bullet — render it however the UI wants. */
+export function composeToneLines(values: ToneValues): ToneLine[] {
+  const out: ToneLine[] = [];
+  for (const dim of TONE_DIMENSIONS) {
+    const prompt = dim.stops[values[dim.id] + 2].prompt;
+    if (prompt) out.push({ dim: dim.id, text: prompt });
+  }
+  return out;
 }
 
 /**
@@ -175,13 +199,9 @@ export function stopLabel(id: ToneDimensionId, stop: ToneStop): string {
  * Returns null if all dimensions are at neutral.
  */
 export function composeToneBlock(values: ToneValues): string | null {
-  const lines: string[] = [];
-  for (const dim of TONE_DIMENSIONS) {
-    const prompt = dim.stops[values[dim.id] + 2].prompt;
-    if (prompt) lines.push(`- ${prompt}`);
-  }
+  const lines = composeToneLines(values);
   if (lines.length === 0) return null;
-  return `Tone:\n${lines.join("\n")}`;
+  return `Tone:\n${lines.map((l) => `- ${l.text}`).join("\n")}`;
 }
 
 /**
