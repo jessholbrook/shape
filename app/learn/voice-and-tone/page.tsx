@@ -8,6 +8,7 @@ import {
   LI,
   Lede,
   NextModuleFooter,
+  NoteAccent,
   P,
   TryItCTA,
   UL,
@@ -36,6 +37,35 @@ export default function VoiceAndTonePage() {
           directness — turning independently. Once you can name the dials,
           you can move them.
         </Lede>
+
+        <H2>Why this is the foundation</H2>
+        <P>
+          Once you can name the dials, tone stops being a matter of taste
+          and starts being a specification. You can hand someone a tone
+          spec the same way you&apos;d hand them a color spec. They can
+          argue with it. You can change one variable and explain why. The
+          new copy that comes back is comparable to the old copy.
+        </P>
+        <P>
+          Three things to watch for when you tune one:
+        </P>
+        <UL>
+          <LI>
+            <strong>Reaching for one dial when you wanted another.</strong>{" "}
+            If &ldquo;warm&rdquo; isn&apos;t landing, the answer might be
+            in Directness or Energy, not Warmth.
+          </LI>
+          <LI>
+            <strong>Stacking too many.</strong> Three dials off neutral is
+            already a strong tone. All five and the output starts to read
+            as a character, not a voice.
+          </LI>
+          <LI>
+            <strong>Forgetting the brief.</strong> Tone shapes a task;
+            it doesn&apos;t replace one. If the dials are doing too much
+            work, you&apos;re probably under-specifying the role.
+          </LI>
+        </UL>
 
         <H2>The familiar move</H2>
         <P>
@@ -80,7 +110,13 @@ Directness: Direct
 (others at neutral)`}
             outputLabel="Output"
             output="Welcome. Take your time getting set up — you can change any of these later."
-            note="Warmth + composure together read as 'grown-up and kind.' Good for a calm onboarding moment."
+            note={
+              <>
+                Warmth + composure together read as{" "}
+                <NoteAccent>&ldquo;grown-up and kind.&rdquo;</NoteAccent>{" "}
+                Good for a calm onboarding moment.
+              </>
+            }
           />
           <ExampleCard
             label="Warm, playful"
@@ -92,7 +128,13 @@ Directness: Direct
 (others at neutral)`}
             outputLabel="Output"
             output="Hey, glad you made it! Set things up however you like — we can always shuffle them later."
-            note="Same warmth, more energy. Now it reads as 'friend at the door,' for better or worse. Both could be right; they're for different products."
+            note={
+              <>
+                Same warmth, more energy. Now it reads as{" "}
+                <NoteAccent>&ldquo;friend at the door.&rdquo;</NoteAccent>{" "}
+                Both could be right; they&apos;re for different products.
+              </>
+            }
           />
         </ExampleBlock>
         <P>
@@ -101,35 +143,6 @@ Directness: Direct
           the lesson: composability isn&apos;t a coding trick, it&apos;s a
           way of seeing.
         </P>
-
-        <H2>Why this is the foundation</H2>
-        <P>
-          Once you can name the dials, tone stops being a matter of taste
-          and starts being a specification. You can hand someone a tone
-          spec the same way you&apos;d hand them a color spec. They can
-          argue with it. You can change one variable and explain why. The
-          new copy that comes back is comparable to the old copy.
-        </P>
-        <P>
-          Three things to watch for when you tune one:
-        </P>
-        <UL>
-          <LI>
-            <strong>Reaching for one dial when you wanted another.</strong>{" "}
-            If &ldquo;warm&rdquo; isn&apos;t landing, the answer might be
-            in Directness or Energy, not Warmth.
-          </LI>
-          <LI>
-            <strong>Stacking too many.</strong> Three dials off neutral is
-            already a strong tone. All five and the output starts to read
-            as a character, not a voice.
-          </LI>
-          <LI>
-            <strong>Forgetting the brief.</strong> Tone shapes a task;
-            it doesn&apos;t replace one. If the dials are doing too much
-            work, you&apos;re probably under-specifying the role.
-          </LI>
-        </UL>
 
         <TryItCTA
           href={mod.playground?.href ?? "/play/tone"}

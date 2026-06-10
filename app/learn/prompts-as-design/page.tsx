@@ -38,6 +38,19 @@ export default function PromptsAsDesignPage() {
           with different inputs.
         </Lede>
 
+        <H2>Why this is the foundation</H2>
+        <P>
+          Behavior design is mostly small loops. Write a version, watch the
+          model behave, notice the gap between what you wanted and what you
+          got, change one thing. The size of the loop matters: the smaller
+          and faster, the more design you do.
+        </P>
+        <P>
+          Diff Mode shrinks the loop. Two configs, one user message, both
+          outputs side-by-side. You stop debating Version A vs Version B in
+          your head and start seeing them.
+        </P>
+
         <H2>The familiar move</H2>
         <P>
           When you write a tooltip, you don&apos;t hand the engineer a
@@ -84,19 +97,6 @@ export default function PromptsAsDesignPage() {
           didn&apos;t need to know anything about transformers or tokens to
           see why Version B is more useful — you read the two outputs and
           one felt right.
-        </P>
-
-        <H2>Why this is the foundation</H2>
-        <P>
-          Behavior design is mostly small loops. Write a version, watch the
-          model behave, notice the gap between what you wanted and what you
-          got, change one thing. The size of the loop matters: the smaller
-          and faster, the more design you do.
-        </P>
-        <P>
-          Diff Mode shrinks the loop. Two configs, one user message, both
-          outputs side-by-side. You stop debating Version A vs Version B in
-          your head and start seeing them.
         </P>
 
         <TryItCTA
