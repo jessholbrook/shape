@@ -87,7 +87,7 @@ export default function MultiTurnFlowsPage() {
           turn order produce together; it&apos;s not automatic.
         </P>
 
-        <H2>The lesson, stated plainly</H2>
+        <H2>The lesson</H2>
         <P>
           Most prompt design happens in single-turn isolation: write a
           system prompt, ask one thing, look at the answer, iterate.

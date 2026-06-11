@@ -81,7 +81,7 @@ export default function VoiceAndTonePage() {
           vibe and everyone disagrees about whether it&apos;s right.
         </P>
 
-        <H2>The lesson, stated plainly</H2>
+        <H2>The lesson</H2>
         <P>
           Most prompt-writing treats tone as a single slider: more warm,
           less formal, less stiff. The problem is that &ldquo;warm&rdquo;

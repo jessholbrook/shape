@@ -87,7 +87,7 @@ export default function PersonasForAIPage() {
           character the product becomes when it talks to her.
         </P>
 
-        <H2>The lesson, stated plainly</H2>
+        <H2>The lesson</H2>
         <P>
           Most AI personas in the wild stop at name and role: &ldquo;You
           are a helpful research assistant.&rdquo; That&apos;s a job

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Shell } from "@/components/shell";
 import { getModule, nextModule } from "@/lib/curriculum";
 import {
@@ -11,6 +10,7 @@ import {
   NextModuleFooter,
   NoteAccent,
   P,
+  TryItCTA,
   UL,
 } from "@/components/learn/article";
 import { MarkAsRead } from "@/components/learn/mark-as-read";
@@ -92,7 +92,7 @@ export default function OutputFormattingPage() {
           design.
         </P>
 
-        <H2>The lesson, stated plainly</H2>
+        <H2>The lesson</H2>
         <P>
           Most language models default to a few formats — bulleted lists
           with bolded prefixes, numbered steps, headings every two
@@ -154,19 +154,19 @@ export default function OutputFormattingPage() {
         <H2>Try it in your own work</H2>
         <P>
           This module doesn&apos;t pair with a single playground — format
-          shows up everywhere. The fastest way to feel it is in{" "}
-          <Link
-            href="/play/diff"
-            className="text-ink underline decoration-highlight underline-offset-4 decoration-2"
-          >
-            Diff Mode
-          </Link>
-          : write the same user message, set Config A to a system prompt
-          that mentions no format, set Config B to one that specifies
-          format on purpose. Read both. You&apos;ll see how much of the
-          output you were assigning to &ldquo;voice&rdquo; was actually
-          formatting choices.
+          shows up everywhere. The fastest way to feel it is in Diff
+          Mode: write the same user message, set Config A to a system
+          prompt that says nothing about format, set Config B to one
+          that specifies it on purpose. Read both. You&apos;ll see how
+          much of the output you were assigning to &ldquo;voice&rdquo;
+          was actually formatting choices.
         </P>
+
+        <TryItCTA href="/play/diff" buttonLabel="Open Diff Mode">
+          Open Diff Mode and{" "}
+          <span className="italic">give format its own config</span>.
+        </TryItCTA>
+
         <P>
           Then carry that habit into the rest of your work. The next time
           you&apos;re tuning a system prompt, the question to ask

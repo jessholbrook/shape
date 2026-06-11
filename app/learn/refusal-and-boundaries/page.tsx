@@ -93,7 +93,7 @@ export default function RefusalBoundariesPage() {
           designing what happens when it shouldn&apos;t.
         </P>
 
-        <H2>The lesson, stated plainly</H2>
+        <H2>The lesson</H2>
         <P>
           Both over-refusal and under-refusal are failures. Over-refusal —
           declining a perfectly benign question because it brushed against
