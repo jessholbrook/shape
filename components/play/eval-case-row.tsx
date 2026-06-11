@@ -10,6 +10,7 @@ import {
   type EvalCase,
   type Score,
 } from "@/lib/evals";
+import { ShareActions } from "./share-actions";
 
 export function EvalCaseRow({
   num,
@@ -72,9 +73,37 @@ export function EvalCaseRow({
 
       {/* Output */}
       <div className="mt-4">
-        <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet mb-1">
-          Output
-        </p>
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+            Output
+          </p>
+          {result.status === "done" && !!result.output && (
+            <div className="flex items-center gap-3">
+              <ShareActions
+                copyText={result.output}
+                filenameStem={`eval-case${num}`}
+                markdown={[
+                  `# Eval Workshop — case ${num}: ${evalCase.label}`,
+                  "",
+                  ...(score
+                    ? [`**Score:** ${score.total}/${score.max}`, ""]
+                    : []),
+                  "## User message",
+                  "",
+                  evalCase.userMessage,
+                  "",
+                  "## Output",
+                  "",
+                  result.output,
+                  "",
+                  ...(result.note?.trim()
+                    ? ["## Reviewer note", "", result.note.trim(), ""]
+                    : []),
+                ].join("\n")}
+              />
+            </div>
+          )}
+        </div>
         <div className="font-mono text-[13px] leading-[1.55] text-ink whitespace-pre-wrap break-words min-h-[60px]">
           {result.error ? (
             <span className="text-danger">{result.error}</span>

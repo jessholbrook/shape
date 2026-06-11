@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ChoreographedTurn, AssistantResult } from "@/lib/choreographer";
+import { ShareActions } from "./share-actions";
 
 export function ChoreographerTurnRow({
   num,
@@ -61,9 +62,34 @@ export function ChoreographerTurnRow({
 
       {/* Assistant response */}
       <div className="mt-4">
-        <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet mb-1">
-          Assistant
-        </p>
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+            Assistant
+          </p>
+          {turn.assistant.status === "done" && !!turn.assistant.text && (
+            <div className="flex items-center gap-3">
+              <ShareActions
+                copyText={turn.assistant.text}
+                filenameStem={`choreographer-turn${num}`}
+                markdown={[
+                  `# Conversation Choreographer — turn ${num}`,
+                  "",
+                  "## User",
+                  "",
+                  turn.userMessage,
+                  "",
+                  "## Assistant",
+                  "",
+                  turn.assistant.text,
+                  "",
+                  ...(turn.assistant.note?.trim()
+                    ? ["## Note", "", turn.assistant.note.trim(), ""]
+                    : []),
+                ].join("\n")}
+              />
+            </div>
+          )}
+        </div>
         <div className="font-mono text-[13px] leading-[1.55] text-ink whitespace-pre-wrap break-words min-h-[60px]">
           {turn.assistant.error ? (
             <span className="text-danger">{turn.assistant.error}</span>

@@ -8,6 +8,7 @@ import {
   divergenceRatio,
   type DiffSegment,
 } from "@/lib/diff-words";
+import { ShareActions } from "./share-actions";
 
 const DIVERGENCE_THRESHOLD = 0.6;
 
@@ -102,12 +103,16 @@ export function TurnRow({
           config={configA}
           output={turn.outputA}
           segments={segments?.left ?? null}
+          userMessage={turn.userMessage}
+          filenameStem={`diff-turn${num}-a`}
         />
         <TurnOutput
           label="B"
           config={configB}
           output={turn.outputB}
           segments={segments?.right ?? null}
+          userMessage={turn.userMessage}
+          filenameStem={`diff-turn${num}-b`}
         />
       </div>
 
@@ -121,11 +126,15 @@ function TurnOutput({
   config,
   output,
   segments,
+  userMessage,
+  filenameStem,
 }: {
   label: string;
   config: DiffDraftConfig;
   output: DiffTurnOutput;
   segments: DiffSegment[] | null;
+  userMessage: string;
+  filenameStem: string;
 }) {
   const modelName =
     PROVIDERS[config.provider].models.find((m) => m.id === config.model)?.name ??
@@ -136,6 +145,7 @@ function TurnOutput({
       : null;
   const [showPrompt, setShowPrompt] = useState(false);
   const hasPrompt = !!config.system.trim();
+  const hasText = output.status === "done" && !!output.text;
 
   return (
     <div className="flex flex-col gap-2 min-w-0">
@@ -161,7 +171,35 @@ function TurnOutput({
             </button>
           )}
         </div>
-        <StatusDot status={output.status} />
+        <div className="flex items-center gap-3 shrink-0">
+          {hasText && (
+            <ShareActions
+              copyText={output.text}
+              filenameStem={filenameStem}
+              markdown={[
+                `# Diff Mode — side ${label}`,
+                "",
+                `**Model:** ${modelName} · temp ${config.temperature.toFixed(1)}`,
+                "",
+                "## System prompt",
+                "",
+                "```",
+                config.system,
+                "```",
+                "",
+                "## User message",
+                "",
+                userMessage,
+                "",
+                "## Output",
+                "",
+                output.text,
+                "",
+              ].join("\n")}
+            />
+          )}
+          <StatusDot status={output.status} />
+        </div>
       </div>
 
       {showPrompt && hasPrompt && (

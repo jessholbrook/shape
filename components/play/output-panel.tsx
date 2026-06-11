@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { PROVIDERS } from "@/lib/providers";
-import { downloadBlob } from "@/lib/download";
+import { ShareActions } from "./share-actions";
 import type { ConfigState } from "./config-panel";
 
 export type OutputState = {
@@ -55,9 +54,13 @@ export function OutputPanel({
         <div className="flex items-center gap-3">
           {hasText && (
             <ShareActions
-              text={output.text}
+              copyText={output.text}
               filenameStem={filenameStem}
-              meta={{ model: modelName, system: config.system }}
+              markdown={outputMarkdown({
+                model: modelName,
+                system: config.system,
+                output: output.text,
+              })}
             />
           )}
           <StatusPill status={output.status} />
@@ -97,71 +100,33 @@ export function OutputPanel({
   );
 }
 
-/**
- * Copy-and-download controls. Renders nothing when there's no output to share.
- * "Copy" puts plain text on the clipboard; "Download" saves a small Markdown
- * file with the system prompt + output, so it reads cleanly out of context.
- */
-function ShareActions({
-  text,
-  filenameStem,
-  meta,
+/** Markdown body for a downloaded output — system prompt + output. */
+function outputMarkdown({
+  model,
+  system,
+  output,
 }: {
-  text: string;
-  filenameStem: string;
-  meta: { model: string; system: string };
-}) {
-  const [copied, setCopied] = useState(false);
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      /* best effort */
-    }
-  }
-
-  function download() {
-    const date = new Date().toISOString().split("T")[0];
-    const body = [
-      `# Shape output — ${date}`,
-      "",
-      `**Model:** ${meta.model}`,
-      "",
-      "## System prompt",
-      "",
-      "```",
-      meta.system,
-      "```",
-      "",
-      "## Output",
-      "",
-      text,
-      "",
-    ].join("\n");
-    downloadBlob(`${filenameStem}-${date}.md`, "text/markdown", body);
-  }
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={copy}
-        className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
-      >
-        {copied ? "Copied" : "Copy"}
-      </button>
-      <button
-        type="button"
-        onClick={download}
-        className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
-      >
-        Download
-      </button>
-    </>
-  );
+  model: string;
+  system: string;
+  output: string;
+}): string {
+  const date = new Date().toISOString().split("T")[0];
+  return [
+    `# Shape output — ${date}`,
+    "",
+    `**Model:** ${model}`,
+    "",
+    "## System prompt",
+    "",
+    "```",
+    system,
+    "```",
+    "",
+    "## Output",
+    "",
+    output,
+    "",
+  ].join("\n");
 }
 
 function StatusPill({ status }: { status: OutputState["status"] }) {
