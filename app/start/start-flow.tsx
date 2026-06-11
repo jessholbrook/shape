@@ -74,6 +74,44 @@ function KeyEntry({
 
   return (
     <div className="flex flex-col gap-8">
+      <div className="bg-surface border border-line rounded-[16px] p-6 md:p-8">
+        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-success inline-flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-success" />
+          Free — no key needed
+        </p>
+        <h2 className="font-display text-[28px] md:text-[34px] leading-[1.1] text-ink mt-3">
+          Try it free in this browser.
+        </h2>
+        <p className="font-sans text-[15px] leading-[1.55] text-ink-muted mt-3 max-w-lg">
+          A small open model runs locally via WebGPU — nothing leaves your
+          machine. The first run downloads the model once (~1GB); after
+          that it&apos;s instant.
+        </p>
+        <div className="mt-5 flex flex-wrap items-center gap-4">
+          <Link
+            href="/play/diff"
+            className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] hover:bg-ink/90 transition-colors"
+          >
+            Open Diff Mode free
+            <span className="text-highlight">→</span>
+          </Link>
+          <Link
+            href="/play"
+            className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+          >
+            All playgrounds →
+          </Link>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="flex-1 border-t border-line" />
+        <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
+          Or bring a key for bigger models
+        </span>
+        <div className="flex-1 border-t border-line" />
+      </div>
+
       <div>
         <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet mb-4">
           Step 1 — Pick a provider

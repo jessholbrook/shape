@@ -5,7 +5,7 @@ import { StartFlow } from "./start-flow";
 export const metadata = {
   title: "Start",
   description:
-    "Module 0 — bring your own key, take it for a drive. The first five minutes of Shape.",
+    "Module 0 — the first five minutes of Shape. Free in your browser, or bring your own key for bigger models.",
 };
 
 export default function StartPage() {
@@ -15,12 +15,13 @@ export default function StartPage() {
         <SectionNumber label="Module 0">00</SectionNumber>
 
         <h1 className="font-display text-[56px] md:text-[80px] leading-[0.98] tracking-tight text-ink mt-6">
-          Bring <span className="italic">your</span> key.
+          Start <span className="italic">shaping</span>.
         </h1>
 
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-8 max-w-xl">
-          Shape runs on your own model access. Five minutes to set up, then
-          every playground is yours. Your key never leaves your browser.
+          Free in this browser — no key needed. Bring an Anthropic or
+          OpenAI key when you want bigger models. Either way, everything
+          stays on your machine.
         </p>
 
         <div className="mt-16">
