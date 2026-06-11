@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback } from "react";
 import { ProviderId, PROVIDER_LIST } from "../providers";
 import { getKey, setKey as writeKey, clearKey as removeKey } from "../keys";
+import { createLocalStore, useHydrated } from "./use-local-store";
 
 export type KeyMap = Partial<Record<ProviderId, string>>;
 
@@ -15,21 +16,15 @@ function readAll(): KeyMap {
   return out;
 }
 
-export function useKeys() {
-  const [keys, setKeys] = useState<KeyMap>({});
-  const [hydrated, setHydrated] = useState(false);
+const store = createLocalStore<KeyMap>({
+  events: ["shape:keys-changed", "storage"],
+  read: readAll,
+  serverValue: {},
+});
 
-  useEffect(() => {
-    setKeys(readAll());
-    setHydrated(true);
-    const handler = () => setKeys(readAll());
-    window.addEventListener("shape:keys-changed", handler);
-    window.addEventListener("storage", handler);
-    return () => {
-      window.removeEventListener("shape:keys-changed", handler);
-      window.removeEventListener("storage", handler);
-    };
-  }, []);
+export function useKeys() {
+  const keys = store.useValue();
+  const hydrated = useHydrated();
 
   const saveKey = useCallback((providerId: ProviderId, key: string) => {
     writeKey(providerId, key.trim());

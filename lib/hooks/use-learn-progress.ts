@@ -1,26 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   LEARN_PROGRESS_EVENT,
   getReadSlugs,
 } from "@/lib/learn-progress";
+import { createLocalStore, useHydrated } from "./use-local-store";
+
+const EMPTY: Set<string> = new Set();
+
+const store = createLocalStore<Set<string>>({
+  events: [LEARN_PROGRESS_EVENT, "storage"],
+  read: getReadSlugs,
+  serverValue: EMPTY,
+});
 
 export function useLearnProgress() {
-  const [read, setRead] = useState<Set<string>>(new Set());
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    setRead(getReadSlugs());
-    setHydrated(true);
-    const refresh = () => setRead(getReadSlugs());
-    window.addEventListener(LEARN_PROGRESS_EVENT, refresh);
-    window.addEventListener("storage", refresh);
-    return () => {
-      window.removeEventListener(LEARN_PROGRESS_EVENT, refresh);
-      window.removeEventListener("storage", refresh);
-    };
-  }, []);
+  const read = store.useValue();
+  const hydrated = useHydrated();
 
   function hasRead(slug: string): boolean {
     return read.has(slug);

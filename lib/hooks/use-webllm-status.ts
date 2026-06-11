@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import {
   getWebLLMStatus,
   subscribeWebLLMStatus,
@@ -13,10 +13,11 @@ import {
  * first run is fetching weights.
  */
 export function useWebLLMStatus(): WebLLMStatus {
-  const [status, setStatus] = useState<WebLLMStatus>(() => getWebLLMStatus());
-  useEffect(() => {
-    setStatus(getWebLLMStatus());
-    return subscribeWebLLMStatus(setStatus);
-  }, []);
-  return status;
+  // The engine module keeps a stable status object between changes, so
+  // getWebLLMStatus doubles as both client and server snapshot.
+  return useSyncExternalStore(
+    subscribeWebLLMStatus,
+    getWebLLMStatus,
+    getWebLLMStatus,
+  );
 }

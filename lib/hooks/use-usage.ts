@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { getTodaySummary, type UsageSummary } from "../usage";
+import { createLocalStore, useHydrated } from "./use-local-store";
 
 const EMPTY: UsageSummary = {
   totalCost: 0,
@@ -10,21 +10,14 @@ const EMPTY: UsageSummary = {
   byProvider: {},
 };
 
+const store = createLocalStore<UsageSummary>({
+  events: ["shape:usage-changed", "storage"],
+  read: getTodaySummary,
+  serverValue: EMPTY,
+});
+
 export function useUsage() {
-  const [summary, setSummary] = useState<UsageSummary>(EMPTY);
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    setSummary(getTodaySummary());
-    setHydrated(true);
-    const refresh = () => setSummary(getTodaySummary());
-    window.addEventListener("shape:usage-changed", refresh);
-    window.addEventListener("storage", refresh);
-    return () => {
-      window.removeEventListener("shape:usage-changed", refresh);
-      window.removeEventListener("storage", refresh);
-    };
-  }, []);
-
+  const summary = store.useValue();
+  const hydrated = useHydrated();
   return { summary, hydrated };
 }
