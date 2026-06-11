@@ -1,5 +1,7 @@
 # Shape
 
+Live at **[shape-models.com](https://shape-models.com)**.
+
 **Shape model behavior.** A playground for people in UX to learn how to shape AI model behaviors. Learn by doing. Create artifacts you can use later.
 
 Free in your browser — no key needed to start. Bring your own Anthropic or OpenAI key when you want bigger models.
@@ -117,7 +119,7 @@ LINEAR_TEAM_ID=        # UUID of the team feedback should land in
 
 # Override the metadataBase for OG/canonical URLs. Only needed when a
 # custom domain points at the deployment.
-NEXT_PUBLIC_SITE_URL=  # e.g. shape.example.com
+NEXT_PUBLIC_SITE_URL=  # e.g. shape-models.com
 ```
 
 ## Feedback → Linear
