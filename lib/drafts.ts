@@ -104,6 +104,11 @@ export type ToneDraft = {
   updatedAt: number;
 };
 
+export type PersonaTranscriptMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
 export type PersonaDraft = {
   id: string;
   kind: "persona";
@@ -114,6 +119,8 @@ export type PersonaDraft = {
   persona: PersonaValues;
   lastUserMessage: string;
   lastOutput?: string;
+  /** Full conversation. Pre-multi-turn drafts only have the last pair above. */
+  transcript?: PersonaTranscriptMessage[];
   createdAt: number;
   updatedAt: number;
 };

@@ -101,53 +101,89 @@ export const EMPTY_PERSONA: PersonaValues = {
   strengths: "",
 };
 
+export type PersonaSection = {
+  /** The form field(s) this section came from; "identity" = name + role,
+   *  "style" = the fixed response-style coda. */
+  source: PersonaField | "identity" | "style";
+  /** Chip label shown in the composed-prompt card. Matches the form labels. */
+  label: string;
+  text: string;
+};
+
+/**
+ * Compose the prompt as labeled sections so the UI can chip each one back to
+ * the form field it came from. Skips empty optional sections.
+ */
+export function composePersonaSections(
+  values: PersonaValues,
+): PersonaSection[] {
+  const name = values.name.trim();
+  const role = values.role.trim();
+  const sections: PersonaSection[] = [];
+
+  if (name && role) {
+    sections.push({
+      source: "identity",
+      label: "Name + Role",
+      text: `You are ${name}, ${role.replace(/\.$/, "")}.`,
+    });
+  } else if (name) {
+    sections.push({ source: "identity", label: "Name + Role", text: `You are ${name}.` });
+  } else if (role) {
+    sections.push({
+      source: "identity",
+      label: "Name + Role",
+      text: `You are ${role.replace(/\.$/, "")}.`,
+    });
+  }
+
+  const optional = (
+    source: PersonaField,
+    label: string,
+    prefix: string,
+    value: string,
+  ) => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    sections.push({ source, label, text: `${prefix}${trimmed}` });
+  };
+
+  optional("backstory", "Backstory", "Background: ", values.backstory);
+  optional("beliefs", "Core beliefs", "Beliefs: ", values.beliefs);
+  optional("voice", "Voice", "Voice: ", values.voice);
+  optional(
+    "wontDiscuss",
+    "Won't discuss",
+    "You don't engage with: ",
+    values.wontDiscuss,
+  );
+  optional(
+    "strengths",
+    "Strengths",
+    "You're particularly good at: ",
+    values.strengths,
+  );
+
+  // Response style coda — keeps the persona from drifting into chatty
+  // roleplay when the user wants concrete, structured help.
+  sections.push({
+    source: "style",
+    label: "Style",
+    text: "Response style: lead with the principle or answer in one short sentence. Then give 2-3 concrete examples or steps. Skip pleasantries and self-introduction. Don't roleplay being asked.",
+  });
+
+  return sections;
+}
+
 /**
  * Compose a system prompt from persona values. Skips empty optional sections so
  * the model isn't told about absent things.
  */
 export function composePersonaPrompt(values: PersonaValues): string {
-  const name = values.name.trim();
-  const role = values.role.trim();
-  const lines: string[] = [];
-
-  if (name && role) {
-    lines.push(`You are ${name}, ${role.replace(/\.$/, "")}.`);
-  } else if (name) {
-    lines.push(`You are ${name}.`);
-  } else if (role) {
-    lines.push(`You are ${role.replace(/\.$/, "")}.`);
-  }
-
-  const section = (label: string, value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return;
-    lines.push("");
-    lines.push(`${label}: ${trimmed}`);
-  };
-
-  section("Background", values.backstory);
-  section("Beliefs", values.beliefs);
-  section("Voice", values.voice);
-
-  if (values.wontDiscuss.trim()) {
-    lines.push("");
-    lines.push(`You don't engage with: ${values.wontDiscuss.trim()}`);
-  }
-  if (values.strengths.trim()) {
-    lines.push("");
-    lines.push(
-      `You're particularly good at: ${values.strengths.trim()}`,
-    );
-  }
-
-  // Response style coda — keeps the persona from drifting into chatty
-  // roleplay when the user wants concrete, structured help.
-  lines.push("");
-  lines.push(
-    "Response style: lead with the principle or answer in one short sentence. Then give 2-3 concrete examples or steps. Skip pleasantries and self-introduction. Don't roleplay being asked.",
-  );
-
-  return lines.join("\n").trim();
+  return composePersonaSections(values)
+    .map((s) => s.text)
+    .join("\n\n")
+    .trim();
 }
 
 /**
