@@ -19,7 +19,6 @@ import { evaluateMatch } from "@/lib/refusal";
 import { aggregateScore, SCORE_MAX } from "@/lib/evals";
 import { ImportPanel } from "@/components/notebook/import-panel";
 import { KindPill } from "@/components/kind-pill";
-import { BUILD_ENABLED } from "@/lib/flags";
 
 const UNDO_WINDOW_MS = 6000;
 
@@ -100,7 +99,6 @@ export function Notebook() {
   const choreographerDrafts = drafts.filter(
     (d) => d.kind === "choreographer",
   );
-  const caseStudyDrafts = drafts.filter((d) => d.kind === "case-study");
   const noDrafts = drafts.length === 0;
 
   return (
@@ -206,20 +204,6 @@ export function Notebook() {
           {choreographerDrafts.length > 0 && (
             <Section title="Conversations" count={choreographerDrafts.length}>
               {choreographerDrafts.map((d) => (
-                <DraftRow
-                  key={d.id}
-                  draft={d}
-                  onDuplicate={() => handleDuplicate(d)}
-                  onExport={() => handleExport(d)}
-                  onDelete={() => handleDelete(d)}
-                />
-              ))}
-            </Section>
-          )}
-
-          {caseStudyDrafts.length > 0 && (
-            <Section title="Case studies" count={caseStudyDrafts.length}>
-              {caseStudyDrafts.map((d) => (
                 <DraftRow
                   key={d.id}
                   draft={d}
@@ -471,27 +455,6 @@ function DraftSummary({ draft }: { draft: Draft }) {
     );
   }
 
-  if (draft.kind === "case-study") {
-    const modelName =
-      PROVIDERS[draft.provider].models.find((m) => m.id === draft.model)
-        ?.name ?? draft.model;
-    const briefSnippet = draft.brief.replace(/\s+/g, " ").trim().slice(0, 80);
-    return (
-      <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
-        {modelName} · {draft.studioId}
-        {briefSnippet && (
-          <>
-            {" — "}
-            <span className="italic">
-              &quot;{briefSnippet}
-              {draft.brief.length > 80 ? "…" : ""}&quot;
-            </span>
-          </>
-        )}
-      </p>
-    );
-  }
-
   const activeDimensions = TONE_DIMENSIONS.filter(
     (d) => draft.tone[d.id] !== 0,
   )
@@ -585,12 +548,11 @@ function EmptyState() {
         No drafts yet
       </p>
       <h2 className="font-display text-[28px] md:text-[34px] leading-[1.15] text-ink mt-3">
-        Save something from a playground{BUILD_ENABLED ? " or studio" : ""}.
+        Save something from a playground.
       </h2>
       <p className="font-sans text-[14px] text-ink-muted mt-4 max-w-md mx-auto">
-        {BUILD_ENABLED
-          ? "Every playground and studio has a Save draft action at the bottom. Anything you save shows up here, ready to reopen or export."
-          : "Every playground has a Save draft action at the bottom. Anything you save shows up here, ready to reopen or export."}
+        Every playground has a Save draft action at the bottom. Anything
+        you save shows up here, ready to reopen or export.
       </p>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
         <Link
@@ -600,31 +562,17 @@ function EmptyState() {
           Open Diff Mode
           <span className="text-highlight">→</span>
         </Link>
-        {BUILD_ENABLED ? (
-          <Link
-            href="/build/research-interview-assistant"
-            className="inline-flex items-center gap-2 border border-ink text-ink rounded-[10px] px-4 py-2 font-sans text-[14px] hover:bg-ink hover:text-canvas transition-colors"
-          >
-            Open a Studio
-          </Link>
-        ) : (
-          <Link
-            href="/play/tone"
-            className="inline-flex items-center gap-2 border border-ink text-ink rounded-[10px] px-4 py-2 font-sans text-[14px] hover:bg-ink hover:text-canvas transition-colors"
-          >
-            Open Tone Dial
-          </Link>
-        )}
+        <Link
+          href="/play/tone"
+          className="inline-flex items-center gap-2 border border-ink text-ink rounded-[10px] px-4 py-2 font-sans text-[14px] hover:bg-ink hover:text-canvas transition-colors"
+        >
+          Open Tone Dial
+        </Link>
       </div>
       <div className="mt-4 flex items-center justify-center gap-4 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
         <Link href="/play" className="hover:text-ink">
           All playgrounds →
         </Link>
-        {BUILD_ENABLED && (
-          <Link href="/build" className="hover:text-ink">
-            All studios →
-          </Link>
-        )}
       </div>
     </div>
   );
