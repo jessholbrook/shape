@@ -22,6 +22,8 @@ import { PersonaForm } from "@/components/play/persona-form";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
+import { StreamingPlaceholder } from "@/components/play/streaming-placeholder";
+import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
 
 type ReplyState = {
   text: string;
@@ -214,6 +216,7 @@ export function PersonaWorkshop() {
         providerName={PROVIDERS[provider].name}
         action="test the persona"
       />
+      <WebLLMUnsupportedBanner show={provider === "webllm"} />
 
       <ProviderModelTempRow
         provider={provider}
@@ -396,9 +399,7 @@ function ConversationCard({
         ))}
         {reply.status === "running" && (
           <Message role="assistant" personaLabel={personaLabel}>
-            {reply.text || (
-              <span className="text-ink-quiet italic">Streaming…</span>
-            )}
+            {reply.text || <StreamingPlaceholder />}
             {reply.text && (
               <span className="inline-block w-2 h-4 align-text-bottom ml-0.5 bg-ink animate-pulse" />
             )}

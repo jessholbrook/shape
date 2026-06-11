@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { ChoreographedTurn, AssistantResult } from "@/lib/choreographer";
 import { ShareActions } from "./share-actions";
+import { StreamingPlaceholder } from "./streaming-placeholder";
 
 export function ChoreographerTurnRow({
   num,
@@ -101,7 +102,7 @@ export function ChoreographerTurnRow({
               )}
             </>
           ) : turn.assistant.status === "running" ? (
-            <span className="text-ink-quiet italic">Streaming…</span>
+            <StreamingPlaceholder />
           ) : (
             <span className="text-ink-quiet italic">Not run yet.</span>
           )}

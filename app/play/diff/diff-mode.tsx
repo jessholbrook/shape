@@ -17,6 +17,7 @@ import {
 import { ConfigPanel, type ConfigState } from "@/components/play/config-panel";
 import { TurnRow } from "@/components/play/turn-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
+import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
 
 const MAX_PIN_LENGTH = 200;
 
@@ -278,6 +279,11 @@ export function DiffMode() {
           </Link>
         </div>
       )}
+      <WebLLMUnsupportedBanner
+        show={
+          configA.provider === "webllm" || configB.provider === "webllm"
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ConfigPanel

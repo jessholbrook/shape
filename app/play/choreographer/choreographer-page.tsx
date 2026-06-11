@@ -21,6 +21,7 @@ import { suggestTitle, type ChoreographerDraft } from "@/lib/drafts";
 import { ChoreographerTurnRow } from "@/components/play/choreographer-turn-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
+import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
 
 const MAX_TURNS = 10;
@@ -230,6 +231,7 @@ export function Choreographer() {
         providerName={PROVIDERS[provider].name}
         action="run the flow"
       />
+      <WebLLMUnsupportedBanner show={provider === "webllm"} />
 
       {/* Provider / model / temperature */}
       <ProviderModelTempRow

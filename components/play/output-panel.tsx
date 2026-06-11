@@ -2,6 +2,7 @@
 
 import { PROVIDERS } from "@/lib/providers";
 import { ShareActions } from "./share-actions";
+import { StreamingPlaceholder } from "./streaming-placeholder";
 import type { ConfigState } from "./config-panel";
 
 export type OutputState = {
@@ -77,6 +78,8 @@ export function OutputPanel({
               <span className="inline-block w-2 h-4 align-text-bottom ml-0.5 bg-ink animate-pulse" />
             )}
           </>
+        ) : output.status === "running" ? (
+          <StreamingPlaceholder />
         ) : (
           <span className="text-ink-quiet italic">
             Output will stream here.

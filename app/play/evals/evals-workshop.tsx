@@ -24,6 +24,7 @@ import { RubricEditor } from "@/components/play/rubric-editor";
 import { EvalCaseRow } from "@/components/play/eval-case-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
+import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
 
 function emptyResults(cases: EvalCase[]): Record<string, CaseResult> {
@@ -209,6 +210,7 @@ export function EvalsWorkshop() {
         providerName={PROVIDERS[provider].name}
         action="run the eval"
       />
+      <WebLLMUnsupportedBanner show={provider === "webllm"} />
 
       {/* Provider / model / temperature */}
       <ProviderModelTempRow

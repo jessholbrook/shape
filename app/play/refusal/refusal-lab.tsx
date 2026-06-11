@@ -20,6 +20,7 @@ import { suggestTitle, type RefusalDraft } from "@/lib/drafts";
 import { ProbeRow } from "@/components/play/probe-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
+import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
 
 function emptyResults(probes: Probe[]): Record<string, ProbeResult> {
@@ -190,6 +191,7 @@ export function RefusalLab() {
         providerName={PROVIDERS[provider].name}
         action="run the panel"
       />
+      <WebLLMUnsupportedBanner show={provider === "webllm"} />
 
       {/* Provider / model / temperature */}
       <ProviderModelTempRow

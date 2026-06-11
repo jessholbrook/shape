@@ -22,6 +22,7 @@ import { OutputPanel, type OutputState } from "@/components/play/output-panel";
 import type { ConfigState } from "@/components/play/config-panel";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
+import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
 
 const EMPTY_OUTPUT: OutputState = {
@@ -174,6 +175,7 @@ export function ToneDial() {
         providerName={PROVIDERS[provider].name}
         action="run the dials"
       />
+      <WebLLMUnsupportedBanner show={provider === "webllm"} />
 
       <ProviderModelTempRow
         provider={provider}
