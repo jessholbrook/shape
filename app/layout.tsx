@@ -24,7 +24,7 @@ const geistMono = Geist_Mono({
 
 /**
  * Best-effort origin for absolute URLs in metadata (OG images, canonical
- * links). Set `NEXT_PUBLIC_SITE_URL` on a custom domain ("shape.example.com");
+ * links). Set `NEXT_PUBLIC_SITE_URL` on a custom domain ("shape-models.com");
  * otherwise we fall back to Vercel's per-deployment URL and finally to local
  * dev. Always includes the protocol.
  */
