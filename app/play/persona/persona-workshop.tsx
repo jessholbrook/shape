@@ -240,7 +240,7 @@ export function PersonaWorkshop() {
 
       <div className="bg-surface border border-line rounded-[16px] p-5">
         <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet block mb-2">
-          {hasConversation ? "Reply to the persona" : "Ask the persona"}
+          {hasConversation ? "Continue the conversation" : "Ask the persona"}
         </label>
         <textarea
           value={userMessage}

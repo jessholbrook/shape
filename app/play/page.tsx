@@ -16,6 +16,8 @@ type Playground = {
   blurb: string;
   artifact: string;
   status: "ready" | "soon";
+  /** The Learn module that teaches the concept behind this playground. */
+  learn?: { href: string; label: string };
 };
 
 const PLAYGROUNDS: Playground[] = [
@@ -28,6 +30,7 @@ const PLAYGROUNDS: Playground[] = [
       "Run one prompt through two configurations side-by-side. The fastest way to feel how prompts shape outputs.",
     artifact: "Diff Log",
     status: "ready",
+    learn: { href: "/learn/prompts-as-design", label: "Module 01" },
   },
   {
     num: "02",
@@ -38,6 +41,7 @@ const PLAYGROUNDS: Playground[] = [
       "Treat style as a design token. Move dials for warmth, verbosity, energy, directness — see the prompt compose itself.",
     artifact: "Behavior Spec",
     status: "ready",
+    learn: { href: "/learn/voice-and-tone", label: "Module 02" },
   },
   {
     num: "03",
@@ -48,6 +52,7 @@ const PLAYGROUNDS: Playground[] = [
       "Design a character — backstory, beliefs, blind spots — and watch the model embody them.",
     artifact: "Persona Card",
     status: "ready",
+    learn: { href: "/learn/personas-for-ai", label: "Module 03" },
   },
   {
     num: "04",
@@ -58,6 +63,7 @@ const PLAYGROUNDS: Playground[] = [
       "Probe boundary design with a panel of edge cases. Tune the line between over- and under-refusal.",
     artifact: "Refusal Scorecard",
     status: "ready",
+    learn: { href: "/learn/refusal-and-boundaries", label: "Module 04" },
   },
   {
     num: "05",
@@ -68,6 +74,7 @@ const PLAYGROUNDS: Playground[] = [
       "Rubric-based evaluation. Define what good looks like, score the model against it, watch the average move.",
     artifact: "Eval Rubric + Scorecard",
     status: "ready",
+    learn: { href: "/learn/evaluation", label: "Module 06" },
   },
   {
     num: "06",
@@ -78,6 +85,7 @@ const PLAYGROUNDS: Playground[] = [
       "Multi-turn flow design. Script the user's turns, run the conversation end-to-end, watch the model hold the thread.",
     artifact: "Behavior Spec",
     status: "ready",
+    learn: { href: "/learn/multi-turn-flows", label: "Module 07" },
   },
 ];
 
@@ -114,6 +122,7 @@ function PlaygroundCard({
   blurb,
   artifact,
   status,
+  learn,
 }: Playground) {
   const ready = status === "ready";
   const inner = (
@@ -147,9 +156,15 @@ function PlaygroundCard({
         {blurb}
       </p>
 
-      <div className="mt-6 flex items-center justify-between">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
           Produces — <span className="text-ink-muted">{artifact}</span>
+          {learn && (
+            <>
+              {" · "}Concept —{" "}
+              <span className="text-ink-muted">{learn.label}</span>
+            </>
+          )}
         </span>
         {ready && (
           <span className="font-mono text-[12px] text-ink group-hover:text-highlight transition-colors">
