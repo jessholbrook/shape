@@ -344,6 +344,13 @@ export function DiffMode() {
               </button>
             </div>
           </div>
+          {pins.length === 0 && !running && (
+            <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+              Tip — highlight a phrase in any output, then{" "}
+              <span className="text-ink-muted">+ Pin selection</span> to carry
+              it through future turns.
+            </p>
+          )}
           {turns.map((t, i) => (
             <TurnRow
               key={t.id}

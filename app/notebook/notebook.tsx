@@ -313,9 +313,9 @@ function DraftRow({
           </button>
           <Link
             href={`/print/draft?id=${draft.id}`}
-            className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+            className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink underline decoration-highlight underline-offset-4 decoration-2"
           >
-            PDF
+            Save as PDF
           </Link>
           <button
             type="button"
