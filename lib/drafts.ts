@@ -41,6 +41,9 @@ export type DiffTurn = {
   outputA: DiffTurnOutput;
   outputB: DiffTurnOutput;
   note?: string;
+  /** Phrases pinned at the time this turn was sent — kept so reopening a draft
+   *  preserves which carry-throughs the model saw on each turn. */
+  pinsApplied?: string[];
 };
 
 export type DiffDraft = {
@@ -50,6 +53,9 @@ export type DiffDraft = {
   configA: DiffDraftConfig;
   configB: DiffDraftConfig;
   turns: DiffTurn[];
+  /** Live pin list — phrases the user has highlighted to inject into future
+   *  turns. Per-turn snapshots live on DiffTurn.pinsApplied. */
+  pins?: string[];
   createdAt: number;
   updatedAt: number;
 };

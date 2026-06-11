@@ -72,6 +72,23 @@ export function TurnRow({
         )}
       </div>
 
+      {turn.pinsApplied && turn.pinsApplied.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+            Pins active
+          </span>
+          {turn.pinsApplied.map((p) => (
+            <span
+              key={p}
+              title={p}
+              className="font-mono text-[10px] bg-highlight-soft text-highlight-ink rounded-full px-2 py-0.5 max-w-[200px] truncate"
+            >
+              &ldquo;{p}&rdquo;
+            </span>
+          ))}
+        </div>
+      )}
+
       {tooDivergent && (
         <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
           Outputs diverge too much for word-level highlights — they&apos;d
