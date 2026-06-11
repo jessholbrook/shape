@@ -2,7 +2,7 @@
 
 Live at **[shape-models.com](https://shape-models.com)**.
 
-**Shape model behavior.** A playground for designers, writers, and researchers to learn how to shape AI model behaviors. Learn by doing. Create artifacts you can use later.
+**Shape model behavior.** A playground for people in UX — designers, researchers, writers, prototypers — to learn how to shape AI model behaviors. Learn by doing. Create artifacts you can use later.
 
 Free in your browser — no key needed to start. Bring your own Anthropic or OpenAI key when you want bigger models.
 
@@ -12,7 +12,7 @@ Free in your browser — no key needed to start. Bring your own Anthropic or Ope
 
 Shape is a small, opinionated web app for the design side of working with AI models. It's the difference between *using* an LLM and *shaping* one — writing personas, tuning voice, choreographing multi-turn flows, designing where the model says no, evaluating outputs against a rubric.
 
-The audience is designers, writers, and researchers, not engineers. Token counters and JSON pretty-printers stay off-screen. Personas, microcopy, evaluation rubrics, and A/B comparisons come to the front.
+The audience is people in UX — designers, researchers, writers, prototypers — not engineers. Token counters and JSON pretty-printers stay off-screen. Personas, microcopy, evaluation rubrics, and A/B comparisons come to the front.
 
 ## What's inside
 
