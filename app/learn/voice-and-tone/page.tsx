@@ -33,9 +33,9 @@ export default function VoiceAndTonePage() {
         <ArticleHeader module={mod} />
 
         <Lede>
-          Tone isn&apos;t one thing. It&apos;s warmth, verbosity, energy,
-          directness — turning independently. Once you can name the dials,
-          you can move them.
+          Tone isn&apos;t one dial. Warmth, verbosity, energy, and
+          directness each turn on their own. Once you can name them, you
+          can move them.
         </Lede>
 
         <H2>Why this is the foundation</H2>

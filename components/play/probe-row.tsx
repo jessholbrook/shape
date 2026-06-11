@@ -167,7 +167,7 @@ export function ProbeRow({
                     : "border-line text-ink-muted hover:border-ink-muted hover:text-ink"
                 }`}
               >
-                It {VERDICT_LABEL[v].toLowerCase()}
+                {VERDICT_LABEL[v]}
               </button>
             );
           })}
