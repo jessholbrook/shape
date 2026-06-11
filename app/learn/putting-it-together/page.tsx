@@ -2,10 +2,13 @@ import { Shell } from "@/components/shell";
 import { getModule, nextModule } from "@/lib/curriculum";
 import {
   ArticleHeader,
+  ExampleBlock,
+  ExampleCard,
   H2,
   LI,
   Lede,
   NextModuleFooter,
+  NoteAccent,
   P,
   TryItCTA,
   UL,
@@ -81,6 +84,46 @@ export default function PuttingItTogetherPage() {
             reflection beat ten of post-rationalization.
           </LI>
         </UL>
+
+        <H2>A small example</H2>
+        <P>
+          The middle steps — persona, voice — are Modules 2 and 3, which
+          you&apos;ve already done. The bookends are what&apos;s new. Here
+          they are for one small project:
+        </P>
+        <ExampleBlock>
+          <ExampleCard
+            label="The brief"
+            promptLabel="Audience"
+            prompt="Junior UX designers preparing for their first interview round."
+            outputLabel="Brief"
+            output="An assistant that helps first-time interviewers write open, non-leading questions and sequence them. It coaches; it doesn't script — the designer should leave with better instincts, not a teleprompter."
+            note={
+              <>
+                Two sentences of constraint.{" "}
+                <NoteAccent>
+                  &ldquo;Coaches, doesn&apos;t script&rdquo; settles a
+                  dozen downstream debates.
+                </NoteAccent>
+              </>
+            }
+          />
+          <ExampleCard
+            label="The reflection"
+            promptLabel="After one sample run"
+            prompt={`"What should I ask first?"`}
+            outputLabel="Reflection"
+            output="The assistant held the no-leading-questions line and rewrote my opener well. But it over-explains — three paragraphs where one would do. Next pass: add a verbosity constraint to the voice, then test whether it survives a 'just give me a script' push."
+            note={
+              <>
+                Honest, specific, points at the next iteration.{" "}
+                <NoteAccent>
+                  This is the paragraph a hiring manager actually reads.
+                </NoteAccent>
+              </>
+            }
+          />
+        </ExampleBlock>
 
         <H2>Why this is the foundation</H2>
         <P>

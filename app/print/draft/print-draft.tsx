@@ -44,8 +44,9 @@ export function PrintDraft() {
     return (
       <main className="mx-auto max-w-[760px] px-6 py-16">
         <p className="font-sans text-[15px] text-ink">
-          Draft not found. Drafts live in this browser&apos;s localStorage —
-          open the print view from the same browser you saved in.
+          Draft not found. Drafts live only in the browser they were saved
+          in — this link won&apos;t work anywhere else. If someone sent it
+          to you, ask them for the PDF or JSON export instead.
         </p>
         <Link
           href="/notebook"
