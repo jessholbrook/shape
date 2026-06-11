@@ -162,7 +162,7 @@ export function Notebook() {
           )}
 
           {toneDrafts.length > 0 && (
-            <Section title="Tone setups" count={toneDrafts.length}>
+            <Section title="Tone designs" count={toneDrafts.length}>
               {toneDrafts.map((d) => (
                 <DraftRow
                   key={d.id}

@@ -20,7 +20,7 @@ const SLUG = "evaluation";
 export const metadata = {
   title: "Evaluation",
   description:
-    "A rubric makes good behavior something you can build, not something you sense.",
+    "A rubric turns \"good\" from a feeling into a spec. Define what good looks like, then score against it.",
 };
 
 export default function EvaluationPage() {
@@ -33,9 +33,9 @@ export default function EvaluationPage() {
         <ArticleHeader module={mod} />
 
         <Lede>
-          A rubric makes good behavior something you can build, not
-          something you sense. Once it&apos;s on the page, you can argue
-          with it — and so can the rest of your team.
+          A rubric turns &ldquo;good&rdquo; from a feeling into a spec.
+          Once it&apos;s on the page, you can argue with it — and so can
+          the rest of your team.
         </Lede>
 
         <H2>Why this is the foundation</H2>

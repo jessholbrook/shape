@@ -39,7 +39,7 @@ function siteOrigin(): string {
 }
 
 const DESCRIPTION =
-  "A playground for people in UX to learn how to shape AI model behaviors. Learn by doing. Create artifacts you can use later.";
+  "A playground for people in UX — designers, researchers, writers, prototypers — to learn how to shape AI model behaviors. Learn by doing. Create artifacts you can use later.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin()),

@@ -316,7 +316,7 @@ export function DiffMode() {
                   selectionText
                     ? `Pin "${selectionText.slice(0, 60)}${
                         selectionText.length > 60 ? "…" : ""
-                      }" — injected as a reminder on future turns.`
+                      }" — carried into every future turn as a reminder.`
                     : "Highlight a phrase in an output to enable."
                 }
                 className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink underline decoration-highlight underline-offset-4 decoration-2 disabled:opacity-40 disabled:no-underline disabled:text-ink-quiet disabled:cursor-not-allowed"
@@ -363,7 +363,7 @@ export function DiffMode() {
         {pins.length > 0 && (
           <div className="mb-4 flex flex-col gap-2">
             <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet">
-              Pinned — injected as a reminder before the next message
+              Pinned — added to each new turn as a reminder to the model
             </p>
             <div className="flex flex-wrap gap-1.5">
               {pins.map((p) => (
