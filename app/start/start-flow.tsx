@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { BYOK_PROVIDERS, PROVIDERS, type ProviderId } from "@/lib/providers";
-import { BUILD_ENABLED } from "@/lib/flags";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { validateKey } from "@/lib/keys";
 import { testConnection } from "@/lib/providers/index";
@@ -284,9 +283,9 @@ function SuccessState({ keys }: { keys: Partial<Record<ProviderId, string>> }) {
           You&apos;re ready to shape.
         </h2>
         <p className="font-sans text-[15px] leading-[1.55] text-ink-muted mt-4 max-w-lg">
-          {BUILD_ENABLED
-            ? "Every playground and studio is unlocked. Most people start with Diff Mode for the fastest sense of how prompts shape outputs, then jump into a Studio when they want a portfolio piece."
-            : "Every playground is unlocked. Most people start with Diff Mode for the fastest sense of how prompts shape outputs. Tone Dial is good if you want to feel style as a lever."}
+          Every playground is unlocked. Most people start with Diff Mode for
+          the fastest sense of how prompts shape outputs. Tone Dial is good
+          if you want to feel style as a lever.
         </p>
       </div>
 
@@ -307,14 +306,6 @@ function SuccessState({ keys }: { keys: Partial<Record<ProviderId, string>> }) {
             title="Style as a design token"
             blurb="Move dials for warmth, verbosity, directness. Watch the prompt rewrite itself."
           />
-          {BUILD_ENABLED && (
-            <NextStepCard
-              href="/build/research-interview-assistant"
-              kicker="Studio · 25 min"
-              title="Build a research interview assistant"
-              blurb="End-to-end project. Brief, persona, voice, sample, reflection — produces a Case Study artifact."
-            />
-          )}
         </div>
         <div className="mt-3 flex items-center justify-between">
           <div className="flex flex-wrap items-center gap-4">
@@ -324,14 +315,6 @@ function SuccessState({ keys }: { keys: Partial<Record<ProviderId, string>> }) {
             >
               See all playgrounds →
             </Link>
-            {BUILD_ENABLED && (
-              <Link
-                href="/build"
-                className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
-              >
-                All studios →
-              </Link>
-            )}
           </div>
           <Link
             href="/settings/keys"

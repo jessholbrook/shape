@@ -20,8 +20,6 @@ The audience is people in UX — designers, researchers, writers, prototypers �
 - **`/play`** — six focused playgrounds. Each one isolates a single design lever and produces an artifact you can save and export.
 - **`/notebook`** — your local working copies. Save drafts from any playground, duplicate them, export to JSON.
 
-(There's a `/build` section for longer Studio projects, currently behind a feature flag. See *Feature flags* below.)
-
 ![Featured playgrounds and the three-step onboarding pitch on the home page](docs/screenshots/play-and-learn.png)
 
 ## Playgrounds
@@ -82,7 +80,7 @@ Drafts persist to `localStorage` — close the tab, come back, your work is stil
 
 ## Curriculum
 
-Eight modules. Each pairs a short reading with a playground and a mini-project. Recommended path, never gated.
+Seven modules. Each pairs a short reading with a playground and a mini-project. Recommended path, never gated.
 
 | # | Module | Pairs with |
 |---|---|---|
@@ -93,7 +91,6 @@ Eight modules. Each pairs a short reading with a playground and a mini-project. 
 | 05 | Output formatting | — |
 | 06 | Evaluation | Eval Workshop |
 | 07 | Multi-turn flows | Conversation Choreographer |
-| 08 | Putting it together | *(Studio project, behind a flag)* |
 
 ## Running locally
 
@@ -148,24 +145,13 @@ Set `LINEAR_API_KEY` and `LINEAR_TEAM_ID` to wire it up.
 - `lib/providers/webllm.ts` — dynamic import of `@mlc-ai/web-llm` so the 14MB package is only shipped to users running the in-browser model.
 - `lib/webllm-engine.ts` — singleton MLCEngine with `reload(modelId)` for switching between the four free models. Exposes a subscribable status (idle / loading / ready / error / unsupported) consumed by the global status banner.
 - `lib/drafts.ts` — typed `Draft` union, `localStorage` CRUD, import/export.
-- `lib/hooks/use-draft-editing.ts` — combined hydration + save state machine that every playground and the studio uses. One source of truth for the `?draft=<id>` URL ↔ state dance.
+- `lib/hooks/use-draft-editing.ts` — combined hydration + save state machine that every playground uses. One source of truth for the `?draft=<id>` URL ↔ state dance.
 - `lib/providers.ts` — `BYOK_PROVIDERS` filters webllm out of BYOK-specific surfaces (key setup, cost meter, `/start`); `providerNeedsKey(id)` gates the "missing key" banner per playground.
-- `lib/flags.ts` — feature flags. Currently a single `BUILD_ENABLED` toggle.
 - `components/play/*` — shared playground primitives (provider/model/temperature row, missing-key banner, draft-save bar, output panel).
 - `components/webllm-status-banner.tsx` — bottom-pinned global banner with model-download progress.
 - `components/feedback-button.tsx` — the floating Feedback widget; mounted once in `Shell`.
 - `app/api/proxy/openai/route.ts` — edge proxy for browser → OpenAI.
 - `app/api/feedback/route.ts` — edge route that forwards submissions to Linear.
-
-## Feature flags
-
-`lib/flags.ts` is the single source of truth. Currently:
-
-```ts
-export const BUILD_ENABLED = false;
-```
-
-When false, the `/build` section disappears from the nav, the `/start` onboarding cards, and the Notebook empty state. Routes still resolve so we can iterate internally; flip the constant and rebuild to expose it again.
 
 ## Deploying to Vercel
 
@@ -188,7 +174,6 @@ app/
   api/
     feedback/route.ts        # → Linear
     proxy/openai/route.ts    # browser → OpenAI shim
-  build/                     # Studios (flag-hidden)
   learn/                     # curriculum articles
   notebook/                  # local drafts
   play/                      # six playgrounds
@@ -204,7 +189,6 @@ components/
   webllm-status-banner.tsx   # in-browser model download banner
 lib/
   drafts.ts                  # Draft union + localStorage CRUD
-  flags.ts                   # feature flags
   hooks/
     use-draft-editing.ts     # save + hydrate state machine
     use-keys.ts
@@ -227,4 +211,4 @@ Active iteration. Recent pivots:
 
 1. Shape moved away from hosted artifact pages — no public URLs, no profile pages. Artifacts now export as portable JSON from the Notebook.
 2. In-browser models became the default entrance via WebLLM. BYOK is the upgrade path for bigger models.
-3. Studios (longer guided projects) are paused behind a flag while the playground side stabilizes.
+3. The Build/Studio section (longer guided projects) was removed — the playgrounds and the Learn curriculum are the product.

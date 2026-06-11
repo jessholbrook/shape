@@ -6,7 +6,6 @@ import { ShapeMark } from "./shape-mark";
 import { CostMeter } from "./cost-meter";
 import { FeedbackButton } from "./feedback-button";
 import { WebLLMStatusBanner } from "./webllm-status-banner";
-import { BUILD_ENABLED } from "@/lib/flags";
 
 type NavItem = {
   num: string;
@@ -18,10 +17,7 @@ const navItems: NavItem[] = [
   { num: "01", label: "Home", href: "/" },
   { num: "02", label: "Learn", href: "/learn" },
   { num: "03", label: "Play", href: "/play" },
-  ...(BUILD_ENABLED
-    ? [{ num: "04", label: "Build", href: "/build" } as NavItem]
-    : []),
-  { num: BUILD_ENABLED ? "05" : "04", label: "Notebook", href: "/notebook" },
+  { num: "04", label: "Notebook", href: "/notebook" },
 ];
 
 function isActive(href: string, pathname: string): boolean {

@@ -14,7 +14,6 @@ import {
 } from "@/lib/refusal";
 import { aggregateScore, caseScore, SCORE_MAX } from "@/lib/evals";
 import type {
-  CaseStudyDraft,
   ChoreographerDraft,
   DiffDraft,
   Draft,
@@ -136,8 +135,6 @@ function DraftBody({ draft }: { draft: Draft }) {
       return <EvalsBody draft={draft} />;
     case "choreographer":
       return <ChoreographerBody draft={draft} />;
-    case "case-study":
-      return <CaseStudyBody draft={draft} />;
   }
 }
 
@@ -456,48 +453,3 @@ function ChoreographerBody({ draft }: { draft: ChoreographerDraft }) {
   );
 }
 
-function CaseStudyBody({ draft }: { draft: CaseStudyDraft }) {
-  const dials = toneSummary(draft.tone);
-  const sections = composePersonaSections(draft.persona);
-  return (
-    <>
-      <Section label="Brief">
-        <Prose>{draft.brief}</Prose>
-      </Section>
-      {draft.audience && (
-        <Section label="Audience">
-          <Prose>{draft.audience}</Prose>
-        </Section>
-      )}
-      <Section label="Persona">
-        <MonoBlock>{sections.map((s) => s.text).join("\n\n")}</MonoBlock>
-      </Section>
-      {dials.length > 0 && (
-        <Section label="Voice">
-          <ul className="flex flex-col gap-1">
-            {dials.map((d) => (
-              <li key={d} className="font-mono text-[12px] text-ink">
-                {d}
-              </li>
-            ))}
-          </ul>
-        </Section>
-      )}
-      {(draft.sample.userMessage || draft.sample.output) && (
-        <Section label="Sample exchange">
-          {draft.sample.userMessage && (
-            <Exchange who="User">{draft.sample.userMessage}</Exchange>
-          )}
-          {draft.sample.output && (
-            <Exchange who="Assistant">{draft.sample.output}</Exchange>
-          )}
-        </Section>
-      )}
-      {draft.reflection && (
-        <Section label="Reflection">
-          <Prose>{draft.reflection}</Prose>
-        </Section>
-      )}
-    </>
-  );
-}

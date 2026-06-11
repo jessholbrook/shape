@@ -14,8 +14,7 @@ export type DraftKind =
   | "persona"
   | "refusal"
   | "evals"
-  | "choreographer"
-  | "case-study";
+  | "choreographer";
 
 export type DiffDraftConfig = {
   provider: ProviderId;
@@ -177,39 +176,22 @@ export type ChoreographerDraft = {
   updatedAt: number;
 };
 
-export type CaseStudyDraft = {
-  id: string;
-  kind: "case-study";
-  /** Which Studio produced this draft (e.g. "research-interview-assistant"). */
-  studioId: string;
-  title: string;
-  provider: ProviderId;
-  model: string;
-  temperature: number;
-  brief: string;
-  audience: string;
-  persona: PersonaValues;
-  tone: ToneValues;
-  sample: {
-    userMessage: string;
-    output?: string;
-    inputTokens?: number;
-    outputTokens?: number;
-    costUsd?: number;
-  };
-  reflection: string;
-  createdAt: number;
-  updatedAt: number;
-};
-
 export type Draft =
   | DiffDraft
   | ToneDraft
   | PersonaDraft
   | RefusalDraft
   | EvalsDraft
-  | ChoreographerDraft
-  | CaseStudyDraft;
+  | ChoreographerDraft;
+
+const KNOWN_KINDS: DraftKind[] = [
+  "diff",
+  "tone",
+  "persona",
+  "refusal",
+  "evals",
+  "choreographer",
+];
 
 function read(): Draft[] {
   if (typeof window === "undefined") return [];
@@ -218,9 +200,15 @@ function read(): Draft[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return (parsed as Draft[]).map((d) =>
-      d.kind === "diff" ? migrateLegacyDiff(d as unknown as LegacyDiffDraft) : d,
-    );
+    return (parsed as Draft[])
+      // Drop kinds we no longer support (e.g. case-study drafts from the
+      // retired Build section) instead of surfacing phantom entries.
+      .filter((d) => KNOWN_KINDS.includes(d?.kind))
+      .map((d) =>
+        d.kind === "diff"
+          ? migrateLegacyDiff(d as unknown as LegacyDiffDraft)
+          : d,
+      );
   } catch {
     return [];
   }
@@ -255,8 +243,7 @@ export type DraftInput =
   | (Omit<EvalsDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
   | (Omit<ChoreographerDraft, "id" | "createdAt" | "updatedAt"> & {
       id?: string;
-    })
-  | (Omit<CaseStudyDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
+    });
 
 /**
  * Save a draft. If `data.id` matches an existing draft, it's updated in place;
@@ -360,8 +347,7 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     kind !== "persona" &&
     kind !== "refusal" &&
     kind !== "evals" &&
-    kind !== "choreographer" &&
-    kind !== "case-study"
+    kind !== "choreographer"
   ) {
     return { ok: false, reason: `Unknown draft kind: ${String(kind)}` };
   }
@@ -406,20 +392,6 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
       return {
         ok: false,
         reason: "Choreographer draft is missing turns or systemPrompt.",
-      };
-    }
-  } else if (kind === "case-study") {
-    if (
-      typeof d.brief !== "string" ||
-      typeof d.studioId !== "string" ||
-      !isObject(d.persona) ||
-      !isObject(d.tone) ||
-      !isObject(d.sample)
-    ) {
-      return {
-        ok: false,
-        reason:
-          "Case study draft is missing brief, studioId, persona, tone, or sample.",
       };
     }
   }
@@ -478,9 +450,8 @@ export function clearAllDrafts(): void {
 }
 
 /**
- * Where this draft can be opened for editing. Studios live under /build/,
- * everything else under /play/. Pairs with the originating client component's
- * `?draft=<id>` hydration.
+ * Where this draft can be opened for editing. Pairs with the originating
+ * client component's `?draft=<id>` hydration.
  */
 export function draftEditorHref(draft: Draft): string {
   switch (draft.kind) {
@@ -496,8 +467,6 @@ export function draftEditorHref(draft: Draft): string {
       return `/play/evals?draft=${draft.id}`;
     case "choreographer":
       return `/play/choreographer?draft=${draft.id}`;
-    case "case-study":
-      return `/build/${draft.studioId}?draft=${draft.id}`;
   }
 }
 

@@ -12,7 +12,6 @@ export const ARTIFACT_KIND_LABEL: Record<DraftKind, string> = {
   refusal: "Refusal Scorecard",
   evals: "Eval Scorecard",
   choreographer: "Conversation",
-  "case-study": "Case Study",
 };
 
 /**
@@ -26,5 +25,4 @@ export const DRAFT_KIND_SHORT_LABEL: Record<DraftKind, string> = {
   refusal: "Refusal",
   evals: "Evals",
   choreographer: "Flow",
-  "case-study": "Case Study",
 };

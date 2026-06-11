@@ -1,5 +1,3 @@
-import { BUILD_ENABLED } from "./flags";
-
 export type ModuleStatus = "ready" | "soon";
 
 export type CurriculumModule = {
@@ -126,25 +124,6 @@ export const MODULES: CurriculumModule[] = [
     artifact: "Behavior Spec",
     href: "/learn/multi-turn-flows",
     status: "ready",
-    readMinutes: 6,
-  },
-  {
-    num: "08",
-    slug: "putting-it-together",
-    title: "Putting it",
-    italic: "together",
-    kicker: "Studio",
-    blurb:
-      "End-to-end project. Brief → persona → tone → sample → reflection. The case study is the deliverable.",
-    playground: BUILD_ENABLED
-      ? {
-          label: "Research Interview Assistant",
-          href: "/build/research-interview-assistant",
-        }
-      : undefined,
-    artifact: "Case Study",
-    href: BUILD_ENABLED ? "/learn/putting-it-together" : "#",
-    status: BUILD_ENABLED ? "ready" : "soon",
     readMinutes: 6,
   },
 ];
