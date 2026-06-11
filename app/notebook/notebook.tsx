@@ -311,6 +311,12 @@ function DraftRow({
           >
             Export JSON
           </button>
+          <Link
+            href={`/print/draft?id=${draft.id}`}
+            className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+          >
+            PDF
+          </Link>
           <button
             type="button"
             onClick={onDelete}
