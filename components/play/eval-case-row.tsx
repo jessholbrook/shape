@@ -11,6 +11,7 @@ import {
   type Score,
 } from "@/lib/evals";
 import { ShareActions } from "./share-actions";
+import { StreamingPlaceholder } from "./streaming-placeholder";
 
 export function EvalCaseRow({
   num,
@@ -115,7 +116,7 @@ export function EvalCaseRow({
               )}
             </>
           ) : result.status === "running" ? (
-            <span className="text-ink-quiet italic">Streaming…</span>
+            <StreamingPlaceholder />
           ) : (
             <span className="text-ink-quiet italic">Not run yet.</span>
           )}

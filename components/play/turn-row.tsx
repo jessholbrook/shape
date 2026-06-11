@@ -9,6 +9,7 @@ import {
   type DiffSegment,
 } from "@/lib/diff-words";
 import { ShareActions } from "./share-actions";
+import { StreamingPlaceholder } from "./streaming-placeholder";
 
 const DIVERGENCE_THRESHOLD = 0.6;
 
@@ -226,7 +227,7 @@ function TurnOutput({
             )}
           </>
         ) : output.status === "running" ? (
-          <span className="text-ink-quiet italic">Streaming…</span>
+          <StreamingPlaceholder />
         ) : (
           <span className="text-ink-quiet italic">—</span>
         )}

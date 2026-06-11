@@ -9,6 +9,7 @@ import {
   type ProbeVerdict,
 } from "@/lib/refusal";
 import { ShareActions } from "./share-actions";
+import { StreamingPlaceholder } from "./streaming-placeholder";
 
 const VERDICT_ORDER: ProbeVerdict[] = ["refused", "engaged", "partial", "unclear"];
 
@@ -118,7 +119,7 @@ export function ProbeRow({
               )}
             </>
           ) : result.status === "running" ? (
-            <span className="text-ink-quiet italic">Streaming…</span>
+            <StreamingPlaceholder />
           ) : (
             <span className="text-ink-quiet italic">Not run yet.</span>
           )}
