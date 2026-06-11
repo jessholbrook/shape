@@ -86,6 +86,13 @@ export function LearnIndex() {
                 More modules will show up here as they land. In the meantime,
                 the playgrounds are where the design work happens.
               </p>
+              <Link
+                href="/play"
+                className="mt-5 inline-flex items-center gap-2 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] hover:bg-ink/90 transition-colors"
+              >
+                Now make something
+                <span className="text-highlight">→</span>
+              </Link>
             </div>
           )}
         </div>
