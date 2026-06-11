@@ -54,7 +54,7 @@ export default function Home() {
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
         <SectionNumber label="The frame">02</SectionNumber>
         <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
-          You already think like a behavior designer.
+          You already think like a <span className="italic">behavior designer</span>.
         </h2>
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-5 max-w-2xl">
           The skills you use every day are the foundation of shaping AI.
@@ -91,7 +91,7 @@ export default function Home() {
           <div>
             <SectionNumber label="Playgrounds">03</SectionNumber>
             <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
-              Play and learn.
+              Play and <span className="italic">learn</span>.
             </h2>
           </div>
           <Link
@@ -139,7 +139,7 @@ export default function Home() {
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
         <SectionNumber label="How it works">04</SectionNumber>
         <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
-          Three steps to get going.
+          Three steps to <span className="italic">get going</span>.
         </h2>
 
         <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
