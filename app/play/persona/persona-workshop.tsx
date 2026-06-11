@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
-import { runChat } from "@/lib/providers/index";
+import { runChat, type ChatMessage } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
 import {
@@ -17,15 +17,24 @@ import {
   type PersonaValues,
 } from "@/lib/persona";
 import { suggestTitle, type PersonaDraft } from "@/lib/drafts";
-import { slugify } from "@/lib/download";
+import { slugify, downloadBlob } from "@/lib/download";
 import { PersonaForm } from "@/components/play/persona-form";
-import { OutputPanel, type OutputState } from "@/components/play/output-panel";
-import type { ConfigState } from "@/components/play/config-panel";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
 
-const EMPTY_OUTPUT: OutputState = {
+type ReplyState = {
+  text: string;
+  status: "idle" | "running" | "done" | "error";
+  error?: string;
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number;
+  startMs?: number;
+  endMs?: number;
+};
+
+const EMPTY_REPLY: ReplyState = {
   text: "",
   status: "idle",
   inputTokens: 0,
@@ -46,7 +55,8 @@ export function PersonaWorkshop() {
   const [temperature, setTemperature] = useState(0.7);
   const [persona, setPersona] = useState<PersonaValues>(DEFAULT_PERSONA);
   const [userMessage, setUserMessage] = useState(DEFAULT_MESSAGE);
-  const [output, setOutput] = useState<OutputState>(EMPTY_OUTPUT);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [reply, setReply] = useState<ReplyState>(EMPTY_REPLY);
   const [running, setRunning] = useState(false);
 
   const hydrateFromDraft = useCallback((draft: PersonaDraft) => {
@@ -54,9 +64,20 @@ export function PersonaWorkshop() {
     setModel(draft.model);
     setTemperature(draft.temperature);
     setPersona(draft.persona);
-    setUserMessage(draft.lastUserMessage);
-    if (draft.lastOutput) {
-      setOutput({ ...EMPTY_OUTPUT, text: draft.lastOutput, status: "done" });
+    if (draft.transcript?.length) {
+      setMessages(draft.transcript);
+      setReply({ ...EMPTY_REPLY, status: "done" });
+      setUserMessage("");
+    } else if (draft.lastOutput) {
+      // Pre-multi-turn draft: reconstruct the single exchange.
+      setMessages([
+        { role: "user", content: draft.lastUserMessage },
+        { role: "assistant", content: draft.lastOutput },
+      ]);
+      setReply({ ...EMPTY_REPLY, status: "done" });
+      setUserMessage("");
+    } else {
+      setUserMessage(draft.lastUserMessage);
     }
   }, []);
   const { draftId, title, setTitle, saveStatus, save } = useDraftEditing({
@@ -77,28 +98,37 @@ export function PersonaWorkshop() {
   const personaEmpty = isPersonaEmpty(persona);
 
   const ready = hydrated && (!providerNeedsKey(provider) || !!keys[provider]);
-  const canRun =
-    ready && userMessage.trim() && !running && !personaEmpty;
+  const canRun = ready && userMessage.trim() && !running && !personaEmpty;
 
   async function run() {
     const apiKey = keys[provider];
     if (providerNeedsKey(provider) && !apiKey) return;
+    const question = userMessage.trim();
+    if (!question) return;
 
+    const history: ChatMessage[] = [
+      ...messages,
+      { role: "user", content: question },
+    ];
+    setMessages(history);
+    setUserMessage("");
     setRunning(true);
-    setOutput({ ...EMPTY_OUTPUT, status: "running", startMs: Date.now() });
+    setReply({ ...EMPTY_REPLY, status: "running", startMs: Date.now() });
 
+    let acc = "";
     try {
       const stream = runChat({
         provider,
         model,
         system: composedSystem,
-        messages: [{ role: "user", content: userMessage }],
+        messages: history,
         temperature,
         apiKey,
       });
       for await (const event of stream) {
         if (event.type === "text") {
-          setOutput((prev) => ({ ...prev, text: prev.text + event.delta }));
+          acc += event.delta;
+          setReply((prev) => ({ ...prev, text: prev.text + event.delta }));
         } else if (event.type === "done") {
           const cost = calcCost(
             provider,
@@ -106,8 +136,10 @@ export function PersonaWorkshop() {
             event.usage.inputTokens,
             event.usage.outputTokens,
           );
-          setOutput((prev) => ({
+          setMessages([...history, { role: "assistant", content: acc }]);
+          setReply((prev) => ({
             ...prev,
+            text: "",
             status: "done",
             inputTokens: event.usage.inputTokens,
             outputTokens: event.usage.outputTokens,
@@ -121,7 +153,10 @@ export function PersonaWorkshop() {
             outputTokens: event.usage.outputTokens,
           });
         } else if (event.type === "error") {
-          setOutput((prev) => ({
+          // Put the question back in the composer so retry is one click.
+          setMessages(messages);
+          setUserMessage(question);
+          setReply((prev) => ({
             ...prev,
             status: "error",
             error: event.message,
@@ -131,7 +166,9 @@ export function PersonaWorkshop() {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      setOutput((prev) => ({
+      setMessages(messages);
+      setUserMessage(question);
+      setReply((prev) => ({
         ...prev,
         status: "error",
         error: message,
@@ -142,11 +179,17 @@ export function PersonaWorkshop() {
     }
   }
 
-  function reset() {
-    setOutput(EMPTY_OUTPUT);
+  function clearConversation() {
+    setMessages([]);
+    setReply(EMPTY_REPLY);
+    setUserMessage(DEFAULT_MESSAGE);
   }
 
   function handleSaveDraft() {
+    const lastUser = [...messages].reverse().find((m) => m.role === "user");
+    const lastAssistant = [...messages]
+      .reverse()
+      .find((m) => m.role === "assistant");
     save({
       title:
         title.trim() ||
@@ -155,17 +198,14 @@ export function PersonaWorkshop() {
       model,
       temperature,
       persona,
-      lastUserMessage: userMessage,
-      lastOutput: output.text || undefined,
+      lastUserMessage: lastUser?.content ?? userMessage,
+      lastOutput: lastAssistant?.content,
+      transcript: messages.length ? messages : undefined,
     });
   }
 
-  const config: ConfigState = {
-    provider,
-    model,
-    system: composedSystem,
-    temperature,
-  };
+  const personaLabel = persona.name.trim() || "Persona";
+  const hasConversation = messages.length > 0 || reply.status === "running";
 
   return (
     <div className="flex flex-col gap-6">
@@ -184,15 +224,30 @@ export function PersonaWorkshop() {
         onTemperatureChange={setTemperature}
       />
 
+      {hasConversation && (
+        <ConversationCard
+          messages={messages}
+          reply={reply}
+          personaLabel={personaLabel}
+          system={composedSystem}
+          filenameStem={`persona-${slugify(persona.name || persona.role || title || "conversation", "conversation")}`}
+          onClear={running ? undefined : clearConversation}
+        />
+      )}
+
       <div className="bg-surface border border-line rounded-[16px] p-5">
         <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet block mb-2">
-          Ask the persona
+          {hasConversation ? "Reply to the persona" : "Ask the persona"}
         </label>
         <textarea
           value={userMessage}
           onChange={(e) => setUserMessage(e.target.value)}
           rows={2}
-          placeholder="Test the persona with a real question."
+          placeholder={
+            hasConversation
+              ? "Follow up, push back, or change direction."
+              : "Test the persona with a real question."
+          }
           className="w-full bg-canvas border border-line rounded-[10px] px-3 py-2 font-sans text-[14px] leading-[1.55] text-ink placeholder:text-ink-quiet focus:border-ink focus:outline-none resize-y"
         />
         <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -202,16 +257,8 @@ export function PersonaWorkshop() {
             disabled={!canRun}
             className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ink/90 transition-colors"
           >
-            {running ? "Streaming…" : "Ask"}
+            {running ? "Streaming…" : hasConversation ? "Reply" : "Ask"}
             <span className="text-highlight">→</span>
-          </button>
-          <button
-            type="button"
-            onClick={reset}
-            disabled={running}
-            className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink disabled:opacity-40"
-          >
-            Clear output
           </button>
           {personaEmpty && (
             <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
@@ -220,20 +267,6 @@ export function PersonaWorkshop() {
           )}
         </div>
       </div>
-
-      <OutputPanel
-        label="Output"
-        config={config}
-        output={output}
-        filenameStem={`persona-${slugify(persona.name || persona.role || title || "output", "output")}`}
-      />
-
-      {output.status === "done" && (
-        <p className="font-mono text-[11px] text-ink-quiet leading-[1.55] -mt-3 px-2">
-          One-shot reply — the persona doesn&apos;t remember earlier turns. To
-          continue, edit the message above and ask again.
-        </p>
-      )}
 
       <div className="pt-2">
         <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet mb-3">
@@ -256,6 +289,167 @@ export function PersonaWorkshop() {
         draftId={draftId}
         onSave={handleSaveDraft}
       />
+    </div>
+  );
+}
+
+function ConversationCard({
+  messages,
+  reply,
+  personaLabel,
+  system,
+  filenameStem,
+  onClear,
+}: {
+  messages: ChatMessage[];
+  reply: ReplyState;
+  personaLabel: string;
+  system: string;
+  filenameStem: string;
+  onClear?: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const elapsed =
+    reply.startMs && reply.endMs
+      ? ((reply.endMs - reply.startMs) / 1000).toFixed(1) + "s"
+      : null;
+
+  function transcriptText(): string {
+    return messages
+      .map((m) => `${m.role === "user" ? "You" : personaLabel}: ${m.content}`)
+      .join("\n\n");
+  }
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(transcriptText());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* best effort */
+    }
+  }
+
+  function download() {
+    const date = new Date().toISOString().split("T")[0];
+    const body = [
+      `# Persona conversation — ${date}`,
+      "",
+      "## System prompt",
+      "",
+      "```",
+      system,
+      "```",
+      "",
+      "## Conversation",
+      "",
+      ...messages.map(
+        (m) => `**${m.role === "user" ? "You" : personaLabel}:** ${m.content}\n`,
+      ),
+    ].join("\n");
+    downloadBlob(`${filenameStem}-${date}.md`, "text/markdown", body);
+  }
+
+  return (
+    <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
+          Conversation — {Math.ceil(messages.length / 2)}{" "}
+          {messages.length > 2 ? "turns" : "turn"}
+        </span>
+        <div className="flex items-center gap-3">
+          {messages.length > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={copy}
+                className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+              >
+                {copied ? "Copied" : "Copy"}
+              </button>
+              <button
+                type="button"
+                onClick={download}
+                className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+              >
+                Download
+              </button>
+            </>
+          )}
+          {onClear && (
+            <button
+              type="button"
+              onClick={onClear}
+              className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet hover:text-danger"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        {messages.map((m, i) => (
+          <Message key={i} role={m.role} personaLabel={personaLabel}>
+            {m.content}
+          </Message>
+        ))}
+        {reply.status === "running" && (
+          <Message role="assistant" personaLabel={personaLabel}>
+            {reply.text || (
+              <span className="text-ink-quiet italic">Streaming…</span>
+            )}
+            {reply.text && (
+              <span className="inline-block w-2 h-4 align-text-bottom ml-0.5 bg-ink animate-pulse" />
+            )}
+          </Message>
+        )}
+        {reply.status === "error" && (
+          <p className="font-mono text-[12px] leading-[1.55] text-danger">
+            {reply.error}
+          </p>
+        )}
+      </div>
+
+      {reply.status === "done" &&
+        (reply.inputTokens || reply.outputTokens || elapsed) && (
+          <div className="border-t border-line pt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+            <span>Last reply</span>
+            <span>in {reply.inputTokens} tok</span>
+            <span>out {reply.outputTokens} tok</span>
+            <span className="text-ink">
+              {reply.costUsd < 0.01 ? "<$0.01" : `$${reply.costUsd.toFixed(3)}`}
+            </span>
+            {elapsed && <span>{elapsed}</span>}
+          </div>
+        )}
+    </div>
+  );
+}
+
+function Message({
+  role,
+  personaLabel,
+  children,
+}: {
+  role: "user" | "assistant";
+  personaLabel: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+        {role === "user" ? "You" : personaLabel}
+      </span>
+      <div
+        className={`whitespace-pre-wrap break-words leading-[1.55] ${
+          role === "user"
+            ? "font-sans text-[14px] text-ink-muted"
+            : "font-mono text-[13px] text-ink"
+        }`}
+      >
+        {children}
+      </div>
     </div>
   );
 }
@@ -344,4 +538,3 @@ function Blank({ label }: { label: string }) {
     </span>
   );
 }
-
