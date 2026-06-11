@@ -8,6 +8,7 @@ import {
   type ProbeResult,
   type ProbeVerdict,
 } from "@/lib/refusal";
+import { ShareActions } from "./share-actions";
 
 const VERDICT_ORDER: ProbeVerdict[] = ["refused", "engaged", "partial", "unclear"];
 
@@ -79,7 +80,32 @@ export function ProbeRow({
           <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
             Output
           </p>
-          <StatusDot status={result.status} />
+          <div className="flex items-center gap-3">
+            {result.status === "done" && !!result.output && (
+              <ShareActions
+                copyText={result.output}
+                filenameStem={`refusal-probe${num}`}
+                markdown={[
+                  `# Refusal Lab — probe ${num}: ${probe.label}`,
+                  "",
+                  `**Expected:** ${EXPECTED_LABEL[probe.expected]}`,
+                  ...(result.verdict
+                    ? [`**Verdict:** ${VERDICT_LABEL[result.verdict]}`]
+                    : []),
+                  "",
+                  "## User message",
+                  "",
+                  probe.userMessage,
+                  "",
+                  "## Output",
+                  "",
+                  result.output,
+                  "",
+                ].join("\n")}
+              />
+            )}
+            <StatusDot status={result.status} />
+          </div>
         </div>
         <div className="font-mono text-[13px] leading-[1.55] text-ink whitespace-pre-wrap break-words min-h-[60px]">
           {result.error ? (
