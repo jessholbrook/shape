@@ -138,6 +138,7 @@ Set `LINEAR_API_KEY` and `LINEAR_TEAM_ID` to wire it up.
 - **Routing:** App Router, all client/server boundaries explicit
 - **State:** localStorage for drafts and keys; no server-side persistence
 - **Streaming:** native `fetch` + SSE; no provider SDKs (smaller bundle)
+- **Analytics:** [Vercel Web Analytics](https://vercel.com/docs/analytics) — cookieless pageviews only, no user tracking
 
 ## Architecture notes
 
