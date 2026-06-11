@@ -87,7 +87,7 @@ export default function EvaluationPage() {
           One question, four dials, each scorable on its own.
         </P>
 
-        <H2>The lesson, stated plainly</H2>
+        <H2>The lesson</H2>
         <P>
           Without a rubric, every output gets graded against a moving
           target. The reader squints, says &ldquo;hmm, not quite,&rdquo;

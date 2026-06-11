@@ -51,7 +51,7 @@ export default function PuttingItTogetherPage() {
           what you&apos;d do next pass.
         </P>
 
-        <H2>The lesson, stated plainly</H2>
+        <H2>The lesson</H2>
         <P>
           A Studio is one project assembled out of the things you already
           know how to do. There&apos;s no new skill — the work is in

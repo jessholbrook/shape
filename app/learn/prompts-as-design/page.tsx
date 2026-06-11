@@ -64,7 +64,7 @@ export default function PromptsAsDesignPage() {
           message is the call site. Same architecture — different surface.
         </P>
 
-        <H2>The lesson, stated plainly</H2>
+        <H2>The lesson</H2>
         <P>
           Every word in a system prompt is a design decision. &ldquo;Be
           concise&rdquo; and &ldquo;Be brief&rdquo; are different style
