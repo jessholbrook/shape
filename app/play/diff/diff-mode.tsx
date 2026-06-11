@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
@@ -17,6 +17,18 @@ import {
 import { ConfigPanel, type ConfigState } from "@/components/play/config-panel";
 import { TurnRow } from "@/components/play/turn-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
+
+const MAX_PIN_LENGTH = 200;
+
+function normalizePin(raw: string): string {
+  return raw.replace(/\s+/g, " ").trim().slice(0, MAX_PIN_LENGTH);
+}
+
+function withPinReminder(message: string, pins: string[]): string {
+  if (pins.length === 0) return message;
+  const list = pins.map((p) => `"${p}"`).join("; ");
+  return `(Keep these from earlier in mind: ${list}.)\n\n${message}`;
+}
 
 const INITIAL_A: ConfigState = {
   provider: "webllm",
@@ -53,14 +65,42 @@ export function DiffMode() {
   const [turns, setTurns] = useState<DiffTurn[]>([]);
   const [running, setRunning] = useState(false);
   const [highlightDiff, setHighlightDiff] = useState(false);
+  const [pins, setPins] = useState<string[]>([]);
+  const [selectionText, setSelectionText] = useState("");
 
   const hydrateFromDraft = useCallback((draft: DiffDraft) => {
     setConfigA(draft.configA);
     setConfigB(draft.configB);
     setTurns(draft.turns);
+    setPins(draft.pins ?? []);
     const lastTurn = draft.turns[draft.turns.length - 1];
     if (lastTurn) setPendingMessage(lastTurn.userMessage);
   }, []);
+
+  useEffect(() => {
+    function handleSelectionChange() {
+      const sel = typeof window !== "undefined" ? window.getSelection() : null;
+      const text = sel?.toString() ?? "";
+      setSelectionText(normalizePin(text));
+    }
+    document.addEventListener("selectionchange", handleSelectionChange);
+    return () =>
+      document.removeEventListener("selectionchange", handleSelectionChange);
+  }, []);
+
+  function pinSelection() {
+    const candidate = normalizePin(selectionText);
+    if (!candidate) return;
+    if (pins.includes(candidate)) return;
+    setPins((prev) => [...prev, candidate]);
+    // Drop the selection so the button settles back to disabled.
+    if (typeof window !== "undefined") window.getSelection()?.removeAllRanges();
+    setSelectionText("");
+  }
+
+  function removePin(phrase: string) {
+    setPins((prev) => prev.filter((p) => p !== phrase));
+  }
   const { draftId, title, setTitle, saveStatus, save } = useDraftEditing({
     initialDraftId,
     editorRoute: "/play/diff",
@@ -94,7 +134,7 @@ export function DiffMode() {
     turnId: string,
     which: "A" | "B",
     config: ConfigState,
-    userMessage: string,
+    apiMessage: string,
   ) {
     const apiKey = keys[config.provider];
     if (providerNeedsKey(config.provider) && !apiKey) {
@@ -111,7 +151,7 @@ export function DiffMode() {
         provider: config.provider,
         model: config.model,
         system: config.system,
-        messages: [{ role: "user", content: userMessage }],
+        messages: [{ role: "user", content: apiMessage }],
         temperature: config.temperature,
         apiKey,
       });
@@ -166,6 +206,8 @@ export function DiffMode() {
   async function runBoth() {
     const userMessage = pendingMessage.trim();
     if (!userMessage) return;
+    const pinsSnapshot = [...pins];
+    const apiMessage = withPinReminder(userMessage, pinsSnapshot);
     const turnId = newTurnId();
     const startMs = Date.now();
     const newTurn: DiffTurn = {
@@ -173,12 +215,13 @@ export function DiffMode() {
       userMessage,
       outputA: { text: "", status: "running", startMs },
       outputB: { text: "", status: "running", startMs },
+      pinsApplied: pinsSnapshot.length ? pinsSnapshot : undefined,
     };
     setTurns((prev) => [...prev, newTurn]);
     setRunning(true);
     await Promise.all([
-      streamOne(turnId, "A", configA, userMessage),
-      streamOne(turnId, "B", configB, userMessage),
+      streamOne(turnId, "A", configA, apiMessage),
+      streamOne(turnId, "B", configB, apiMessage),
     ]);
     setRunning(false);
   }
@@ -210,6 +253,7 @@ export function DiffMode() {
       configA,
       configB,
       turns,
+      pins: pins.length ? pins : undefined,
     });
   }
 
@@ -258,6 +302,21 @@ export function DiffMode() {
               {turns.length === 1 ? "turn" : "turns"}
             </h2>
             <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={pinSelection}
+                disabled={!selectionText}
+                title={
+                  selectionText
+                    ? `Pin "${selectionText.slice(0, 60)}${
+                        selectionText.length > 60 ? "…" : ""
+                      }" — injected as a reminder on future turns.`
+                    : "Highlight a phrase in an output to enable."
+                }
+                className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink underline decoration-highlight underline-offset-4 decoration-2 disabled:opacity-40 disabled:no-underline disabled:text-ink-quiet disabled:cursor-not-allowed"
+              >
+                + Pin selection
+              </button>
               <label className="inline-flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -295,6 +354,33 @@ export function DiffMode() {
       )}
 
       <div className="bg-surface border border-line rounded-[16px] p-5">
+        {pins.length > 0 && (
+          <div className="mb-4 flex flex-col gap-2">
+            <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet">
+              Pinned — injected as a reminder before the next message
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {pins.map((p) => (
+                <span
+                  key={p}
+                  className="inline-flex items-center gap-1.5 bg-highlight-soft text-highlight-ink rounded-full pl-2.5 pr-1 py-0.5 font-mono text-[11px] max-w-[280px]"
+                >
+                  <span className="truncate" title={p}>
+                    &ldquo;{p}&rdquo;
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removePin(p)}
+                    aria-label={`Remove pinned phrase ${p}`}
+                    className="text-highlight-ink/70 hover:text-highlight-ink rounded-full w-4 h-4 inline-flex items-center justify-center leading-none"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
         <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet block mb-2">
           {turns.length > 0 ? "Next turn" : "User message"}
         </label>
