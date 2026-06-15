@@ -141,9 +141,9 @@ Each scored 1-5.`}
 
         <TryItCTA
           href={mod.playground?.href ?? "/play/evals"}
-          buttonLabel="Open Eval Workshop"
+          buttonLabel="Open Eval Lab"
         >
-          Run the Eval Workshop and{" "}
+          Run the Eval Lab and{" "}
           <span className="italic">move one criterion</span>.
         </TryItCTA>
 

@@ -16,7 +16,7 @@ The audience is people in UX — designers, researchers, writers, prototypers �
 
 ## What's inside
 
-- **`/learn`** — eight short concept articles ("modules"). Prompts as design, voice & tone, personas for AI, refusal & boundaries, output formatting, evaluation, multi-turn flows.
+- **`/learn`** — seven short concept lessons. Prompts as design, voice & tone, personas for AI, refusal & boundaries, output formatting, evaluation, multi-turn flows.
 - **`/play`** — six focused playgrounds. Each one isolates a single design lever and produces an artifact you can save and export.
 - **`/notebook`** — your local working copies. Save drafts from any playground, duplicate them, export to JSON.
 
@@ -28,9 +28,9 @@ The audience is people in UX — designers, researchers, writers, prototypers �
 |---|---|---|
 | **Diff Mode** | Iteration. Run one prompt through two configs side by side. | Diff Log |
 | **Tone Dial** | Style as a design token. Move warmth, verbosity, directness as independent dials. | Behavior Spec |
-| **Persona Workshop** | Character design for AI. Backstory, beliefs, voice, blind spots. | Persona Card |
+| **Persona Lab** | Character design for AI. Backstory, beliefs, voice, blind spots. | Persona Card |
 | **Refusal Lab** | Boundary design. Where the model says no — and where it shouldn't. | Refusal Scorecard |
-| **Eval Workshop** | Rubric-based evaluation. Define what good looks like, score against it. | Eval Rubric + Scorecard |
+| **Eval Lab** | Rubric-based evaluation. Define what good looks like, score against it. | Eval Rubric + Scorecard |
 | **Conversation Choreographer** | Multi-turn flow design. Script user turns, run the conversation end-to-end. | Behavior Spec |
 
 Each playground includes a composed system-prompt preview, streaming output from the selected model, save-to-Notebook as a draft, and export to portable JSON.
@@ -80,16 +80,16 @@ Drafts persist to `localStorage` — close the tab, come back, your work is stil
 
 ## Curriculum
 
-Seven modules. Each pairs a short reading with a playground and a mini-project. Recommended path, never gated.
+Seven micro-lessons. Each pairs a short reading with a playground. Recommended path, never gated.
 
-| # | Module | Pairs with |
+| # | Lesson | Pairs with |
 |---|---|---|
 | 01 | Prompts as design | Diff Mode |
 | 02 | Voice & tone | Tone Dial |
-| 03 | Personas for AI | Persona Workshop |
+| 03 | Personas for AI | Persona Lab |
 | 04 | Refusal & boundaries | Refusal Lab |
 | 05 | Output formatting | — |
-| 06 | Evaluation | Eval Workshop |
+| 06 | Evaluation | Eval Lab |
 | 07 | Multi-turn flows | Conversation Choreographer |
 
 ## Running locally

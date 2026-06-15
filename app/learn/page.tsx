@@ -5,7 +5,7 @@ import { LearnIndex } from "@/components/learn/learn-index";
 export const metadata = {
   title: "Learn",
   description:
-    "Eight modules from Behavior Designer 101 to 301. Concept articles paired with playgrounds.",
+    "Seven micro-lessons that pair a short explanation with a hands-on playground.",
 };
 
 export default function LearnPage() {
@@ -15,14 +15,14 @@ export default function LearnPage() {
         <SectionNumber label="Learn">04</SectionNumber>
 
         <h1 className="font-display text-[64px] md:text-[88px] leading-[0.95] tracking-tight text-ink mt-8 max-w-4xl">
-          Behavior designer{" "}
-          <span className="italic">101 → 301</span>.
+          Model behavior designer{" "}
+          <span className="italic">101 → 201</span>.
         </h1>
 
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-8 max-w-2xl">
-          Setup, then eight concept modules. Each pairs a short article with a
-          hands-on playground and a portfolio artifact. Read in order or jump
-          around — modules never gate each other.
+          Seven micro-lessons that pair a short explanation with a
+          hands-on playground to explore the concept. Read in order or
+          jump around.
         </p>
 
         <LearnIndex />

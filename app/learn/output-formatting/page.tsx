@@ -112,48 +112,61 @@ export default function OutputFormattingPage() {
         <H2>A small example</H2>
         <ExampleBlock>
           <ExampleCard
-            label="Bulleted default"
+            label="Default — full structure"
             promptLabel="Format instruction"
             prompt="(none — model picks)"
             outputLabel="Output"
-            output={`Here's what to think about before your interview:
-- Open with rapport, not the first question
-- Avoid leading or compound questions
-- Let silence do work
-- Take notes by hand if you can`}
+            output={`## Interview Prep Checklist
+
+**Opening**
+- 🤝 **Build rapport first.** Don't dive into the first question.
+- ❌ **Avoid leading questions.** No "Don't you think…?"
+
+**Questioning**
+- 1️⃣ **One thing at a time.** No compound questions.
+- 🤫 **Let silence do the work.** Don't fill the gap.
+
+**Note-taking**
+- ✍️ **Hand-written notes** > typing.
+- 💬 **Capture verbatim quotes** at key moments.
+
+**Key Reminders**
+1. Watch body language
+2. Follow the participant's lead
+3. End on time`}
             note={
               <>
-                Scannable, list-shaped. Reads more like a checklist than a
-                conversation. Fine for a doc;{" "}
-                <NoteAccent>cold for a chat.</NoteAccent>
+                Headings, bullets, sub-bullets, bold prefixes, emoji,
+                numbered footers. Looks competent and{" "}
+                <NoteAccent>reads like a wiki page.</NoteAccent>
               </>
             }
           />
           <ExampleCard
             label="Prose, on purpose"
             promptLabel="Format instruction"
-            prompt="Reply in one short paragraph. No lists."
+            prompt="Reply in one short paragraph. No lists, no headings, no bold."
             outputLabel="Output"
-            output="Before you walk in: lead with rapport, not the first question. Keep questions short and one-at-a-time, and let silence do some of the work — most people fill it with the thing they actually wanted to say. Take notes by hand if you can; it changes how you listen."
+            output="Honestly, just be a person for the first minute. Don't dive into the first question — let them get settled. When you start asking things, ask one thing at a time, and resist filling silences; most people will tell you what they actually meant if you wait. Take notes by hand if you can. It changes how you listen."
             note={
               <>
-                Same four points, different relationship with the reader.{" "}
+                Same content, different posture.{" "}
                 <NoteAccent>
-                  Sounds like advice from someone, not a checklist.
+                  Sounds like a person leaning in, not a doc.
                 </NoteAccent>
               </>
             }
           />
         </ExampleBlock>
         <P>
-          Same content. Same persona, probably. The format is doing the
-          work of moving the output from &ldquo;a list of tips&rdquo; to
-          &ldquo;something a person said.&rdquo;
+          Same persona, probably. Same five points. The format is doing
+          all of the work to move the output from &ldquo;reference
+          material&rdquo; to &ldquo;something someone said.&rdquo;
         </P>
 
         <H2>Try it in your own work</H2>
         <P>
-          This module doesn&apos;t pair with a single playground — format
+          This one doesn&apos;t pair with a single playground — format
           shows up everywhere. The fastest way to feel it is in Diff
           Mode: write the same user message, set Config A to a system
           prompt that says nothing about format, set Config B to one

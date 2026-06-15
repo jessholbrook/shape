@@ -20,7 +20,7 @@ export function ArticleHeader({ module: mod }: { module: CurriculumModule }) {
       </Link>
 
       <div className="mt-10">
-        <SectionNumber label={`Module ${mod.num}`}>{mod.num}</SectionNumber>
+        <SectionNumber label={mod.kicker}>{mod.num}</SectionNumber>
       </div>
 
       <h1 className="font-display text-[56px] md:text-[80px] leading-[0.98] tracking-tight text-ink mt-6">
@@ -260,7 +260,7 @@ export function NextModuleFooter({
   return (
     <div className="mt-20 pt-8 border-t border-line">
       <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
-        Next module
+        Next up
       </p>
       <Link
         href={next.href !== "#" ? next.href : "/learn"}

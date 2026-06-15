@@ -15,7 +15,8 @@ export function ConceptLink({ playgroundHref }: { playgroundHref: string }) {
       className="mt-6 inline-flex items-baseline gap-2 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
     >
       <span>
-        Module {mod.num} — Read the concept
+        Read the concept — {mod.title}
+        {mod.italic ? ` ${mod.italic}` : ""}
       </span>
       <span className="text-highlight">→</span>
     </Link>

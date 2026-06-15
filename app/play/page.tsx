@@ -16,8 +16,8 @@ type Playground = {
   blurb: string;
   artifact: string;
   status: "ready" | "soon";
-  /** The Learn module that teaches the concept behind this playground. */
-  learn?: { href: string; label: string };
+  /** The concept this playground teaches — used in the card footer line. */
+  concept?: { href: string; label: string };
 };
 
 const PLAYGROUNDS: Playground[] = [
@@ -30,7 +30,7 @@ const PLAYGROUNDS: Playground[] = [
       "Run one prompt through two configurations side-by-side. The fastest way to feel how prompts shape outputs.",
     artifact: "Diff Log",
     status: "ready",
-    learn: { href: "/learn/prompts-as-design", label: "Module 01" },
+    concept: { href: "/learn/prompts-as-design", label: "Prompts as design" },
   },
   {
     num: "02",
@@ -41,18 +41,18 @@ const PLAYGROUNDS: Playground[] = [
       "Treat style as a design token. Move dials for warmth, verbosity, energy, directness — see the prompt compose itself.",
     artifact: "Behavior Spec",
     status: "ready",
-    learn: { href: "/learn/voice-and-tone", label: "Module 02" },
+    concept: { href: "/learn/voice-and-tone", label: "Voice & tone" },
   },
   {
     num: "03",
     href: "/play/persona",
     title: "Persona",
-    italic: "workshop",
+    italic: "lab",
     blurb:
       "Design a character — backstory, beliefs, blind spots — and watch the model embody them.",
     artifact: "Persona Card",
     status: "ready",
-    learn: { href: "/learn/personas-for-ai", label: "Module 03" },
+    concept: { href: "/learn/personas-for-ai", label: "Personas for AI" },
   },
   {
     num: "04",
@@ -63,18 +63,21 @@ const PLAYGROUNDS: Playground[] = [
       "Probe boundary design with a panel of edge cases. Tune the line between over- and under-refusal.",
     artifact: "Refusal Scorecard",
     status: "ready",
-    learn: { href: "/learn/refusal-and-boundaries", label: "Module 04" },
+    concept: {
+      href: "/learn/refusal-and-boundaries",
+      label: "Refusal & boundaries",
+    },
   },
   {
     num: "05",
     href: "/play/evals",
     title: "Eval",
-    italic: "workshop",
+    italic: "lab",
     blurb:
       "Rubric-based evaluation. Define what good looks like, score the model against it, watch the average move.",
     artifact: "Eval Rubric + Scorecard",
     status: "ready",
-    learn: { href: "/learn/evaluation", label: "Module 06" },
+    concept: { href: "/learn/evaluation", label: "Evaluation" },
   },
   {
     num: "06",
@@ -85,7 +88,7 @@ const PLAYGROUNDS: Playground[] = [
       "Multi-turn flow design. Script the user's turns, run the conversation end-to-end, watch the model hold the thread.",
     artifact: "Behavior Spec",
     status: "ready",
-    learn: { href: "/learn/multi-turn-flows", label: "Module 07" },
+    concept: { href: "/learn/multi-turn-flows", label: "Multi-turn flows" },
   },
 ];
 
@@ -96,7 +99,7 @@ export default function PlayPage() {
         <SectionNumber label="Play">02</SectionNumber>
 
         <h1 className="font-display text-[64px] md:text-[88px] leading-[0.95] tracking-tight text-ink mt-8 max-w-4xl">
-          Small tools. <span className="italic">Sharp lessons.</span>
+          Play to <span className="italic">learn</span>.
         </h1>
 
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-8 max-w-2xl">
@@ -122,7 +125,7 @@ function PlaygroundCard({
   blurb,
   artifact,
   status,
-  learn,
+  concept,
 }: Playground) {
   const ready = status === "ready";
   const inner = (
@@ -137,15 +140,11 @@ function PlaygroundCard({
         <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-quiet">
           {num}
         </span>
-        <span
-          className={`font-mono text-[10px] uppercase tracking-[0.08em] rounded-full px-2 py-0.5 ${
-            ready
-              ? "bg-highlight-soft text-highlight-ink"
-              : "bg-line/60 text-ink-quiet"
-          }`}
-        >
-          {ready ? "Open" : "Soon"}
-        </span>
+        {!ready && (
+          <span className="font-mono text-[10px] uppercase tracking-[0.08em] rounded-full px-2 py-0.5 bg-line/60 text-ink-quiet">
+            Soon
+          </span>
+        )}
       </div>
 
       <h2 className="font-display text-[36px] md:text-[44px] leading-[1.05] tracking-tight text-ink mt-6">
@@ -159,10 +158,10 @@ function PlaygroundCard({
       <div className="mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
           Produces — <span className="text-ink-muted">{artifact}</span>
-          {learn && (
+          {concept && (
             <>
               {" · "}Concept —{" "}
-              <span className="text-ink-muted">{learn.label}</span>
+              <span className="text-ink-muted">{concept.label}</span>
             </>
           )}
         </span>

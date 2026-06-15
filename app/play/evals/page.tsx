@@ -5,7 +5,7 @@ import { ConceptLink } from "@/components/play/concept-link";
 import { EvalsWorkshop } from "./evals-workshop";
 
 export const metadata = {
-  title: "Eval Workshop",
+  title: "Eval Lab",
   description:
     "Rubric-based evaluation. Define what good looks like, run a panel of cases, score each output against your rubric.",
 };
@@ -18,7 +18,7 @@ export default function EvalsPage() {
 
         <div className="mt-6 flex flex-wrap items-baseline justify-between gap-4">
           <h1 className="font-display text-[48px] md:text-[64px] leading-[1.0] tracking-tight text-ink">
-            Eval <span className="italic">workshop</span>
+            Eval <span className="italic">lab</span>
           </h1>
           <p className="font-sans text-[14px] text-ink-muted max-w-md">
             Define what good looks like, then score the model against it.

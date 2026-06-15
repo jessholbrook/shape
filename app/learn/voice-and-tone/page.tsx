@@ -73,7 +73,7 @@ export default function VoiceAndTonePage() {
           who the brand is — it doesn&apos;t change between an empty state
           and a payment confirmation. Tone is how voice shows up in a
           situation: a little more careful in error states, a little more
-          warm in onboarding. Same identity, different settings.
+          warm in onboarding.
         </P>
         <P>
           That separation is the whole reason those guides work. Without
