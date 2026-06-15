@@ -169,15 +169,11 @@ function ModuleRow({
               Read
             </span>
           )}
-          <span
-            className={`font-mono text-[10px] uppercase tracking-[0.08em] rounded-full px-2 py-0.5 ${
-              ready
-                ? "bg-highlight-soft text-highlight-ink"
-                : "bg-line/60 text-ink-quiet"
-            }`}
-          >
-            {ready ? "Open" : "Soon"}
-          </span>
+          {!ready && (
+            <span className="font-mono text-[10px] uppercase tracking-[0.08em] rounded-full px-2 py-0.5 bg-line/60 text-ink-quiet">
+              Soon
+            </span>
+          )}
         </div>
       </div>
 
