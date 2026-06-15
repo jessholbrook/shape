@@ -23,7 +23,7 @@ export const MODULES: CurriculumModule[] = [
     kicker: "Setup",
     blurb:
       "Bring your own model access. Five minutes to set up, then every playground is yours.",
-    playground: { label: "Module 0 setup", href: "/start" },
+    playground: { label: "Setup", href: "/start" },
     artifact: "First successful call",
     href: "/start",
     status: "ready",
@@ -65,7 +65,7 @@ export const MODULES: CurriculumModule[] = [
     kicker: "Concept",
     blurb:
       "Character design isn't decoration. Backstory, beliefs, and blind spots shape every response.",
-    playground: { label: "Persona Workshop", href: "/play/persona" },
+    playground: { label: "Persona Lab", href: "/play/persona" },
     artifact: "Persona Card",
     href: "/learn/personas-for-ai",
     status: "ready",
@@ -106,7 +106,7 @@ export const MODULES: CurriculumModule[] = [
     kicker: "Concept",
     blurb:
       "Rubrics + sample sets. Score behavior the same way you score a usability study.",
-    playground: { label: "Eval Workshop", href: "/play/evals" },
+    playground: { label: "Eval Lab", href: "/play/evals" },
     artifact: "Eval Rubric + Scorecard",
     href: "/learn/evaluation",
     status: "ready",

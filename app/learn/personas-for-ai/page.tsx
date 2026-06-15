@@ -41,12 +41,12 @@ export default function PersonasForAIPage() {
 
         <H2>Why this is the foundation</H2>
         <P>
-          Voice and tone (Module 2) decide how the model speaks. Persona
-          decides who&apos;s speaking. Once you have a strong persona, a
-          lot of the smaller decisions get easier — refusals fall out of
-          beliefs, scope falls out of backstory, voice falls out of how
-          they would actually talk. You&apos;re not maintaining a long
-          list of rules; you&apos;re consulting a character.
+          Voice and tone decide how the model speaks. Persona decides
+          who&apos;s speaking. Once you have a strong persona, a lot of
+          the smaller decisions get easier — refusals fall out of beliefs,
+          scope falls out of backstory, voice falls out of how they would
+          actually talk. You&apos;re not maintaining a long list of rules;
+          you&apos;re consulting a character.
         </P>
         <P>
           Three things to put real weight on when you author one:
@@ -99,9 +99,8 @@ export default function PersonasForAIPage() {
           The bits that turn a job title into a character are the bits
           you&apos;d include in a user persona: a backstory that explains
           how they got here, beliefs they&apos;ll defend, a voice with
-          texture, and blind spots they&apos;ll back away from. The
-          contradictions are especially load-bearing. A persona who
-          believes &ldquo;curiosity beats charm&rdquo; will run a
+          texture, and blind spots they&apos;ll back away from. A persona
+          who believes &ldquo;curiosity beats charm&rdquo; will run a
           different interview than a persona who believes &ldquo;rapport
           first, then questions.&rdquo; Both can be right. Picking one is
           design.
@@ -144,6 +143,44 @@ export default function PersonasForAIPage() {
           you wrote the character or left the model to imagine one.
         </P>
 
+        <H2>A note on giving the model a face</H2>
+        <P>
+          This article teaches the persona technique because it&apos;s a
+          real lever for shaping behavior. It doesn&apos;t teach &ldquo;a
+          model is a person.&rdquo; The line between those two ideas is
+          thinner than it looks, and it&apos;s worth naming the risks
+          before you ship anything you build here.
+        </P>
+        <UL>
+          <LI>
+            <strong>End-user confusion.</strong> A warm, opinionated
+            character is convincing. If you ship one without telling
+            users it&apos;s a model, they will assume things that
+            aren&apos;t true — that it remembers them, that it cares,
+            that someone is accountable. Disclosure isn&apos;t a
+            footnote; it&apos;s part of the persona&apos;s design.
+          </LI>
+          <LI>
+            <strong>Designer projection.</strong> You will start to
+            believe in the character. It happens almost involuntarily,
+            and it makes you over-trust outputs that sound like the
+            persona and under-question the ones that don&apos;t. Treat
+            the persona card as the artifact, not the entity.
+          </LI>
+          <LI>
+            <strong>Where the lever ends.</strong> Personas can shape
+            tone, scope, and refusals. They can&apos;t make the model
+            actually know your user, remember earlier sessions, or be
+            held responsible for advice. When the design implies any of
+            those things, you&apos;ve crossed from technique into claim.
+          </LI>
+        </UL>
+        <P>
+          This is here to learn the lever. Whether to use it in shipped
+          product is a separate decision — one that lives in the ethics
+          and trust conversation, not the prompt editor.
+        </P>
+
         <H2>A scaffold to start from</H2>
         <P>
           When you sit down to write one, fill the blanks in this order.
@@ -166,9 +203,9 @@ Your voice is ____, ____, and ____.`}
 
         <TryItCTA
           href={mod.playground?.href ?? "/play/persona"}
-          buttonLabel="Open Persona Workshop"
+          buttonLabel="Open Persona Lab"
         >
-          Open Persona Workshop and{" "}
+          Open Persona Lab and{" "}
           <span className="italic">build a character</span>.
         </TryItCTA>
 

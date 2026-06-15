@@ -5,7 +5,7 @@ import { ConceptLink } from "@/components/play/concept-link";
 import { PersonaWorkshop } from "./persona-workshop";
 
 export const metadata = {
-  title: "Persona Workshop",
+  title: "Persona Lab",
   description:
     "Character design for AI. Build a persona — name, role, voice, blind spots — and watch the model embody them.",
 };
@@ -18,7 +18,7 @@ export default function PersonaPage() {
 
         <div className="mt-6 flex flex-wrap items-baseline justify-between gap-4">
           <h1 className="font-display text-[48px] md:text-[64px] leading-[1.0] tracking-tight text-ink">
-            Persona <span className="italic">workshop</span>
+            Persona <span className="italic">lab</span>
           </h1>
           <p className="font-sans text-[14px] text-ink-muted max-w-md">
             Design a character — backstory, beliefs, voice, blind spots — and

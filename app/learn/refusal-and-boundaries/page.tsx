@@ -33,9 +33,9 @@ export default function RefusalBoundariesPage() {
         <ArticleHeader module={mod} />
 
         <Lede>
-          A refusal is a design surface, not a failure mode. The question
-          isn&apos;t whether the model says no — it&apos;s how, when, and
-          what it offers instead.
+          Refusals are critical product boundaries, not failure modes.
+          Thoughtfully design how and when the model says &ldquo;no&rdquo;
+          and what it offers instead.
         </Lede>
 
         <H2>Why this is the foundation</H2>

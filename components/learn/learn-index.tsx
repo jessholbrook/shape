@@ -28,7 +28,7 @@ export function LearnIndex() {
   return (
     <>
       <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
-        {totalReady} of {MODULES.length} modules live
+        {totalReady} of {MODULES.length} lessons live
         {hydrated && readable.length > 0 && (
           <>
             {" · "}
@@ -80,11 +80,11 @@ export function LearnIndex() {
                 Curriculum complete
               </p>
               <h2 className="font-display text-[28px] md:text-[32px] leading-[1.1] text-ink mt-3">
-                You&apos;ve read every live module.
+                You&apos;ve read every live lesson.
               </h2>
               <p className="font-sans text-[14px] leading-[1.55] text-ink-muted mt-3 max-w-2xl">
-                More modules will show up here as they land. In the meantime,
-                the playgrounds are where the design work happens.
+                More will show up here as they land. In the meantime, the
+                playgrounds are where the design work happens.
               </p>
               <Link
                 href="/play"
@@ -169,15 +169,11 @@ function ModuleRow({
               Read
             </span>
           )}
-          <span
-            className={`font-mono text-[10px] uppercase tracking-[0.08em] rounded-full px-2 py-0.5 ${
-              ready
-                ? "bg-highlight-soft text-highlight-ink"
-                : "bg-line/60 text-ink-quiet"
-            }`}
-          >
-            {ready ? "Open" : "Soon"}
-          </span>
+          {!ready && (
+            <span className="font-mono text-[10px] uppercase tracking-[0.08em] rounded-full px-2 py-0.5 bg-line/60 text-ink-quiet">
+              Soon
+            </span>
+          )}
         </div>
       </div>
 

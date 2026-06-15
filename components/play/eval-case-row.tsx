@@ -84,7 +84,7 @@ export function EvalCaseRow({
                 copyText={result.output}
                 filenameStem={`eval-case${num}`}
                 markdown={[
-                  `# Eval Workshop — case ${num}: ${evalCase.label}`,
+                  `# Eval Lab — case ${num}: ${evalCase.label}`,
                   "",
                   ...(score
                     ? [`**Score:** ${score.total}/${score.max}`, ""]
