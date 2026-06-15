@@ -27,6 +27,29 @@ let currentModelId: string | null = null;
 let pendingPromise: Promise<MLCEngine> | null = null;
 const listeners = new Set<Listener>();
 
+/**
+ * Serializes inference across callers. WebLLM's MLCEngine supports exactly
+ * one in-flight `chat.completions.create()` at a time — a second concurrent
+ * call disposes the first's generation context, so the first errors with
+ * "The current Object has already been disposed." Diff Mode trips this any
+ * time both configs use the in-browser provider.
+ *
+ * Callers `await acquireInferenceLock()` before touching the engine and
+ * invoke the returned release fn in a `finally` block. The lock is FIFO,
+ * so a queued caller runs as soon as the active one finishes (or errors).
+ */
+let inferenceLock: Promise<void> = Promise.resolve();
+
+export async function acquireInferenceLock(): Promise<() => void> {
+  const previous = inferenceLock;
+  let release!: () => void;
+  inferenceLock = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await previous;
+  return release;
+}
+
 function detectInitialStatus(): WebLLMStatus {
   if (typeof navigator === "undefined") return { kind: "idle" };
   if (!("gpu" in navigator)) return { kind: "unsupported" };
