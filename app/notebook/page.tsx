@@ -17,22 +17,10 @@ export default function NotebookPage() {
           <h1 className="font-display text-[48px] md:text-[64px] leading-[1.0] tracking-tight text-ink">
             Your <span className="italic">notebook</span>.
           </h1>
-          <p className="font-sans text-[14px] text-ink-muted max-w-md">
-            Every saved draft lives here, in this browser — private, instant,
-            no account. Export one to JSON or PDF when you want to keep it
-            elsewhere or share it.
-          </p>
-        </div>
-
-        <div className="mt-3 max-w-2xl rounded-[12px] border border-line bg-surface px-4 py-3">
-          <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet">
-            Why save here vs. download
-          </p>
-          <p className="font-sans text-[13px] leading-[1.55] text-ink-muted mt-1.5">
-            Saving keeps a draft in this browser so you can reopen and keep
-            iterating — nothing leaves your machine, but it&apos;s tied to this
-            browser. Exporting (JSON or PDF) makes a portable copy you can move
-            to another device, attach to a doc, or hand to someone else.
+          <p className="font-sans text-[14px] leading-[1.55] text-ink-muted max-w-md">
+            Drafts live in this browser — private, instant, no account.
+            Reopen to keep iterating; export to JSON or PDF when you want a
+            portable copy to take elsewhere or share.
           </p>
         </div>
 
