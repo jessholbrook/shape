@@ -43,7 +43,7 @@ export function InfoTip({
         <span
           role="tooltip"
           id={id}
-          className="absolute left-0 top-full mt-2 z-50 w-[260px] bg-ink text-canvas rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.18)] px-3 py-2 font-sans text-[12px] leading-[1.45]"
+          className="absolute left-0 top-full mt-2 z-50 w-[280px] bg-ink text-canvas rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.18)] px-3.5 py-2.5 font-sans text-[12px] leading-[1.5]"
         >
           {children}
         </span>
