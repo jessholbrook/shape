@@ -26,7 +26,7 @@ The audience is people in UX — designers, researchers, writers, prototypers �
 
 | Playground | What it teaches | Artifact |
 |---|---|---|
-| **Diff Mode** | Iteration. Run one prompt through two configs side by side. | Diff Log |
+| **Diff Mode** | Iteration. Compare two configs side by side — fresh each run, or as a running conversation. Starter example pairs included. | Diff Log |
 | **Tone Dial** | Style as a design token. Move warmth, verbosity, directness as independent dials. | Behavior Spec |
 | **Persona Lab** | Character design for AI. Backstory, beliefs, voice, blind spots. | Persona Card |
 | **Refusal Lab** | Boundary design. Where the model says no — and where it shouldn't. | Refusal Scorecard |
@@ -35,9 +35,11 @@ The audience is people in UX — designers, researchers, writers, prototypers �
 
 Each playground includes a composed system-prompt preview, streaming output from the selected model, save-to-Notebook as a draft, and export to portable JSON.
 
-**Diff Mode** — one prompt, two configurations, output streamed side by side:
+**Diff Mode** — two configurations, output streamed side by side:
 
 ![Diff Mode playground with two provider/model configurations](docs/screenshots/diff-mode.png)
+
+Diff Mode runs in two modes. **Independent** fires a fresh single-shot prompt through both configs each run (no memory) — the classic A/B compare. **Conversation** gives each side its own history, so the two configs accumulate context and drift apart over a multi-turn chat. A row of one-click example pairs (Warm vs Blunt, Terse vs Expansive, Prose vs Bullets, Temp 0.1 vs 1.0) seeds meaningful variance for newcomers.
 
 **Refusal Lab** — design the boundary, then test it against a panel of probes:
 
@@ -76,6 +78,7 @@ Drafts persist to `localStorage` — close the tab, come back, your work is stil
 - **Open** to keep editing (URL becomes `?draft=<id>` so you can bookmark)
 - **Duplicate** to fork
 - **Export JSON** to download a portable artifact
+- **Save as PDF** — a print-friendly view of the draft (`/print/draft?id=<id>`) with a one-click **Save as PDF** button; uses the browser's print dialog, no PDF library
 - **Delete** (with a 6-second undo toast)
 
 ## Curriculum
@@ -174,9 +177,10 @@ app/
   api/
     feedback/route.ts        # → Linear
     proxy/openai/route.ts    # browser → OpenAI shim
-  learn/                     # curriculum articles
+  learn/                     # curriculum lessons
   notebook/                  # local drafts
   play/                      # six playgrounds
+  print/draft/               # print-friendly draft view (Save as PDF)
   settings/keys/             # BYOK setup
   start/                     # onboarding
   layout.tsx
@@ -201,7 +205,7 @@ lib/
     webllm.ts                # in-browser via @mlc-ai/web-llm
     index.ts                 # runChat dispatch
   webllm-engine.ts           # singleton MLCEngine + status state
-  curriculum.ts              # module list
+  curriculum.ts              # lesson list
   ...
 ```
 
