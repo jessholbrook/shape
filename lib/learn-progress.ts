@@ -1,10 +1,11 @@
 const KEY = "shape:learn:read";
+const DISMISSED_KEY = "shape:learn:concept-link-dismissed";
 const EVENT = "shape:learn-progress-changed";
 
-function read(): Set<string> {
+function readSet(key: string): Set<string> {
   if (typeof window === "undefined") return new Set();
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return new Set();
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return new Set();
@@ -14,28 +15,40 @@ function read(): Set<string> {
   }
 }
 
-function write(set: Set<string>) {
+function writeSet(key: string, set: Set<string>) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(KEY, JSON.stringify([...set]));
+  localStorage.setItem(key, JSON.stringify([...set]));
   window.dispatchEvent(new CustomEvent(EVENT));
 }
 
 export function markRead(slug: string): void {
   if (typeof window === "undefined") return;
-  const set = read();
+  const set = readSet(KEY);
   if (set.has(slug)) return;
   set.add(slug);
-  write(set);
+  writeSet(KEY, set);
 }
 
 export function getReadSlugs(): Set<string> {
-  return read();
+  return readSet(KEY);
 }
 
 export function clearReadSlugs(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(KEY);
   window.dispatchEvent(new CustomEvent(EVENT));
+}
+
+export function dismissConceptLink(slug: string): void {
+  if (typeof window === "undefined") return;
+  const set = readSet(DISMISSED_KEY);
+  if (set.has(slug)) return;
+  set.add(slug);
+  writeSet(DISMISSED_KEY, set);
+}
+
+export function getDismissedConceptLinks(): Set<string> {
+  return readSet(DISMISSED_KEY);
 }
 
 export const LEARN_PROGRESS_EVENT = EVENT;
