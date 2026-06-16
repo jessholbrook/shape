@@ -1,6 +1,7 @@
 import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
 import { KeySetupForm } from "@/components/key-setup-form";
+import { KeyPrivacyNote } from "@/components/key-privacy-note";
 
 export const metadata = {
   title: "Keys",
@@ -18,24 +19,13 @@ export default function KeysPage() {
         </h1>
 
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-6 max-w-xl">
-          Shape is BYOK by design. Your keys live in your browser&apos;s
-          localStorage and are sent directly to the provider when you run a
-          playground. They never touch our server.
+          Shape is BYOK by design — and prefers no key at all. The free
+          in-browser models need nothing here. If you do bring a key, this is
+          how it&apos;s handled:
         </p>
 
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Reassurance
-            title="In your browser."
-            body="localStorage only. Closing the tab keeps the key; clearing site data removes it."
-          />
-          <Reassurance
-            title="Never persisted server-side."
-            body="Anthropic calls go straight from your browser. OpenAI requests pass through our edge proxy in memory only — never logged or stored."
-          />
-          <Reassurance
-            title="You see every cost."
-            body="A meter in the nav tracks tokens and estimated $ per provider."
-          />
+        <div className="mt-10">
+          <KeyPrivacyNote />
         </div>
 
         <div className="mt-16">
@@ -70,21 +60,5 @@ export default function KeysPage() {
         </div>
       </section>
     </Shell>
-  );
-}
-
-function Reassurance({ title, body }: { title: string; body: string }) {
-  return (
-    <div className="bg-surface border border-line rounded-[12px] p-5">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-highlight" />
-        <h3 className="font-display text-[18px] leading-[1.2] text-ink">
-          {title}
-        </h3>
-      </div>
-      <p className="font-sans text-[13px] leading-[1.5] text-ink-muted">
-        {body}
-      </p>
-    </div>
   );
 }

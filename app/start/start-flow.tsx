@@ -6,6 +6,7 @@ import { BYOK_PROVIDERS, PROVIDERS, type ProviderId } from "@/lib/providers";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { validateKey } from "@/lib/keys";
 import { testConnection } from "@/lib/providers/index";
+import { KeyPrivacyNote } from "@/components/key-privacy-note";
 
 type TestState =
   | { status: "idle" }
@@ -79,12 +80,13 @@ function KeyEntry({
           Free — no key needed
         </p>
         <h2 className="font-display text-[28px] md:text-[34px] leading-[1.1] text-ink mt-3">
-          Try it free in this browser.
+          Start free, right in this browser.
         </h2>
         <p className="font-sans text-[15px] leading-[1.55] text-ink-muted mt-3 max-w-lg">
-          A small open model runs locally via WebGPU — nothing leaves your
-          machine. The first run downloads the model once (~1GB); after
-          that it&apos;s instant.
+          No account, no key, nothing to paste. A small open model runs on
+          your own device via WebGPU — the first run downloads it once
+          (~1GB), then it&apos;s instant. This is the recommended way to
+          start.
         </p>
         <div className="mt-5 flex flex-wrap items-center gap-4">
           <Link
@@ -110,6 +112,8 @@ function KeyEntry({
         </span>
         <div className="flex-1 border-t border-line" />
       </div>
+
+      <KeyPrivacyNote />
 
       <div>
         <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet mb-4">
@@ -165,6 +169,9 @@ function KeyEntry({
           {error && (
             <p className="mt-2 font-sans text-[13px] text-danger">{error}</p>
           )}
+          <p className="mt-2 font-mono text-[11px] text-ink-quiet">
+            Saved to this browser only — never sent to a Shape server.
+          </p>
           <div className="mt-4 flex flex-wrap items-center gap-4">
             <button
               type="button"
@@ -198,10 +205,7 @@ function KeyEntry({
         </div>
       </div>
 
-      <div className="border-t border-line pt-6 flex flex-wrap items-center justify-between gap-3">
-        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
-          Your key stays in this browser. We never see it.
-        </p>
+      <div className="border-t border-line pt-6 flex justify-end">
         <Link
           href="/settings/keys"
           className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
