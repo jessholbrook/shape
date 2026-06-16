@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { useDefaultProvider } from "@/lib/hooks/use-default-provider";
+import { useUnsavedWork } from "@/lib/hooks/use-unsaved-work";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
@@ -38,6 +39,9 @@ export function Choreographer() {
   const [systemPrompt, setSystemPrompt] = useState(DEFAULT_CHOREOGRAPHER_PROMPT);
   const [turns, setTurns] = useState<ChoreographedTurn[]>(SEED_TURNS);
   const [running, setRunning] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  useUnsavedWork(dirty);
 
   const hydrateFromDraft = useCallback((draft: ChoreographerDraft) => {
     setProvider(draft.provider);
@@ -105,12 +109,14 @@ export function Choreographer() {
         assistant: { ...EMPTY_ASSISTANT, note: t.assistant.note },
       })),
     );
+    setDirty(false);
   }
 
   async function runFlow() {
     const apiKey = keys[provider];
     if (providerNeedsKey(provider) && !apiKey) return;
     setRunning(true);
+    setDirty(true);
 
     // Reset all turns to running/idle first so we have a clean slate.
     const baseTurns = turns.map((t) => ({
@@ -231,6 +237,7 @@ export function Choreographer() {
       systemPrompt,
       turns,
     });
+    setDirty(false);
   }
 
   return (

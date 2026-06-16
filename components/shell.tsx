@@ -7,6 +7,10 @@ import { ShapeMark } from "./shape-mark";
 import { CostMeter } from "./cost-meter";
 import { FeedbackButton } from "./feedback-button";
 import { WebLLMStatusBanner } from "./webllm-status-banner";
+import { hasUnsavedWork, clearUnsavedWork } from "@/lib/hooks/use-unsaved-work";
+
+const LEAVE_CONFIRM =
+  "You have unsaved output in this session. Leave without saving it? Use the Save draft bar at the bottom to keep it.";
 
 type NavItem = {
   num: string;
@@ -44,6 +48,39 @@ export function Shell({ children }: { children: React.ReactNode }) {
       document.body.style.overflow = previousOverflow;
     };
   }, [menuOpen]);
+
+  // Guard in-app navigation when a playground has unsaved output. Capture-phase
+  // so we intercept any internal link click (nav, brand, in-page CTAs) before
+  // Next's Link handles it. New-tab and modified clicks pass through untouched.
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (!hasUnsavedWork()) return;
+      if (
+        e.defaultPrevented ||
+        e.button !== 0 ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.shiftKey ||
+        e.altKey
+      ) {
+        return;
+      }
+      const anchor = (e.target as HTMLElement | null)?.closest("a");
+      if (!anchor || anchor.target === "_blank") return;
+      const href = anchor.getAttribute("href");
+      if (!href || !href.startsWith("/")) return;
+      const dest = href.split(/[?#]/)[0];
+      if (dest === window.location.pathname) return; // same page (e.g. ?draft=)
+      if (window.confirm(LEAVE_CONFIRM)) {
+        clearUnsavedWork();
+      } else {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, []);
 
   return (
     <div className="min-h-screen">

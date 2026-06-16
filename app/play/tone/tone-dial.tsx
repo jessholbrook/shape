@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { useDefaultProvider } from "@/lib/hooks/use-default-provider";
+import { useUnsavedWork } from "@/lib/hooks/use-unsaved-work";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
@@ -53,6 +54,9 @@ export function ToneDial() {
   const [tone, setTone] = useState<ToneValues>(DEFAULT_TONE);
   const [output, setOutput] = useState<OutputState>(EMPTY_OUTPUT);
   const [running, setRunning] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  useUnsavedWork(dirty);
 
   const hydrateFromDraft = useCallback((draft: ToneDraft) => {
     setProvider(draft.provider);
@@ -91,6 +95,7 @@ export function ToneDial() {
       lastUserMessage: userMessage,
       lastOutput: output.text || undefined,
     });
+    setDirty(false);
   }
 
   const composedSystem = useMemo(
@@ -108,6 +113,7 @@ export function ToneDial() {
     if (providerNeedsKey(provider) && !apiKey) return;
 
     setRunning(true);
+    setDirty(true);
     setOutput({ ...EMPTY_OUTPUT, status: "running", startMs: Date.now() });
 
     try {
@@ -167,6 +173,7 @@ export function ToneDial() {
 
   function reset() {
     setOutput(EMPTY_OUTPUT);
+    setDirty(false);
   }
 
   // OutputPanel expects a ConfigState; build a synthetic one.
