@@ -18,9 +18,11 @@ import {
   type DiffTurnOutput,
 } from "@/lib/drafts";
 import { DIFF_EXAMPLES, type DiffExample } from "@/lib/diff-examples";
+import { REFLECTION } from "@/lib/reflection-questions";
 import { ConfigPanel, type ConfigState } from "@/components/play/config-panel";
 import { TurnRow } from "@/components/play/turn-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
+import { ReflectionCard } from "@/components/play/reflection-card";
 import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
 
 const MAX_PIN_LENGTH = 200;
@@ -91,6 +93,7 @@ export function DiffMode() {
   const [pins, setPins] = useState<string[]>([]);
   const [selectionText, setSelectionText] = useState("");
   const [dirty, setDirty] = useState(false);
+  const [reflectionDismissed, setReflectionDismissed] = useState(false);
 
   useUnsavedWork(dirty);
 
@@ -146,6 +149,15 @@ export function DiffMode() {
       setConfigB((c) => ({ ...c, provider: p, model: m }));
     }, []),
   });
+
+  const completedTurns = turns.filter(
+    (t) => t.outputA.status === "done" && t.outputB.status === "done",
+  ).length;
+  const showReflection =
+    completedTurns >= 2 && !running && !reflectionDismissed;
+  const reflection = conversation
+    ? REFLECTION.diffConversation
+    : REFLECTION.diffIndependent;
 
   const aReady =
     hydrated &&
@@ -357,14 +369,20 @@ export function DiffMode() {
           <ModeButton
             active={!conversation}
             disabled={running}
-            onClick={() => setMode("independent")}
+            onClick={() => {
+              setMode("independent");
+              setReflectionDismissed(false);
+            }}
           >
             Independent
           </ModeButton>
           <ModeButton
             active={conversation}
             disabled={running}
-            onClick={() => setMode("conversation")}
+            onClick={() => {
+              setMode("conversation");
+              setReflectionDismissed(false);
+            }}
           >
             Conversation
           </ModeButton>
@@ -489,6 +507,13 @@ export function DiffMode() {
             ))}
           </div>
         </div>
+      )}
+
+      {showReflection && (
+        <ReflectionCard
+          reflection={reflection}
+          onDismiss={() => setReflectionDismissed(true)}
+        />
       )}
 
       <div className="bg-surface border border-line rounded-[16px] p-5">

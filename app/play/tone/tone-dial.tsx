@@ -19,11 +19,13 @@ import {
 } from "@/lib/tone";
 import { suggestTitle, type ToneDraft } from "@/lib/drafts";
 import { slugify } from "@/lib/download";
+import { REFLECTION } from "@/lib/reflection-questions";
 import { ToneDialControls } from "@/components/play/tone-dial-controls";
 import { OutputPanel, type OutputState } from "@/components/play/output-panel";
 import type { ConfigState } from "@/components/play/config-panel";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
+import { ReflectionCard } from "@/components/play/reflection-card";
 import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
 
@@ -55,6 +57,8 @@ export function ToneDial() {
   const [output, setOutput] = useState<OutputState>(EMPTY_OUTPUT);
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [runCount, setRunCount] = useState(0);
+  const [reflectionDismissed, setReflectionDismissed] = useState(false);
 
   useUnsavedWork(dirty);
 
@@ -143,6 +147,7 @@ export function ToneDial() {
             costUsd: cost,
             endMs: Date.now(),
           }));
+          setRunCount((n) => n + 1);
           recordUsage({
             provider,
             model,
@@ -273,6 +278,13 @@ export function ToneDial() {
         output={output}
         filenameStem={`tone-${slugify(title || brief, "output")}`}
       />
+
+      {runCount >= 2 && !running && !reflectionDismissed && (
+        <ReflectionCard
+          reflection={REFLECTION.tone}
+          onDismiss={() => setReflectionDismissed(true)}
+        />
+      )}
 
       <DraftSaveBar
         title={title}

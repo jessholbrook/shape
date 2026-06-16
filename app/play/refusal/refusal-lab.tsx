@@ -19,9 +19,11 @@ import {
   type ProbeVerdict,
 } from "@/lib/refusal";
 import { suggestTitle, type RefusalDraft } from "@/lib/drafts";
+import { REFLECTION } from "@/lib/reflection-questions";
 import { ProbeRow } from "@/components/play/probe-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
+import { ReflectionCard } from "@/components/play/reflection-card";
 import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
 
@@ -46,6 +48,7 @@ export function RefusalLab() {
   );
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [reflectionDismissed, setReflectionDismissed] = useState(false);
 
   useUnsavedWork(dirty);
 
@@ -77,6 +80,14 @@ export function RefusalLab() {
   });
 
   const ready = hydrated && (!providerNeedsKey(provider) || !!keys[provider]);
+
+  const completedProbes = useMemo(
+    () =>
+      probes.filter((p) => results[p.id]?.status === "done").length,
+    [probes, results],
+  );
+  const showReflection =
+    completedProbes >= 2 && !running && !reflectionDismissed;
 
   const score = useMemo(() => {
     let matched = 0;
@@ -176,6 +187,7 @@ export function RefusalLab() {
   function resetResults() {
     setResults(emptyResults(probes));
     setDirty(false);
+    setReflectionDismissed(false);
   }
 
   function setVerdict(probeId: string, verdict: ProbeVerdict | null) {
@@ -275,6 +287,13 @@ export function RefusalLab() {
           />
         ))}
       </div>
+
+      {showReflection && (
+        <ReflectionCard
+          reflection={REFLECTION.refusal}
+          onDismiss={() => setReflectionDismissed(true)}
+        />
+      )}
 
       <DraftSaveBar
         title={title}

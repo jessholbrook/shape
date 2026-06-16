@@ -20,9 +20,11 @@ import {
   type ChoreographedTurn,
 } from "@/lib/choreographer";
 import { suggestTitle, type ChoreographerDraft } from "@/lib/drafts";
+import { REFLECTION } from "@/lib/reflection-questions";
 import { ChoreographerTurnRow } from "@/components/play/choreographer-turn-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
+import { ReflectionCard } from "@/components/play/reflection-card";
 import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
 
@@ -40,6 +42,7 @@ export function Choreographer() {
   const [turns, setTurns] = useState<ChoreographedTurn[]>(SEED_TURNS);
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [reflectionDismissed, setReflectionDismissed] = useState(false);
 
   useUnsavedWork(dirty);
 
@@ -67,6 +70,8 @@ export function Choreographer() {
 
   const ready = hydrated && (!providerNeedsKey(provider) || !!keys[provider]);
   const completed = completedTurnCount(turns);
+  const showReflection =
+    completed >= 2 && !running && !reflectionDismissed;
 
   function updateTurn(
     id: string,
@@ -110,6 +115,7 @@ export function Choreographer() {
       })),
     );
     setDirty(false);
+    setReflectionDismissed(false);
   }
 
   async function runFlow() {
@@ -338,6 +344,13 @@ export function Choreographer() {
           />
         ))}
       </div>
+
+      {showReflection && (
+        <ReflectionCard
+          reflection={REFLECTION.choreographer}
+          onDismiss={() => setReflectionDismissed(true)}
+        />
+      )}
 
       <DraftSaveBar
         title={title}

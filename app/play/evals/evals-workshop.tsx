@@ -22,10 +22,12 @@ import {
   type Score,
 } from "@/lib/evals";
 import { suggestTitle, type EvalsDraft } from "@/lib/drafts";
+import { REFLECTION } from "@/lib/reflection-questions";
 import { RubricEditor } from "@/components/play/rubric-editor";
 import { EvalCaseRow } from "@/components/play/eval-case-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
+import { ReflectionCard } from "@/components/play/reflection-card";
 import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
 
@@ -51,6 +53,7 @@ export function EvalsWorkshop() {
   );
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [reflectionDismissed, setReflectionDismissed] = useState(false);
 
   useUnsavedWork(dirty);
 
@@ -91,6 +94,13 @@ export function EvalsWorkshop() {
     () => aggregateScore(rubric, cases, results),
     [rubric, cases, results],
   );
+
+  const completedCases = useMemo(
+    () => cases.filter((c) => results[c.id]?.status === "done").length,
+    [cases, results],
+  );
+  const showReflection =
+    completedCases >= 2 && !running && !reflectionDismissed;
 
   function updateResult(id: string, updater: (prev: CaseResult) => CaseResult) {
     setResults((prev) => ({
@@ -182,6 +192,7 @@ export function EvalsWorkshop() {
   function resetResults() {
     setResults(emptyResults(cases));
     setDirty(false);
+    setReflectionDismissed(false);
   }
 
   function setScore(caseId: string, criterionId: string, score: Score | null) {
@@ -304,6 +315,13 @@ export function EvalsWorkshop() {
           />
         ))}
       </div>
+
+      {showReflection && (
+        <ReflectionCard
+          reflection={REFLECTION.evals}
+          onDismiss={() => setReflectionDismissed(true)}
+        />
+      )}
 
       <DraftSaveBar
         title={title}
