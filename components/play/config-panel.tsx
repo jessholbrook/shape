@@ -1,6 +1,13 @@
 "use client";
 
 import { PROVIDER_LIST, ProviderId, PROVIDERS } from "@/lib/providers";
+import { InfoTip } from "@/components/info-tip";
+import {
+  ModelTip,
+  ProviderTip,
+  TemperatureTip,
+  temperatureRegime,
+} from "@/components/play/config-help";
 
 export type ConfigState = {
   provider: ProviderId;
@@ -43,7 +50,7 @@ export function ConfigPanel({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Provider">
+        <Field label="Provider" tip={ProviderTip}>
           <select
             value={config.provider}
             onChange={(e) => {
@@ -64,7 +71,10 @@ export function ConfigPanel({
           </select>
         </Field>
 
-        <Field label="Model">
+        <Field
+          label="Model"
+          tip={<ModelTip provider={config.provider} model={config.model} />}
+        >
           <select
             value={config.model}
             onChange={(e) => onChange({ ...config, model: e.target.value })}
@@ -89,7 +99,17 @@ export function ConfigPanel({
         />
       </Field>
 
-      <Field label={`Temperature — ${config.temperature.toFixed(2)}`}>
+      <Field
+        label={
+          <>
+            Temperature — {config.temperature.toFixed(2)}
+            <span className="ml-1 font-mono text-[10px] uppercase tracking-[0.08em] bg-highlight-soft text-highlight-ink rounded-full px-1.5 py-0.5">
+              {temperatureRegime(config.temperature)}
+            </span>
+          </>
+        }
+        tip={TemperatureTip}
+      >
         <input
           type="range"
           min={0}
@@ -108,15 +128,18 @@ export function ConfigPanel({
 
 function Field({
   label,
+  tip,
   children,
 }: {
-  label: string;
+  label: React.ReactNode;
+  tip?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet">
+      <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet inline-flex items-center gap-1.5 flex-wrap">
         {label}
+        {tip && <InfoTip>{tip}</InfoTip>}
       </span>
       {children}
     </label>

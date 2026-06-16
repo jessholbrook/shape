@@ -3,11 +3,16 @@
 import {
   PROVIDER_LIST,
   PROVIDERS,
-  getModel,
   type ModelMeta,
   type ProviderId,
 } from "@/lib/providers";
 import { InfoTip } from "@/components/info-tip";
+import {
+  ModelTip,
+  ProviderTip,
+  TemperatureTip,
+  temperatureRegime,
+} from "@/components/play/config-help";
 
 /**
  * The Provider / Model / Temperature row that sits above every playground and
@@ -29,20 +34,9 @@ export function ProviderModelTempRow({
   onModelChange: (next: string) => void;
   onTemperatureChange: (next: number) => void;
 }) {
-  const selectedModel = getModel(provider, model);
   return (
     <div className="bg-surface border border-line rounded-[16px] p-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-      <Field
-        label="Provider"
-        tip={
-          <>
-            <strong>Free (in browser)</strong> runs small open models via WebGPU
-            — no key, no server. <strong>Anthropic</strong> + <strong>OpenAI</strong>{" "}
-            need a key but unlock bigger models. First webllm run downloads the
-            model once (~280MB to 2GB depending on choice).
-          </>
-        }
-      >
+      <Field label="Provider" tip={ProviderTip}>
         <select
           value={provider}
           onChange={(e) => {
@@ -59,26 +53,7 @@ export function ProviderModelTempRow({
           ))}
         </select>
       </Field>
-      <Field
-        label="Model"
-        tip={
-          provider === "webllm" ? (
-            <>
-              Each model is downloaded once and cached. Bigger = better quality
-              but a slower first run.{" "}
-              <strong>{selectedModel?.name ?? model}</strong>
-              {selectedModel?.blurb && <> — {selectedModel.blurb}</>}.
-            </>
-          ) : (
-            <>
-              <strong>Frontier</strong> = top quality, slow, pricier.{" "}
-              <strong>Balanced</strong> = good quality, fast, recommended for
-              most playgrounds. <strong>Fast</strong> = cheap and quick.
-              Selected: <em>{selectedModel?.name ?? model}</em>.
-            </>
-          )
-        }
-      >
+      <Field label="Model" tip={<ModelTip provider={provider} model={model} />}>
         <select
           value={model}
           onChange={(e) => onModelChange(e.target.value)}
@@ -100,14 +75,7 @@ export function ProviderModelTempRow({
             </span>
           </>
         }
-        tip={
-          <>
-            How much variation in the output. <strong>0</strong> = same answer
-            every time, useful for tests and rubrics. <strong>0.7</strong> =
-            creative but coherent, good default. <strong>1.0</strong> = loose
-            and surprising, sometimes incoherent.
-          </>
-        }
+        tip={TemperatureTip}
       >
         <input
           type="range"
@@ -121,12 +89,6 @@ export function ProviderModelTempRow({
       </Field>
     </div>
   );
-}
-
-function temperatureRegime(t: number): string {
-  if (t <= 0.2) return "Deterministic";
-  if (t < 0.8) return "Creative";
-  return "Loose";
 }
 
 function tierLabel(tier: "frontier" | "balanced" | "fast"): string {
