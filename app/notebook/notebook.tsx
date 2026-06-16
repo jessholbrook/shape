@@ -550,9 +550,10 @@ function EmptyState() {
       <h2 className="font-display text-[28px] md:text-[34px] leading-[1.15] text-ink mt-3">
         Save something from a playground.
       </h2>
-      <p className="font-sans text-[14px] text-ink-muted mt-4 max-w-md mx-auto">
+      <p className="font-sans text-[14px] leading-[1.55] text-ink-muted mt-4 max-w-md mx-auto">
         Every playground has a Save draft action at the bottom. Anything
-        you save shows up here, ready to reopen or export.
+        you save shows up here, private to this browser — reopen to keep
+        iterating, or export to JSON or PDF to take it elsewhere.
       </p>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
         <Link
