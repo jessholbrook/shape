@@ -50,9 +50,37 @@ export default function Home() {
 
       <Divider />
 
+      {/* HOW IT WORKS */}
+      <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
+        <SectionNumber label="How it works">02</SectionNumber>
+        <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
+          Three steps to <span className="italic">get going</span>.
+        </h2>
+
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <StepCard
+            num="01"
+            title="Start free."
+            body="A small open model runs right in your browser — no key required. Bring an Anthropic or OpenAI key when you want bigger models."
+          />
+          <StepCard
+            num="02"
+            title="Shape something."
+            body="Open a playground. Tune a tone, design a persona, diff two prompts."
+          />
+          <StepCard
+            num="03"
+            title="Save it to your notebook."
+            body="Every draft persists locally — reopen, duplicate, export as JSON."
+          />
+        </div>
+      </section>
+
+      <Divider />
+
       {/* BRIDGE */}
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
-        <SectionNumber label="The frame">02</SectionNumber>
+        <SectionNumber label="The frame">03</SectionNumber>
         <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
           You already think like a <span className="italic">behavior designer</span>.
         </h2>
@@ -89,7 +117,7 @@ export default function Home() {
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <div>
-            <SectionNumber label="Playgrounds">03</SectionNumber>
+            <SectionNumber label="Playgrounds">04</SectionNumber>
             <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
               Play and <span className="italic">learn</span>.
             </h2>
@@ -129,34 +157,6 @@ export default function Home() {
             blurb="Character design for AI. Build a backstory, voice, and blind spots."
             artifact="Persona Card"
             preview={<PersonaPreview />}
-          />
-        </div>
-      </section>
-
-      <Divider />
-
-      {/* HOW IT WORKS */}
-      <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
-        <SectionNumber label="How it works">04</SectionNumber>
-        <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
-          Three steps to <span className="italic">get going</span>.
-        </h2>
-
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StepCard
-            num="01"
-            title="Start free."
-            body="A small open model runs right in your browser — no key required. Bring an Anthropic or OpenAI key when you want bigger models."
-          />
-          <StepCard
-            num="02"
-            title="Shape something."
-            body="Open a playground. Tune a tone, design a persona, diff two prompts."
-          />
-          <StepCard
-            num="03"
-            title="Save it to your notebook."
-            body="Every draft persists locally — reopen, duplicate, export as JSON."
           />
         </div>
       </section>
