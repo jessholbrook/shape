@@ -14,10 +14,12 @@ export function temperatureRegime(t: number): string {
 
 export const ProviderTip = (
   <>
-    <strong>Free (in browser)</strong> runs small open models via WebGPU — no
-    key, no server. <strong>Anthropic</strong> + <strong>OpenAI</strong> need a
-    key but unlock bigger models. The first in-browser run downloads the model
-    once (~280MB to 2GB depending on choice).
+    <strong>Free (in browser)</strong> runs a small open model on your own
+    device — private, no key, no per-token cost — but lower quality, and a
+    one-time download (~280MB–2GB) on first use.{" "}
+    <strong>Anthropic</strong> / <strong>OpenAI</strong> are sharper and
+    faster, but need a key and bill you per token. Same task either way; the
+    trade-off is quality vs. cost &amp; privacy.
   </>
 );
 

@@ -67,6 +67,12 @@ export function DraftSaveBar({
             : "Save draft"}
         </button>
       </div>
+      {!draftId && (
+        <p className="font-mono text-[10px] text-ink-quiet leading-[1.5]">
+          Saves to this browser — private, no account. Export to JSON or PDF
+          from the Notebook to take it elsewhere.
+        </p>
+      )}
     </div>
   );
 }
