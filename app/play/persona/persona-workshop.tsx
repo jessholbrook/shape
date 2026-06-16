@@ -20,10 +20,12 @@ import {
 } from "@/lib/persona";
 import { suggestTitle, type PersonaDraft } from "@/lib/drafts";
 import { slugify, downloadBlob } from "@/lib/download";
+import { REFLECTION } from "@/lib/reflection-questions";
 import { PersonaForm } from "@/components/play/persona-form";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
+import { ReflectionCard } from "@/components/play/reflection-card";
 import { StreamingPlaceholder } from "@/components/play/streaming-placeholder";
 import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
 
@@ -63,6 +65,7 @@ export function PersonaWorkshop() {
   const [reply, setReply] = useState<ReplyState>(EMPTY_REPLY);
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [reflectionDismissed, setReflectionDismissed] = useState(false);
 
   useUnsavedWork(dirty);
 
@@ -200,6 +203,7 @@ export function PersonaWorkshop() {
     setReply(EMPTY_REPLY);
     setUserMessage(DEFAULT_MESSAGE);
     setDirty(false);
+    setReflectionDismissed(false);
   }
 
   function handleSaveDraft() {
@@ -224,6 +228,9 @@ export function PersonaWorkshop() {
 
   const personaLabel = persona.name.trim() || "Persona";
   const hasConversation = messages.length > 0 || reply.status === "running";
+  const assistantReplies = messages.filter((m) => m.role === "assistant").length;
+  const showReflection =
+    assistantReplies >= 2 && !running && !reflectionDismissed;
 
   return (
     <div className="flex flex-col gap-6">
@@ -251,6 +258,13 @@ export function PersonaWorkshop() {
           system={composedSystem}
           filenameStem={`persona-${slugify(persona.name || persona.role || title || "conversation", "conversation")}`}
           onClear={running ? undefined : clearConversation}
+        />
+      )}
+
+      {showReflection && (
+        <ReflectionCard
+          reflection={REFLECTION.persona}
+          onDismiss={() => setReflectionDismissed(true)}
         />
       )}
 
