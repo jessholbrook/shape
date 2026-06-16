@@ -7,12 +7,13 @@ import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { useDefaultProvider } from "@/lib/hooks/use-default-provider";
 import { useUnsavedWork } from "@/lib/hooks/use-unsaved-work";
-import { runChat } from "@/lib/providers/index";
+import { runChat, type ChatMessage } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { providerNeedsKey, type ProviderId } from "@/lib/providers";
 import {
   suggestTitle,
   type DiffDraft,
+  type DiffMode as DiffModeKind,
   type DiffTurn,
   type DiffTurnOutput,
 } from "@/lib/drafts";
@@ -50,6 +51,23 @@ const INITIAL_B: ConfigState = {
 const DEFAULT_MESSAGE =
   "Write a one-sentence welcome message for a research interview tool.";
 
+/**
+ * Reconstruct one side's conversation history from prior completed turns.
+ * Each side builds its OWN history from its OWN outputs, so the two configs
+ * accumulate independent context — the whole point of conversation mode.
+ */
+function buildHistory(turns: DiffTurn[], which: "A" | "B"): ChatMessage[] {
+  const msgs: ChatMessage[] = [];
+  for (const t of turns) {
+    const out = which === "A" ? t.outputA : t.outputB;
+    if (out.status === "done" && out.text) {
+      msgs.push({ role: "user", content: t.userMessage });
+      msgs.push({ role: "assistant", content: out.text });
+    }
+  }
+  return msgs;
+}
+
 function newTurnId(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -66,6 +84,7 @@ export function DiffMode() {
   const [configB, setConfigB] = useState<ConfigState>(INITIAL_B);
   const [pendingMessage, setPendingMessage] = useState(DEFAULT_MESSAGE);
   const [turns, setTurns] = useState<DiffTurn[]>([]);
+  const [mode, setMode] = useState<DiffModeKind>("independent");
   const [running, setRunning] = useState(false);
   const [highlightDiff, setHighlightDiff] = useState(false);
   const [pins, setPins] = useState<string[]>([]);
@@ -78,10 +97,13 @@ export function DiffMode() {
     setConfigA(draft.configA);
     setConfigB(draft.configB);
     setTurns(draft.turns);
+    setMode(draft.mode ?? "independent");
     setPins(draft.pins ?? []);
     const lastTurn = draft.turns[draft.turns.length - 1];
     if (lastTurn) setPendingMessage(lastTurn.userMessage);
   }, []);
+
+  const conversation = mode === "conversation";
 
   useEffect(() => {
     function handleSelectionChange() {
@@ -150,6 +172,7 @@ export function DiffMode() {
     turnId: string,
     which: "A" | "B",
     config: ConfigState,
+    history: ChatMessage[],
     apiMessage: string,
   ) {
     const apiKey = keys[config.provider];
@@ -167,7 +190,7 @@ export function DiffMode() {
         provider: config.provider,
         model: config.model,
         system: config.system,
-        messages: [{ role: "user", content: apiMessage }],
+        messages: [...history, { role: "user", content: apiMessage }],
         temperature: config.temperature,
         apiKey,
       });
@@ -222,8 +245,14 @@ export function DiffMode() {
   async function runBoth() {
     const userMessage = pendingMessage.trim();
     if (!userMessage) return;
-    const pinsSnapshot = [...pins];
+    // Pins simulate carrying context forward; in conversation mode the real
+    // history does that, so pins only apply to independent runs.
+    const pinsSnapshot = conversation ? [] : [...pins];
     const apiMessage = withPinReminder(userMessage, pinsSnapshot);
+    // Snapshot prior turns BEFORE appending the new one, for per-side history.
+    const priorTurns = turns;
+    const historyA = conversation ? buildHistory(priorTurns, "A") : [];
+    const historyB = conversation ? buildHistory(priorTurns, "B") : [];
     const turnId = newTurnId();
     const startMs = Date.now();
     const newTurn: DiffTurn = {
@@ -237,8 +266,8 @@ export function DiffMode() {
     setDirty(true);
     setRunning(true);
     await Promise.all([
-      streamOne(turnId, "A", configA, apiMessage),
-      streamOne(turnId, "B", configB, apiMessage),
+      streamOne(turnId, "A", configA, historyA, apiMessage),
+      streamOne(turnId, "B", configB, historyB, apiMessage),
     ]);
     setRunning(false);
   }
@@ -271,6 +300,7 @@ export function DiffMode() {
       configA,
       configB,
       turns,
+      mode,
       pins: pins.length ? pins : undefined,
     });
     setDirty(false);
@@ -303,6 +333,30 @@ export function DiffMode() {
         }
       />
 
+      <div className="bg-surface border border-line rounded-[16px] p-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex rounded-[10px] border border-line bg-canvas p-0.5">
+          <ModeButton
+            active={!conversation}
+            disabled={running}
+            onClick={() => setMode("independent")}
+          >
+            Independent
+          </ModeButton>
+          <ModeButton
+            active={conversation}
+            disabled={running}
+            onClick={() => setMode("conversation")}
+          >
+            Conversation
+          </ModeButton>
+        </div>
+        <p className="font-mono text-[11px] leading-[1.5] text-ink-quiet max-w-md">
+          {conversation
+            ? "Each side keeps its own history — watch the two configs drift apart over a real conversation."
+            : "Each run is a fresh single-shot prompt through both configs. No memory between runs."}
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ConfigPanel
           label="Config A"
@@ -322,25 +376,32 @@ export function DiffMode() {
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h2 className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
-              Session log — {turns.length}{" "}
-              {turns.length === 1 ? "turn" : "turns"}
+              {conversation
+                ? `Conversation — ${turns.length} ${
+                    turns.length === 1 ? "turn" : "turns"
+                  }`
+                : `Comparison log — ${turns.length} ${
+                    turns.length === 1 ? "run" : "runs"
+                  }`}
             </h2>
             <div className="flex items-center gap-4">
-              <button
-                type="button"
-                onClick={pinSelection}
-                disabled={!selectionText}
-                title={
-                  selectionText
-                    ? `Pin "${selectionText.slice(0, 60)}${
-                        selectionText.length > 60 ? "…" : ""
-                      }" — carried into every future turn as a reminder.`
-                    : "Highlight a phrase in an output to enable."
-                }
-                className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink underline decoration-highlight underline-offset-4 decoration-2 disabled:opacity-40 disabled:no-underline disabled:text-ink-quiet disabled:cursor-not-allowed"
-              >
-                + Pin selection
-              </button>
+              {!conversation && (
+                <button
+                  type="button"
+                  onClick={pinSelection}
+                  disabled={!selectionText}
+                  title={
+                    selectionText
+                      ? `Pin "${selectionText.slice(0, 60)}${
+                          selectionText.length > 60 ? "…" : ""
+                        }" — carried into every future run as a reminder.`
+                      : "Highlight a phrase in an output to enable."
+                  }
+                  className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink underline decoration-highlight underline-offset-4 decoration-2 disabled:opacity-40 disabled:no-underline disabled:text-ink-quiet disabled:cursor-not-allowed"
+                >
+                  + Pin selection
+                </button>
+              )}
               <label className="inline-flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -362,33 +423,42 @@ export function DiffMode() {
               </button>
             </div>
           </div>
-          {pins.length === 0 && !running && (
+          {!conversation && pins.length === 0 && !running && (
             <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
               Tip — highlight a phrase in any output, then{" "}
               <span className="text-ink-muted">+ Pin selection</span> to carry
-              it through future turns.
+              it through future runs.
             </p>
           )}
-          {turns.map((t, i) => (
-            <TurnRow
-              key={t.id}
-              num={i + 1}
-              turn={t}
-              configA={configA}
-              configB={configB}
-              highlightDiff={highlightDiff}
-              onDelete={running ? undefined : () => deleteTurn(t.id)}
-              onNoteChange={(note) => updateTurnNote(t.id, note)}
-            />
-          ))}
+          <div
+            className={
+              conversation
+                ? "flex flex-col gap-3 border-l-2 border-highlight/40 pl-4"
+                : "flex flex-col gap-3"
+            }
+          >
+            {turns.map((t, i) => (
+              <TurnRow
+                key={t.id}
+                num={i + 1}
+                turn={t}
+                configA={configA}
+                configB={configB}
+                highlightDiff={highlightDiff}
+                label={conversation ? "Turn" : "Run"}
+                onDelete={running ? undefined : () => deleteTurn(t.id)}
+                onNoteChange={(note) => updateTurnNote(t.id, note)}
+              />
+            ))}
+          </div>
         </div>
       )}
 
       <div className="bg-surface border border-line rounded-[16px] p-5">
-        {pins.length > 0 && (
+        {!conversation && pins.length > 0 && (
           <div className="mb-4 flex flex-col gap-2">
             <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet">
-              Pinned — added to each new turn as a reminder to the model
+              Pinned — added to each new run as a reminder to the model
             </p>
             <div className="flex flex-wrap gap-1.5">
               {pins.map((p) => (
@@ -413,14 +483,22 @@ export function DiffMode() {
           </div>
         )}
         <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet block mb-2">
-          {turns.length > 0 ? "Next turn" : "User message"}
+          {turns.length === 0
+            ? "User message"
+            : conversation
+            ? "Next turn"
+            : "New message"}
         </label>
         <textarea
           value={pendingMessage}
           onChange={(e) => setPendingMessage(e.target.value)}
           rows={3}
           className="w-full bg-canvas border border-line rounded-[10px] px-3 py-2 font-sans text-[14px] leading-[1.55] text-ink placeholder:text-ink-quiet focus:border-ink focus:outline-none resize-y"
-          placeholder="What do you want to send to both models?"
+          placeholder={
+            conversation
+              ? "Continue the conversation with both configs…"
+              : "What do you want to send to both models?"
+          }
         />
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
@@ -432,13 +510,19 @@ export function DiffMode() {
             {running
               ? "Streaming…"
               : turns.length === 0
-              ? "Run both"
-              : "Run next turn"}
+              ? conversation
+                ? "Start the conversation"
+                : "Run both"
+              : conversation
+              ? "Send next turn"
+              : "Run again"}
             <span className="text-highlight">→</span>
           </button>
           {turns.length > 0 && (
             <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
-              Same configs, new message — outputs append below.
+              {conversation
+                ? "Each side replies with its own history in context."
+                : "Same configs, fresh prompt — outputs append below."}
             </span>
           )}
         </div>
@@ -452,5 +536,33 @@ export function DiffMode() {
         onSave={handleSaveDraft}
       />
     </div>
+  );
+}
+
+function ModeButton({
+  active,
+  disabled,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={active}
+      className={`font-mono text-[11px] uppercase tracking-[0.08em] rounded-[8px] px-3 py-1.5 transition-colors disabled:cursor-not-allowed ${
+        active
+          ? "bg-ink text-canvas"
+          : "text-ink-muted hover:text-ink disabled:opacity-50"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
