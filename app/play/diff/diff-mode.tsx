@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { useDefaultProvider } from "@/lib/hooks/use-default-provider";
+import { useUnsavedWork } from "@/lib/hooks/use-unsaved-work";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { providerNeedsKey, type ProviderId } from "@/lib/providers";
@@ -69,6 +70,9 @@ export function DiffMode() {
   const [highlightDiff, setHighlightDiff] = useState(false);
   const [pins, setPins] = useState<string[]>([]);
   const [selectionText, setSelectionText] = useState("");
+  const [dirty, setDirty] = useState(false);
+
+  useUnsavedWork(dirty);
 
   const hydrateFromDraft = useCallback((draft: DiffDraft) => {
     setConfigA(draft.configA);
@@ -230,6 +234,7 @@ export function DiffMode() {
       pinsApplied: pinsSnapshot.length ? pinsSnapshot : undefined,
     };
     setTurns((prev) => [...prev, newTurn]);
+    setDirty(true);
     setRunning(true);
     await Promise.all([
       streamOne(turnId, "A", configA, apiMessage),
@@ -240,6 +245,7 @@ export function DiffMode() {
 
   function clearSession() {
     setTurns([]);
+    setDirty(false);
   }
 
   function deleteTurn(turnId: string) {
@@ -267,6 +273,7 @@ export function DiffMode() {
       turns,
       pins: pins.length ? pins : undefined,
     });
+    setDirty(false);
   }
 
   return (

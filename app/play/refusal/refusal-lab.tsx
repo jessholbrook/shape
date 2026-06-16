@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { useDefaultProvider } from "@/lib/hooks/use-default-provider";
+import { useUnsavedWork } from "@/lib/hooks/use-unsaved-work";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
@@ -44,6 +45,9 @@ export function RefusalLab() {
     emptyResults(SEED_PROBES),
   );
   const [running, setRunning] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  useUnsavedWork(dirty);
 
   const hydrateFromDraft = useCallback((draft: RefusalDraft) => {
     setProvider(draft.provider);
@@ -100,6 +104,7 @@ export function RefusalLab() {
       }));
       return;
     }
+    setDirty(true);
     updateResult(probe.id, () => ({
       output: "",
       status: "running",
@@ -170,6 +175,7 @@ export function RefusalLab() {
 
   function resetResults() {
     setResults(emptyResults(probes));
+    setDirty(false);
   }
 
   function setVerdict(probeId: string, verdict: ProbeVerdict | null) {
@@ -191,6 +197,7 @@ export function RefusalLab() {
       probes,
       results,
     });
+    setDirty(false);
   }
 
   return (

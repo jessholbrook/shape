@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { useDefaultProvider } from "@/lib/hooks/use-default-provider";
+import { useUnsavedWork } from "@/lib/hooks/use-unsaved-work";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
@@ -49,6 +50,9 @@ export function EvalsWorkshop() {
     emptyResults(SEED_CASES),
   );
   const [running, setRunning] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  useUnsavedWork(dirty);
 
   const hydrateFromDraft = useCallback((draft: EvalsDraft) => {
     setProvider(draft.provider);
@@ -106,6 +110,7 @@ export function EvalsWorkshop() {
       }));
       return;
     }
+    setDirty(true);
     updateResult(evalCase.id, () => ({
       ...EMPTY_CASE_RESULT,
       status: "running",
@@ -176,6 +181,7 @@ export function EvalsWorkshop() {
 
   function resetResults() {
     setResults(emptyResults(cases));
+    setDirty(false);
   }
 
   function setScore(caseId: string, criterionId: string, score: Score | null) {
@@ -210,6 +216,7 @@ export function EvalsWorkshop() {
       cases,
       results,
     });
+    setDirty(false);
   }
 
   return (

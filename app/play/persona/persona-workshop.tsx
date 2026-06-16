@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { useDefaultProvider } from "@/lib/hooks/use-default-provider";
+import { useUnsavedWork } from "@/lib/hooks/use-unsaved-work";
 import { runChat, type ChatMessage } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
@@ -61,6 +62,9 @@ export function PersonaWorkshop() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [reply, setReply] = useState<ReplyState>(EMPTY_REPLY);
   const [running, setRunning] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  useUnsavedWork(dirty);
 
   const hydrateFromDraft = useCallback((draft: PersonaDraft) => {
     setProvider(draft.provider);
@@ -124,6 +128,7 @@ export function PersonaWorkshop() {
     setMessages(history);
     setUserMessage("");
     setRunning(true);
+    setDirty(true);
     setReply({ ...EMPTY_REPLY, status: "running", startMs: Date.now() });
 
     let acc = "";
@@ -194,6 +199,7 @@ export function PersonaWorkshop() {
     setMessages([]);
     setReply(EMPTY_REPLY);
     setUserMessage(DEFAULT_MESSAGE);
+    setDirty(false);
   }
 
   function handleSaveDraft() {
@@ -213,6 +219,7 @@ export function PersonaWorkshop() {
       lastOutput: lastAssistant?.content,
       transcript: messages.length ? messages : undefined,
     });
+    setDirty(false);
   }
 
   const personaLabel = persona.name.trim() || "Persona";
