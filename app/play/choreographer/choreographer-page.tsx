@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
+import { useDefaultProvider } from "@/lib/hooks/use-default-provider";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
@@ -50,6 +51,14 @@ export function Choreographer() {
     editorRoute: "/play/choreographer",
     kind: "choreographer",
     apply: hydrateFromDraft,
+  });
+
+  useDefaultProvider({
+    enabled: !initialDraftId,
+    onResolve: useCallback((p: ProviderId, m: string) => {
+      setProvider(p);
+      setModel(m);
+    }, []),
   });
 
   const ready = hydrated && (!providerNeedsKey(provider) || !!keys[provider]);

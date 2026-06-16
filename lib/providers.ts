@@ -150,3 +150,18 @@ export function getModel(providerId: ProviderId, modelId: string): ModelMeta | u
 export function providerNeedsKey(provider: ProviderId): boolean {
   return provider !== "webllm";
 }
+
+/**
+ * The provider a fresh playground should default to. If the user has saved a
+ * BYOK key, prefer it (Anthropic before OpenAI, matching BYOK_PROVIDERS order)
+ * so the playground opens on the provider they actually set up. Otherwise fall
+ * back to the free in-browser model so first-timers can run with no key.
+ */
+export function preferredProvider(
+  keys: Partial<Record<ProviderId, string>>,
+): ProviderId {
+  for (const p of BYOK_PROVIDERS) {
+    if (keys[p.id]) return p.id;
+  }
+  return "webllm";
+}

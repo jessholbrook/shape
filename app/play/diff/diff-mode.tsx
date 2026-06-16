@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
+import { useDefaultProvider } from "@/lib/hooks/use-default-provider";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
-import { providerNeedsKey } from "@/lib/providers";
+import { providerNeedsKey, type ProviderId } from "@/lib/providers";
 import {
   suggestTitle,
   type DiffDraft,
@@ -107,6 +108,16 @@ export function DiffMode() {
     editorRoute: "/play/diff",
     kind: "diff",
     apply: hydrateFromDraft,
+  });
+
+  // Default both configs to the user's BYOK provider when one is set up,
+  // keeping each side's distinct system prompt + temperature.
+  useDefaultProvider({
+    enabled: !initialDraftId,
+    onResolve: useCallback((p: ProviderId, m: string) => {
+      setConfigA((c) => ({ ...c, provider: p, model: m }));
+      setConfigB((c) => ({ ...c, provider: p, model: m }));
+    }, []),
   });
 
   const aReady =
