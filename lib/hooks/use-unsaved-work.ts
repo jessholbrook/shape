@@ -4,45 +4,48 @@ import { useEffect } from "react";
 
 /**
  * Tracks whether the current playground has generated output the user hasn't
- * saved. A module-level flag (not React state) because the Shell — which owns
- * the nav and the click guard — needs to read it at click time without
- * re-rendering on every keystroke. Playgrounds register their dirty state via
- * useUnsavedWork(); the Shell reads hasUnsavedWork() to decide whether to
- * confirm before navigating away.
+ * saved, plus whether we've already warned them about it once. Module-level
+ * (not React state) because the Shell — which owns the nav and the click
+ * guard — reads these at click time without re-rendering on every keystroke.
+ *
+ * The guard is intentionally gentle: it warns once per unsaved session and
+ * then gets out of the way, so a user is never trapped on the page.
  */
 let unsaved = false;
+let warned = false;
 
 export function hasUnsavedWork(): boolean {
   return unsaved;
 }
 
-export function clearUnsavedWork(): void {
-  unsaved = false;
+export function hasWarnedAboutUnsaved(): boolean {
+  return warned;
 }
 
-function onBeforeUnload(e: BeforeUnloadEvent) {
-  // Arms the browser's native "Leave site?" prompt for refresh / tab-close /
-  // external navigation. Only attached while there's unsaved output.
-  e.preventDefault();
-  e.returnValue = "";
+export function markWarnedAboutUnsaved(): void {
+  warned = true;
+}
+
+export function clearUnsavedWork(): void {
+  unsaved = false;
+  warned = false;
 }
 
 /**
  * Register whether this playground currently holds unsaved generated output.
- * Sets the global flag the Shell reads before in-app navigation, and arms a
- * native beforeunload prompt for hard exits. Clears the flag on unmount.
+ * Saving or clearing (isDirty → false) also resets the one-time warning, so a
+ * fresh batch of work earns a fresh heads-up. Clears on unmount.
  */
 export function useUnsavedWork(isDirty: boolean) {
   useEffect(() => {
-    unsaved = isDirty;
-    if (!isDirty) return;
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+    if (isDirty) {
+      unsaved = true;
+    } else {
+      clearUnsavedWork();
+    }
   }, [isDirty]);
 
   useEffect(() => {
-    return () => {
-      unsaved = false;
-    };
+    return () => clearUnsavedWork();
   }, []);
 }
