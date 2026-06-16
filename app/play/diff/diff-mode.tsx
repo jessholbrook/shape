@@ -17,6 +17,7 @@ import {
   type DiffTurn,
   type DiffTurnOutput,
 } from "@/lib/drafts";
+import { DIFF_EXAMPLES, type DiffExample } from "@/lib/diff-examples";
 import { ConfigPanel, type ConfigState } from "@/components/play/config-panel";
 import { TurnRow } from "@/components/play/turn-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
@@ -277,6 +278,24 @@ export function DiffMode() {
     setDirty(false);
   }
 
+  function loadExample(ex: DiffExample) {
+    if (
+      turns.length > 0 &&
+      !window.confirm(
+        "Load this example? It replaces both system prompts and clears the current session.",
+      )
+    ) {
+      return;
+    }
+    // Keep each side's provider/model; only swap the prompt + temperature.
+    setConfigA((c) => ({ ...c, system: ex.systemA, temperature: ex.tempA }));
+    setConfigB((c) => ({ ...c, system: ex.systemB, temperature: ex.tempB }));
+    setPendingMessage(ex.message);
+    setTurns([]);
+    setPins([]);
+    setDirty(false);
+  }
+
   function deleteTurn(turnId: string) {
     setTurns((prev) => prev.filter((t) => t.id !== turnId));
   }
@@ -355,6 +374,24 @@ export function DiffMode() {
             ? "Each side keeps its own history — watch the two configs drift apart over a real conversation."
             : "Each run is a fresh single-shot prompt through both configs. No memory between runs."}
         </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet mr-1">
+          Try an example
+        </span>
+        {DIFF_EXAMPLES.map((ex) => (
+          <button
+            key={ex.id}
+            type="button"
+            onClick={() => loadExample(ex)}
+            disabled={running}
+            title={ex.lever}
+            className="font-mono text-[11px] tracking-[0.02em] text-ink-muted border border-line rounded-full px-3 py-1 hover:border-ink-muted hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {ex.name}
+          </button>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
