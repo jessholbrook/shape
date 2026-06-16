@@ -45,6 +45,13 @@ export type DiffTurn = {
   pinsApplied?: string[];
 };
 
+/**
+ * Independent: each turn is a fresh single-shot call through both configs.
+ * Conversation: each side carries its own prior turns as history, so the two
+ * configs accumulate variance over a real multi-turn conversation.
+ */
+export type DiffMode = "independent" | "conversation";
+
 export type DiffDraft = {
   id: string;
   kind: "diff";
@@ -52,6 +59,8 @@ export type DiffDraft = {
   configA: DiffDraftConfig;
   configB: DiffDraftConfig;
   turns: DiffTurn[];
+  /** Defaults to "independent" when absent (pre-mode drafts). */
+  mode?: DiffMode;
   /** Live pin list — phrases the user has highlighted to inject into future
    *  turns. Per-turn snapshots live on DiffTurn.pinsApplied. */
   pins?: string[];

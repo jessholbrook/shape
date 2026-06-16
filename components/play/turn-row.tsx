@@ -19,6 +19,7 @@ export function TurnRow({
   configA,
   configB,
   highlightDiff,
+  label = "Turn",
   onDelete,
   onNoteChange,
 }: {
@@ -27,6 +28,8 @@ export function TurnRow({
   configA: DiffDraftConfig;
   configB: DiffDraftConfig;
   highlightDiff: boolean;
+  /** Row prefix — "Turn" in conversation mode, "Run" in independent mode. */
+  label?: string;
   onDelete?: () => void;
   onNoteChange: (note: string) => void;
 }) {
@@ -55,7 +58,7 @@ export function TurnRow({
       <div className="flex flex-wrap items-baseline justify-between gap-3 pb-3 border-b border-line">
         <div className="flex items-baseline gap-3 min-w-0">
           <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet shrink-0">
-            Turn {num}
+            {label} {num}
           </span>
           <p className="font-sans text-[14px] leading-[1.5] text-ink truncate min-w-0">
             {turn.userMessage || (
