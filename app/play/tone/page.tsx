@@ -16,15 +16,13 @@ export default function TonePage() {
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 pt-16 md:pt-20 pb-32">
         <SectionNumber label="Playground">03</SectionNumber>
 
-        <div className="mt-6 flex flex-wrap items-baseline justify-between gap-4">
-          <h1 className="font-display text-[48px] md:text-[64px] leading-[1.0] tracking-tight text-ink">
-            Tone <span className="italic">dial</span>
-          </h1>
-          <p className="font-sans text-[14px] text-ink-muted max-w-md">
-            Style as a design token. Move a dial, watch the system prompt
-            compose itself, then run it and feel the shift.
-          </p>
-        </div>
+        <h1 className="font-display text-[48px] md:text-[64px] leading-[1.0] tracking-tight text-ink mt-6">
+          Tone <span className="italic">dial</span>
+        </h1>
+        <p className="font-sans text-[14px] text-ink-muted max-w-md mt-5">
+          Style as a design token. Move a dial, watch the system prompt
+          compose itself, then run it and feel the shift.
+        </p>
 
         <ConceptLink playgroundHref="/play/tone" />
 
