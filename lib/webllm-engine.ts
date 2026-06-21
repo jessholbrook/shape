@@ -50,6 +50,27 @@ export async function acquireInferenceLock(): Promise<() => void> {
   return release;
 }
 
+/**
+ * Drop the live engine and reset the singleton so the next call to
+ * `getEngine()` starts fresh. Used after the user clears the in-browser
+ * model storage — otherwise the engine would hold references to data we've
+ * already wiped and the next inference would crash or stream garbage.
+ */
+export async function resetEngineSingleton(): Promise<void> {
+  if (engine) {
+    try {
+      const e = engine as MLCEngine & { unload?: () => Promise<void> };
+      await e.unload?.();
+    } catch {
+      // best effort — engine state is going away regardless
+    }
+  }
+  engine = null;
+  currentModelId = null;
+  pendingPromise = null;
+  setStatus(detectInitialStatus());
+}
+
 function detectInitialStatus(): WebLLMStatus {
   if (typeof navigator === "undefined") return { kind: "idle" };
   if (!("gpu" in navigator)) return { kind: "unsupported" };
