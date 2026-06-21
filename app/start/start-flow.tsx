@@ -7,6 +7,8 @@ import { useKeys } from "@/lib/hooks/use-keys";
 import { validateKey } from "@/lib/keys";
 import { testConnection } from "@/lib/providers/index";
 import { KeyPrivacyNote } from "@/components/key-privacy-note";
+import { LocalModelStorage } from "@/components/local-model-storage";
+import { WebLLMDisclosure } from "@/components/webllm-disclosure";
 
 type TestState =
   | { status: "idle" }
@@ -102,6 +104,14 @@ function KeyEntry({
           >
             All playgrounds →
           </Link>
+        </div>
+
+        <div className="mt-6 pt-5 border-t border-line">
+          <WebLLMDisclosure />
+        </div>
+
+        <div className="mt-4">
+          <LocalModelStorage />
         </div>
       </div>
 

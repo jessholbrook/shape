@@ -2,6 +2,8 @@ import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
 import { KeySetupForm } from "@/components/key-setup-form";
 import { KeyPrivacyNote } from "@/components/key-privacy-note";
+import { LocalModelStorage } from "@/components/local-model-storage";
+import { WebLLMDisclosure } from "@/components/webllm-disclosure";
 
 export const metadata = {
   title: "Keys",
@@ -30,6 +32,23 @@ export default function KeysPage() {
 
         <div className="mt-16">
           <KeySetupForm />
+        </div>
+
+        <div className="mt-16 border-t border-line pt-8">
+          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
+            In-browser model
+          </p>
+          <p className="font-sans text-[14px] text-ink-muted mt-3 max-w-xl">
+            The Free option downloads a small open model into this browser
+            the first time you open a playground. Here&apos;s what it is and
+            how to wipe it.
+          </p>
+          <div className="mt-5">
+            <WebLLMDisclosure />
+          </div>
+          <div className="mt-5">
+            <LocalModelStorage />
+          </div>
         </div>
 
         <div className="mt-16 border-t border-line pt-8">
