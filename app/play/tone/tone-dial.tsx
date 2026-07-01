@@ -14,12 +14,15 @@ import {
   TONE_INITIAL,
   composeSystemPrompt,
   composeToneLines,
+  normalizeToneValues,
   type ToneLine,
   type ToneValues,
 } from "@/lib/tone";
 import { suggestTitle, type ToneDraft } from "@/lib/drafts";
 import { slugify } from "@/lib/download";
 import { REFLECTION } from "@/lib/reflection-questions";
+import { InfoTip } from "@/components/info-tip";
+import { UserMessageTip } from "@/components/play/config-help";
 import { ToneDialControls } from "@/components/play/tone-dial-controls";
 import { OutputPanel, type OutputState } from "@/components/play/output-panel";
 import type { ConfigState } from "@/components/play/config-panel";
@@ -59,15 +62,18 @@ export function ToneDial() {
   const [dirty, setDirty] = useState(false);
   const [runCount, setRunCount] = useState(0);
   const [reflectionDismissed, setReflectionDismissed] = useState(false);
+  const [reflectionNote, setReflectionNote] = useState("");
 
   useUnsavedWork(dirty);
 
   const hydrateFromDraft = useCallback((draft: ToneDraft) => {
     setProvider(draft.provider);
+    setReflectionNote(draft.reflection ?? "");
     setModel(draft.model);
     setTemperature(draft.temperature);
     setBrief(draft.brief);
-    setTone(draft.tone);
+    // Fills in dials added after this draft was saved (they read as Neutral).
+    setTone(normalizeToneValues(draft.tone));
     setUserMessage(draft.lastUserMessage);
     if (draft.lastOutput) {
       setOutput({ ...EMPTY_OUTPUT, text: draft.lastOutput, status: "done" });
@@ -98,6 +104,7 @@ export function ToneDial() {
       tone,
       lastUserMessage: userMessage,
       lastOutput: output.text || undefined,
+      reflection: reflectionNote.trim() || undefined,
     });
     setDirty(false);
   }
@@ -241,8 +248,9 @@ export function ToneDial() {
 
       {/* Run row */}
       <div className="bg-surface border border-line rounded-[16px] p-5">
-        <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet block mb-2">
+        <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet mb-2 inline-flex items-center gap-1.5">
           User message
+          <InfoTip>{UserMessageTip}</InfoTip>
         </label>
         <textarea
           value={userMessage}
@@ -282,11 +290,17 @@ export function ToneDial() {
       {runCount >= 2 && !running && !reflectionDismissed && (
         <ReflectionCard
           reflection={REFLECTION.tone}
+          answer={reflectionNote}
+          onAnswerChange={(v) => {
+            setReflectionNote(v);
+            setDirty(true);
+          }}
           onDismiss={() => setReflectionDismissed(true)}
         />
       )}
 
       <DraftSaveBar
+        artifact="Behavior Spec"
         title={title}
         onTitleChange={setTitle}
         status={saveStatus}

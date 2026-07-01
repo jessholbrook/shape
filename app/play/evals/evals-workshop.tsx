@@ -23,6 +23,8 @@ import {
 } from "@/lib/evals";
 import { suggestTitle, type EvalsDraft } from "@/lib/drafts";
 import { REFLECTION } from "@/lib/reflection-questions";
+import { InfoTip } from "@/components/info-tip";
+import { SystemPromptTip } from "@/components/play/config-help";
 import { RubricEditor } from "@/components/play/rubric-editor";
 import { EvalCaseRow } from "@/components/play/eval-case-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
@@ -54,11 +56,13 @@ export function EvalsWorkshop() {
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [reflectionDismissed, setReflectionDismissed] = useState(false);
+  const [reflectionNote, setReflectionNote] = useState("");
 
   useUnsavedWork(dirty);
 
   const hydrateFromDraft = useCallback((draft: EvalsDraft) => {
     setProvider(draft.provider);
+    setReflectionNote(draft.reflection ?? "");
     setModel(draft.model);
     setTemperature(draft.temperature);
     setSystemPrompt(draft.systemPrompt);
@@ -226,6 +230,7 @@ export function EvalsWorkshop() {
       rubric,
       cases,
       results,
+      reflection: reflectionNote.trim() || undefined,
     });
     setDirty(false);
   }
@@ -251,8 +256,9 @@ export function EvalsWorkshop() {
 
       {/* System prompt */}
       <div className="bg-surface border border-line rounded-[16px] p-5">
-        <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet block mb-2">
+        <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet mb-2 inline-flex items-center gap-1.5">
           System prompt under test
+          <InfoTip>{SystemPromptTip}</InfoTip>
         </label>
         <textarea
           value={systemPrompt}
@@ -319,11 +325,17 @@ export function EvalsWorkshop() {
       {showReflection && (
         <ReflectionCard
           reflection={REFLECTION.evals}
+          answer={reflectionNote}
+          onAnswerChange={(v) => {
+            setReflectionNote(v);
+            setDirty(true);
+          }}
           onDismiss={() => setReflectionDismissed(true)}
         />
       )}
 
       <DraftSaveBar
+        artifact="Eval Rubric + Scorecard"
         title={title}
         onTitleChange={setTitle}
         status={saveStatus}

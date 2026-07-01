@@ -20,6 +20,8 @@ import {
 } from "@/lib/refusal";
 import { suggestTitle, type RefusalDraft } from "@/lib/drafts";
 import { REFLECTION } from "@/lib/reflection-questions";
+import { InfoTip } from "@/components/info-tip";
+import { SystemPromptTip } from "@/components/play/config-help";
 import { ProbeRow } from "@/components/play/probe-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
@@ -49,11 +51,13 @@ export function RefusalLab() {
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [reflectionDismissed, setReflectionDismissed] = useState(false);
+  const [reflectionNote, setReflectionNote] = useState("");
 
   useUnsavedWork(dirty);
 
   const hydrateFromDraft = useCallback((draft: RefusalDraft) => {
     setProvider(draft.provider);
+    setReflectionNote(draft.reflection ?? "");
     setModel(draft.model);
     setTemperature(draft.temperature);
     setGuidelines(draft.guidelines);
@@ -208,6 +212,7 @@ export function RefusalLab() {
       guidelines,
       probes,
       results,
+      reflection: reflectionNote.trim() || undefined,
     });
     setDirty(false);
   }
@@ -233,8 +238,9 @@ export function RefusalLab() {
 
       {/* Guidelines editor */}
       <div className="bg-surface border border-line rounded-[16px] p-5">
-        <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet block mb-2">
+        <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet mb-2 inline-flex items-center gap-1.5">
           Refusal guidelines (system prompt)
+          <InfoTip>{SystemPromptTip}</InfoTip>
         </label>
         <textarea
           value={guidelines}
@@ -291,11 +297,17 @@ export function RefusalLab() {
       {showReflection && (
         <ReflectionCard
           reflection={REFLECTION.refusal}
+          answer={reflectionNote}
+          onAnswerChange={(v) => {
+            setReflectionNote(v);
+            setDirty(true);
+          }}
           onDismiss={() => setReflectionDismissed(true)}
         />
       )}
 
       <DraftSaveBar
+        artifact="Refusal Scorecard"
         title={title}
         onTitleChange={setTitle}
         status={saveStatus}

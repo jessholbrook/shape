@@ -122,6 +122,19 @@ function draftMeta(draft: Draft): string {
 }
 
 function DraftBody({ draft }: { draft: Draft }) {
+  return (
+    <>
+      <KindBody draft={draft} />
+      {draft.reflection?.trim() && (
+        <Section label="Reflection">
+          <Prose>{draft.reflection.trim()}</Prose>
+        </Section>
+      )}
+    </>
+  );
+}
+
+function KindBody({ draft }: { draft: Draft }) {
   switch (draft.kind) {
     case "persona":
       return <PersonaBody draft={draft} />;

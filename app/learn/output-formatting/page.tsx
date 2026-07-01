@@ -166,18 +166,18 @@ export default function OutputFormattingPage() {
 
         <H2>Try it in your own work</H2>
         <P>
-          This one doesn&apos;t pair with a single playground — format
-          shows up everywhere. The fastest way to feel it is in Diff
-          Mode: write the same user message, set Config A to a system
-          prompt that says nothing about format, set Config B to one
-          that specifies it on purpose. Read both. You&apos;ll see how
-          much of the output you were assigning to &ldquo;voice&rdquo;
-          was actually formatting choices.
+          The Tone Dial has a <strong>Structure</strong> dial for exactly
+          this: sweep it from flowing prose to headed sections while the
+          other dials stay put, and watch how much of what you were
+          calling &ldquo;voice&rdquo; was actually formatting. For a
+          side-by-side version, Diff Mode&apos;s{" "}
+          <em>Prose vs Bullets</em> preset runs the same message through
+          both shapes at once.
         </P>
 
-        <TryItCTA href="/play/diff" buttonLabel="Open Diff Mode">
-          Open Diff Mode and{" "}
-          <span className="italic">give format its own config</span>.
+        <TryItCTA href="/play/tone" buttonLabel="Open Tone Dial">
+          Open the Tone Dial and{" "}
+          <span className="italic">move only the Structure dial</span>.
         </TryItCTA>
 
         <P>

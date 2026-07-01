@@ -93,6 +93,10 @@ export const MODULES: CurriculumModule[] = [
     kicker: "Concept",
     blurb:
       "Lists, headings, JSON, paragraphs. Format is part of voice; pick one on purpose.",
+    // Note: /play/tone's primary module is voice-and-tone (02); the reverse
+    // lookup in getModuleByPlaygroundHref returns the first match, so this
+    // entry doesn't change the Tone Dial's concept link.
+    playground: { label: "Tone Dial — Structure dial", href: "/play/tone" },
     artifact: "Structured-output spec",
     href: "/learn/output-formatting",
     status: "ready",
