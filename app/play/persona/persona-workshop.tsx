@@ -268,6 +268,17 @@ export function PersonaWorkshop() {
         />
       )}
 
+      {/* First-ask failures revert the (empty) transcript, so the error would
+          otherwise have nowhere to render and the Ask button looks dead.
+          Surface it here whenever there's no conversation card to hold it. */}
+      {!hasConversation && reply.status === "error" && reply.error && (
+        <div className="bg-danger/10 border border-danger/30 rounded-[12px] p-4">
+          <p className="font-sans text-[14px] leading-[1.55] text-ink">
+            {reply.error}
+          </p>
+        </div>
+      )}
+
       <div className="bg-surface border border-line rounded-[16px] p-5">
         <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet block mb-2">
           {hasConversation ? "Continue the conversation" : "Ask the persona"}

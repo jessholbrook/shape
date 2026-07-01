@@ -7,14 +7,11 @@ import { ShapeMark } from "./shape-mark";
 import { CostMeter } from "./cost-meter";
 import { FeedbackButton } from "./feedback-button";
 import { WebLLMStatusBanner } from "./webllm-status-banner";
+import { UnsavedToast } from "./unsaved-toast";
 import {
+  flagUnsavedLeaveToast,
   hasUnsavedWork,
-  hasWarnedAboutUnsaved,
-  markWarnedAboutUnsaved,
 } from "@/lib/hooks/use-unsaved-work";
-
-const LEAVE_NOTICE =
-  "One sec! You have unsaved outputs in this session. Use the Save draft bar at the bottom to keep it.";
 
 type NavItem = {
   num: string;
@@ -53,11 +50,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
     };
   }, [menuOpen]);
 
-  // Gently guard in-app navigation when a playground has unsaved output.
-  // Capture-phase so we intercept an internal link click (nav, brand, in-page
-  // CTAs) before Next's Link handles it. New-tab and modified clicks pass
-  // through. We warn exactly once per unsaved session, then stop blocking — the
-  // user is never trapped: a second click on the same destination goes through.
+  // Non-blocking heads-up when leaving a playground with unsaved output.
+  // Capture-phase so we see an internal link click (nav, brand, in-page CTAs)
+  // before Next's Link handles it — but we NEVER call preventDefault: the
+  // navigation always proceeds. We just flag a toast that the destination page
+  // shows. New-tab and modified clicks are ignored. A user exploring is never
+  // interrupted or trapped.
   useEffect(() => {
     function onClick(e: MouseEvent) {
       if (!hasUnsavedWork()) return;
@@ -77,11 +75,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       if (!href || !href.startsWith("/")) return;
       const dest = href.split(/[?#]/)[0];
       if (dest === window.location.pathname) return; // same page (e.g. ?draft=)
-      if (hasWarnedAboutUnsaved()) return; // already warned once — let them go
-      markWarnedAboutUnsaved();
-      e.preventDefault();
-      e.stopPropagation();
-      window.alert(LEAVE_NOTICE);
+      flagUnsavedLeaveToast();
     }
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
@@ -169,6 +163,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
       <FeedbackButton />
       <WebLLMStatusBanner />
+      <UnsavedToast />
     </div>
   );
 }

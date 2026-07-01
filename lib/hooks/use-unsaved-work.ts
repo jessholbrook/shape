@@ -4,45 +4,56 @@ import { useEffect } from "react";
 
 /**
  * Tracks whether the current playground has generated output the user hasn't
- * saved, plus whether we've already warned them about it once. Module-level
- * (not React state) because the Shell — which owns the nav and the click
- * guard — reads these at click time without re-rendering on every keystroke.
+ * saved. Module-level (not React state) because the Shell — which owns the nav
+ * and the leave-toast — reads it at click time without re-rendering on every
+ * keystroke.
  *
- * The guard is intentionally gentle: it warns once per unsaved session and
- * then gets out of the way, so a user is never trapped on the page.
+ * The guard is intentionally non-blocking: navigation is never intercepted, so
+ * a user exploring is never interrupted or trapped. When they leave a
+ * playground with unsaved output, we flag a gentle, auto-dismissing toast on
+ * the destination page — a reminder, not a wall.
  */
 let unsaved = false;
-let warned = false;
 
 export function hasUnsavedWork(): boolean {
   return unsaved;
 }
 
-export function hasWarnedAboutUnsaved(): boolean {
-  return warned;
-}
-
-export function markWarnedAboutUnsaved(): void {
-  warned = true;
-}
-
 export function clearUnsavedWork(): void {
   unsaved = false;
-  warned = false;
+}
+
+// --- Leave toast -----------------------------------------------------------
+// Set when the user navigates away from a playground that had unsaved output;
+// consumed by the <UnsavedToast> on the page they land on. Module-level so it
+// survives the Shell unmount/remount that happens during client navigation.
+
+let pendingToast = false;
+const toastListeners = new Set<() => void>();
+
+export function flagUnsavedLeaveToast(): void {
+  pendingToast = true;
+  for (const l of toastListeners) l();
+}
+
+export function consumeUnsavedLeaveToast(): boolean {
+  const had = pendingToast;
+  pendingToast = false;
+  return had;
+}
+
+export function subscribeUnsavedLeaveToast(fn: () => void): () => void {
+  toastListeners.add(fn);
+  return () => toastListeners.delete(fn);
 }
 
 /**
  * Register whether this playground currently holds unsaved generated output.
- * Saving or clearing (isDirty → false) also resets the one-time warning, so a
- * fresh batch of work earns a fresh heads-up. Clears on unmount.
+ * Clears on unmount.
  */
 export function useUnsavedWork(isDirty: boolean) {
   useEffect(() => {
-    if (isDirty) {
-      unsaved = true;
-    } else {
-      clearUnsavedWork();
-    }
+    unsaved = isDirty;
   }, [isDirty]);
 
   useEffect(() => {

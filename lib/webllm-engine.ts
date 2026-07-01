@@ -77,6 +77,54 @@ function detectInitialStatus(): WebLLMStatus {
   return { kind: "idle" };
 }
 
+/**
+ * `"gpu" in navigator` is necessary but not sufficient: a browser can expose
+ * the WebGPU API and still fail to hand out an adapter (Linux without GPU
+ * drivers, some VMs, browsers with partial support). That surfaces at engine
+ * init as a cryptic "Unable to find a compatible GPU" — which a beta tester
+ * hit. Probe the adapter proactively so the friendly banner shows *before*
+ * the user clicks Run, instead of a raw library error after.
+ *
+ * Runs at most once, and only downgrades from `idle` — it never clobbers a
+ * live loading/ready engine.
+ */
+let adapterProbed = false;
+
+export async function probeWebGPUAdapter(): Promise<void> {
+  if (adapterProbed) return;
+  adapterProbed = true;
+  if (typeof navigator === "undefined") return;
+  const gpu = (
+    navigator as Navigator & {
+      gpu?: { requestAdapter(): Promise<unknown> };
+    }
+  ).gpu;
+  if (!gpu) {
+    setStatus({ kind: "unsupported" });
+    return;
+  }
+  if (status.kind !== "idle") return;
+  try {
+    const adapter = await gpu.requestAdapter();
+    if (!adapter && status.kind === "idle") {
+      setStatus({ kind: "unsupported" });
+    }
+  } catch {
+    if (status.kind === "idle") setStatus({ kind: "unsupported" });
+  }
+}
+
+/**
+ * Turn WebLLM's low-level GPU errors into something a designer can act on.
+ * Returns the original message for anything we don't recognize.
+ */
+export function humanizeWebLLMError(raw: string): string {
+  if (/compatible gpu|requestadapter|no adapter|gpu adapter|webgpu/i.test(raw)) {
+    return "This browser exposes WebGPU but couldn't find a compatible GPU, so the free in-browser model can't run here. This is common on Linux without GPU drivers, in some virtual machines, or in browsers with partial support. Bring your own Anthropic or OpenAI key to use the playgrounds, or try Chrome or Edge on a machine with a supported GPU.";
+  }
+  return raw;
+}
+
 function setStatus(next: WebLLMStatus): void {
   status = next;
   for (const l of listeners) l(next);
@@ -146,9 +194,16 @@ export async function getEngine(modelId: string): Promise<MLCEngine> {
       setStatus({ kind: "ready", model: modelId });
       return engine;
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setStatus({ kind: "error", message });
-      throw err;
+      const raw = err instanceof Error ? err.message : String(err);
+      const message = humanizeWebLLMError(raw);
+      // A GPU-adapter failure is really an "unsupported browser" condition —
+      // surface it via the banner path, not a transient error state.
+      if (message !== raw) {
+        setStatus({ kind: "unsupported" });
+      } else {
+        setStatus({ kind: "error", message });
+      }
+      throw new Error(message);
     }
   })();
 
