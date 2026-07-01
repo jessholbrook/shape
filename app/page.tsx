@@ -19,9 +19,10 @@ export default function Home() {
         </h1>
 
         <p className="font-sans text-[18px] md:text-[22px] leading-[1.5] text-ink-muted mt-8 max-w-2xl">
-          A playground for people in UX — designers, researchers, writers,
-          prototypers — to learn how to shape AI model behaviors. Learn by
-          doing. Create artifacts you can use later.
+          A hands-on playground for UX designers and researchers to learn a new
+          craft: designing how an AI behaves — its tone, persona, and
+          boundaries. It&apos;s not about using AI to do your work; it&apos;s
+          about learning to direct the model itself.
         </p>
 
         <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -65,8 +66,8 @@ export default function Home() {
           />
           <StepCard
             num="02"
-            title="Shape something."
-            body="Open a playground. Tune a tone, design a persona, diff two prompts."
+            title="Design a behavior."
+            body="Pick one lever in a playground — a tone, a persona, a boundary — change it, and watch how the model's output shifts."
           />
           <StepCard
             num="03"
