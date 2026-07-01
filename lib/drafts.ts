@@ -64,6 +64,8 @@ export type DiffDraft = {
   /** Live pin list — phrases the user has highlighted to inject into future
    *  turns. Per-turn snapshots live on DiffTurn.pinsApplied. */
   pins?: string[];
+  /** The user's answer to the playground's reflection question, if they jotted one. */
+  reflection?: string;
   createdAt: number;
   updatedAt: number;
 };
@@ -114,6 +116,8 @@ export type ToneDraft = {
   tone: ToneValues;
   lastUserMessage: string;
   lastOutput?: string;
+  /** The user's answer to the playground's reflection question, if they jotted one. */
+  reflection?: string;
   createdAt: number;
   updatedAt: number;
 };
@@ -135,6 +139,8 @@ export type PersonaDraft = {
   lastOutput?: string;
   /** Full conversation. Pre-multi-turn drafts only have the last pair above. */
   transcript?: PersonaTranscriptMessage[];
+  /** The user's answer to the playground's reflection question, if they jotted one. */
+  reflection?: string;
   createdAt: number;
   updatedAt: number;
 };
@@ -151,6 +157,8 @@ export type RefusalDraft = {
   probes: Probe[];
   /** Results keyed by probe id. */
   results: Record<string, ProbeResult>;
+  /** The user's answer to the playground's reflection question, if they jotted one. */
+  reflection?: string;
   createdAt: number;
   updatedAt: number;
 };
@@ -168,6 +176,8 @@ export type EvalsDraft = {
   cases: EvalCase[];
   /** Per-case results, keyed by case id. */
   results: Record<string, CaseResult>;
+  /** The user's answer to the playground's reflection question, if they jotted one. */
+  reflection?: string;
   createdAt: number;
   updatedAt: number;
 };
@@ -181,6 +191,8 @@ export type ChoreographerDraft = {
   temperature: number;
   systemPrompt: string;
   turns: ChoreographedTurn[];
+  /** The user's answer to the playground's reflection question, if they jotted one. */
+  reflection?: string;
   createdAt: number;
   updatedAt: number;
 };

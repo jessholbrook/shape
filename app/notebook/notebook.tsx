@@ -273,6 +273,11 @@ function DraftRow({
             {draft.title || "Untitled"}
           </h3>
           <DraftSummary draft={draft} />
+          {draft.reflection?.trim() && (
+            <p className="mt-2 font-sans text-[13px] leading-[1.5] text-ink-muted italic line-clamp-2">
+              &ldquo;{draft.reflection.trim()}&rdquo;
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-3 shrink-0">
           <Link

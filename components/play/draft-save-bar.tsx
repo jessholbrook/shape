@@ -11,6 +11,7 @@ export function DraftSaveBar({
   draftId,
   onSave,
   disabled,
+  artifact,
 }: {
   title: string;
   onTitleChange: (next: string) => void;
@@ -19,12 +20,21 @@ export function DraftSaveBar({
   draftId: string | null;
   onSave: () => void;
   disabled?: boolean;
+  /** The artifact this playground produces (e.g. "Persona Card") — names the
+   *  thing being saved, matching the promise on the /play cards. */
+  artifact?: string;
 }) {
   return (
     <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
         <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet">
           Draft title
+          {artifact && (
+            <>
+              {" · "}
+              <span className="text-ink-muted">Saves as {artifact}</span>
+            </>
+          )}
         </label>
         <div className="flex items-center gap-3">
           {status === "saved" && (

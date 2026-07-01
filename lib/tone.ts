@@ -13,7 +13,8 @@ export type ToneDimensionId =
   | "verbosity"
   | "energy"
   | "directness"
-  | "concreteness";
+  | "concreteness"
+  | "structure";
 
 export type ToneValues = Record<ToneDimensionId, ToneStop>;
 
@@ -23,7 +24,17 @@ export const DEFAULT_TONE: ToneValues = {
   energy: 0,
   directness: 0,
   concreteness: 0,
+  structure: 0,
 };
+
+/**
+ * Fill in dials that didn't exist when a draft was saved (e.g. drafts from
+ * before the Structure dial shipped) so old drafts hydrate without crashing
+ * and new dials read as Neutral.
+ */
+export function normalizeToneValues(values: Partial<ToneValues>): ToneValues {
+  return { ...DEFAULT_TONE, ...values };
+}
 
 export const TONE_DIMENSIONS: ToneDimension[] = [
   {
@@ -158,6 +169,34 @@ export const TONE_DIMENSIONS: ToneDimension[] = [
       },
     ],
   },
+  {
+    id: "structure",
+    label: "Structure",
+    blurb: "Flowing prose ↔ headed sections",
+    stops: [
+      {
+        label: "Prose",
+        prompt:
+          "Write in flowing prose paragraphs only. No lists, headings, or tables.",
+      },
+      {
+        label: "Prose-first",
+        prompt:
+          "Prefer paragraphs. Use a list only when it clearly beats prose.",
+      },
+      { label: "Neutral", prompt: null },
+      {
+        label: "Scannable",
+        prompt:
+          "Prefer structure: short bullets with a bold lead-in word where it helps scanning.",
+      },
+      {
+        label: "Sectioned",
+        prompt:
+          "Structure the reply with short headed sections and tight bullets. No long paragraphs.",
+      },
+    ],
+  },
 ];
 
 export const TONE_BY_ID: Record<ToneDimensionId, ToneDimension> =
@@ -174,6 +213,7 @@ export const TONE_INITIAL: Record<ToneDimensionId, string> = {
   energy: "E",
   directness: "D",
   concreteness: "C",
+  structure: "S",
 };
 
 export function stopLabel(id: ToneDimensionId, stop: ToneStop): string {

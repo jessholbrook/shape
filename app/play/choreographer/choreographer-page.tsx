@@ -21,6 +21,8 @@ import {
 } from "@/lib/choreographer";
 import { suggestTitle, type ChoreographerDraft } from "@/lib/drafts";
 import { REFLECTION } from "@/lib/reflection-questions";
+import { InfoTip } from "@/components/info-tip";
+import { SystemPromptTip } from "@/components/play/config-help";
 import { ChoreographerTurnRow } from "@/components/play/choreographer-turn-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
@@ -43,11 +45,13 @@ export function Choreographer() {
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [reflectionDismissed, setReflectionDismissed] = useState(false);
+  const [reflectionNote, setReflectionNote] = useState("");
 
   useUnsavedWork(dirty);
 
   const hydrateFromDraft = useCallback((draft: ChoreographerDraft) => {
     setProvider(draft.provider);
+    setReflectionNote(draft.reflection ?? "");
     setModel(draft.model);
     setTemperature(draft.temperature);
     setSystemPrompt(draft.systemPrompt);
@@ -242,6 +246,7 @@ export function Choreographer() {
       temperature,
       systemPrompt,
       turns,
+      reflection: reflectionNote.trim() || undefined,
     });
     setDirty(false);
   }
@@ -267,8 +272,9 @@ export function Choreographer() {
 
       {/* System prompt */}
       <div className="bg-surface border border-line rounded-[16px] p-5">
-        <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet block mb-2">
+        <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet mb-2 inline-flex items-center gap-1.5">
           System prompt
+          <InfoTip>{SystemPromptTip}</InfoTip>
         </label>
         <textarea
           value={systemPrompt}
@@ -348,11 +354,17 @@ export function Choreographer() {
       {showReflection && (
         <ReflectionCard
           reflection={REFLECTION.choreographer}
+          answer={reflectionNote}
+          onAnswerChange={(v) => {
+            setReflectionNote(v);
+            setDirty(true);
+          }}
           onDismiss={() => setReflectionDismissed(true)}
         />
       )}
 
       <DraftSaveBar
+        artifact="Behavior Spec"
         title={title}
         onTitleChange={setTitle}
         status={saveStatus}

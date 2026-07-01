@@ -5,6 +5,7 @@ import { InfoTip } from "@/components/info-tip";
 import {
   ModelTip,
   ProviderTip,
+  SystemPromptTip,
   TemperatureTip,
   temperatureRegime,
 } from "@/components/play/config-help";
@@ -89,7 +90,7 @@ export function ConfigPanel({
         </Field>
       </div>
 
-      <Field label="System prompt">
+      <Field label="System prompt" tip={SystemPromptTip}>
         <textarea
           value={config.system}
           onChange={(e) => onChange({ ...config, system: e.target.value })}

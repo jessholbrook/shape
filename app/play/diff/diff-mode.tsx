@@ -19,6 +19,8 @@ import {
 } from "@/lib/drafts";
 import { DIFF_EXAMPLES, type DiffExample } from "@/lib/diff-examples";
 import { REFLECTION } from "@/lib/reflection-questions";
+import { InfoTip } from "@/components/info-tip";
+import { UserMessageTip } from "@/components/play/config-help";
 import { ConfigPanel, type ConfigState } from "@/components/play/config-panel";
 import { TurnRow } from "@/components/play/turn-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
@@ -86,6 +88,7 @@ export function DiffMode() {
   const [configA, setConfigA] = useState<ConfigState>(INITIAL_A);
   const [configB, setConfigB] = useState<ConfigState>(INITIAL_B);
   const [pendingMessage, setPendingMessage] = useState(DEFAULT_MESSAGE);
+  const [activeExample, setActiveExample] = useState<DiffExample | null>(null);
   const [turns, setTurns] = useState<DiffTurn[]>([]);
   const [mode, setMode] = useState<DiffModeKind>("independent");
   const [running, setRunning] = useState(false);
@@ -94,11 +97,13 @@ export function DiffMode() {
   const [selectionText, setSelectionText] = useState("");
   const [dirty, setDirty] = useState(false);
   const [reflectionDismissed, setReflectionDismissed] = useState(false);
+  const [reflectionNote, setReflectionNote] = useState("");
 
   useUnsavedWork(dirty);
 
   const hydrateFromDraft = useCallback((draft: DiffDraft) => {
     setConfigA(draft.configA);
+    setReflectionNote(draft.reflection ?? "");
     setConfigB(draft.configB);
     setTurns(draft.turns);
     setMode(draft.mode ?? "independent");
@@ -303,6 +308,7 @@ export function DiffMode() {
     setConfigA((c) => ({ ...c, system: ex.systemA, temperature: ex.tempA }));
     setConfigB((c) => ({ ...c, system: ex.systemB, temperature: ex.tempB }));
     setPendingMessage(ex.message);
+    setActiveExample(ex);
     setTurns([]);
     setPins([]);
     setDirty(false);
@@ -333,6 +339,7 @@ export function DiffMode() {
       turns,
       mode,
       pins: pins.length ? pins : undefined,
+      reflection: reflectionNote.trim() || undefined,
     });
     setDirty(false);
   }
@@ -416,16 +423,31 @@ export function DiffMode() {
         <ConfigPanel
           label="Config A"
           config={configA}
-          onChange={setConfigA}
+          onChange={(next) => {
+            setConfigA(next);
+            setActiveExample(null);
+          }}
           connected={aReady}
         />
         <ConfigPanel
           label="Config B"
           config={configB}
-          onChange={setConfigB}
+          onChange={(next) => {
+            setConfigB(next);
+            setActiveExample(null);
+          }}
           connected={bReady}
         />
       </div>
+
+      {activeExample && turns.length === 0 && (
+        <SampleRunCard
+          example={activeExample}
+          canRun={!!canRun}
+          running={running}
+          onRunLive={runBoth}
+        />
+      )}
 
       {turns.length > 0 && (
         <div className="flex flex-col gap-3">
@@ -512,6 +534,11 @@ export function DiffMode() {
       {showReflection && (
         <ReflectionCard
           reflection={reflection}
+          answer={reflectionNote}
+          onAnswerChange={(v) => {
+            setReflectionNote(v);
+            setDirty(true);
+          }}
           onDismiss={() => setReflectionDismissed(true)}
         />
       )}
@@ -544,12 +571,13 @@ export function DiffMode() {
             </div>
           </div>
         )}
-        <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet block mb-2">
+        <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet mb-2 inline-flex items-center gap-1.5">
           {turns.length === 0
             ? "User message"
             : conversation
             ? "Next turn"
             : "New message"}
+          <InfoTip>{UserMessageTip}</InfoTip>
         </label>
         <textarea
           value={pendingMessage}
@@ -591,12 +619,88 @@ export function DiffMode() {
       </div>
 
       <DraftSaveBar
+        artifact="Diff Log"
         title={title}
         onTitleChange={setTitle}
         status={saveStatus}
         draftId={draftId}
         onSave={handleSaveDraft}
       />
+    </div>
+  );
+}
+
+/**
+ * Recorded sample outputs for a just-loaded example preset. Lets a first-time
+ * visitor feel the contrast in seconds — before any model has downloaded and
+ * without a key — with "Run it live" as the follow-up. Hidden as soon as a
+ * real turn exists or a config is edited by hand.
+ */
+function SampleRunCard({
+  example,
+  canRun,
+  running,
+  onRunLive,
+}: {
+  example: DiffExample;
+  canRun: boolean;
+  running: boolean;
+  onRunLive: () => void;
+}) {
+  return (
+    <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-col gap-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
+          Sample run — recorded, not live
+        </span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.08em] bg-highlight-soft text-highlight-ink rounded-full px-2 py-0.5">
+          {example.name}
+        </span>
+      </div>
+
+      <p className="font-sans text-[14px] leading-[1.55] text-ink-muted">
+        <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet mr-2">
+          Message
+        </span>
+        {example.message}
+      </p>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {(["A", "B"] as const).map((which) => (
+          <div
+            key={which}
+            className="bg-canvas border border-line rounded-[12px] p-4 flex flex-col gap-2"
+          >
+            <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+              Config {which} — sample
+            </span>
+            <p className="font-mono text-[13px] leading-[1.6] text-ink whitespace-pre-wrap break-words">
+              {which === "A" ? example.sample.outputA : example.sample.outputB}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <p className="font-sans text-[13px] leading-[1.55] text-ink-muted border-l-2 border-highlight pl-3">
+        <span className="font-medium text-ink">What to notice — </span>
+        {example.lever}
+      </p>
+
+      <div className="flex flex-wrap items-center gap-3 pt-1">
+        <button
+          type="button"
+          onClick={onRunLive}
+          disabled={!canRun}
+          className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ink/90 transition-colors"
+        >
+          {running ? "Streaming…" : "Run it live"}
+          <span className="text-highlight">→</span>
+        </button>
+        <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+          Same message, your selected models — outputs will differ from the
+          sample
+        </span>
+      </div>
     </div>
   );
 }

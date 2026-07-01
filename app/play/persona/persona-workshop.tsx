@@ -66,11 +66,13 @@ export function PersonaWorkshop() {
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [reflectionDismissed, setReflectionDismissed] = useState(false);
+  const [reflectionNote, setReflectionNote] = useState("");
 
   useUnsavedWork(dirty);
 
   const hydrateFromDraft = useCallback((draft: PersonaDraft) => {
     setProvider(draft.provider);
+    setReflectionNote(draft.reflection ?? "");
     setModel(draft.model);
     setTemperature(draft.temperature);
     setPersona(draft.persona);
@@ -222,6 +224,7 @@ export function PersonaWorkshop() {
       lastUserMessage: lastUser?.content ?? userMessage,
       lastOutput: lastAssistant?.content,
       transcript: messages.length ? messages : undefined,
+      reflection: reflectionNote.trim() || undefined,
     });
     setDirty(false);
   }
@@ -264,6 +267,11 @@ export function PersonaWorkshop() {
       {showReflection && (
         <ReflectionCard
           reflection={REFLECTION.persona}
+          answer={reflectionNote}
+          onAnswerChange={(v) => {
+            setReflectionNote(v);
+            setDirty(true);
+          }}
           onDismiss={() => setReflectionDismissed(true)}
         />
       )}
@@ -327,6 +335,7 @@ export function PersonaWorkshop() {
       </div>
 
       <DraftSaveBar
+        artifact="Persona Card"
         title={title}
         onTitleChange={setTitle}
         status={saveStatus}

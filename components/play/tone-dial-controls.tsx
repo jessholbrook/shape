@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  DEFAULT_TONE,
   TONE_DIMENSIONS,
   TONE_INITIAL,
   type ToneDimensionId,
@@ -23,15 +24,7 @@ export function ToneDialControls({
         </div>
         <button
           type="button"
-          onClick={() =>
-            onChange({
-              warmth: 0,
-              verbosity: 0,
-              energy: 0,
-              directness: 0,
-              concreteness: 0,
-            })
-          }
+          onClick={() => onChange({ ...DEFAULT_TONE })}
           className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
         >
           Reset dials

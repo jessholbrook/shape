@@ -12,6 +12,33 @@ export function temperatureRegime(t: number): string {
   return "Loose";
 }
 
+export const SystemPromptTip = (
+  <>
+    <span className="block">
+      The standing instructions the model reads before every message — who it
+      is, how it speaks, where its boundaries are. The person chatting never
+      sees this text; they only feel its effects.
+    </span>
+    <span className="block mt-2 text-canvas/75">
+      Think brand-voice doc: written once, applied to the whole conversation.
+      Every word in it is a design decision.
+    </span>
+  </>
+);
+
+export const UserMessageTip = (
+  <>
+    <span className="block">
+      What a person types in the moment — the question or task. The system
+      prompt shapes <em>how</em> the model answers it.
+    </span>
+    <span className="block mt-2 text-canvas/75">
+      Brand-voice doc vs. one tooltip: the system prompt is the standing
+      style, the user message is the call site.
+    </span>
+  </>
+);
+
 export const ProviderTip = (
   <>
     <span className="block">
