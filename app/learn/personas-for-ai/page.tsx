@@ -143,6 +143,54 @@ export default function PersonasForAIPage() {
           you wrote the character or left the model to imagine one.
         </P>
 
+        <H2>But isn&apos;t that just telling it who it is?</H2>
+        <P>
+          If you already give the model a role, its goals, and a few
+          example responses, you&apos;re most of the way there — this
+          isn&apos;t a different universe from what you&apos;re doing. The
+          difference is what happens on the case your examples didn&apos;t
+          cover. Examples <em>enumerate</em> behavior you already thought
+          of. A backstory and a belief give the model something to{" "}
+          <em>reason from</em>, so the hundredth situation — the one you
+          never wrote a sample for — still comes out in character.
+          Enumeration versus a generative source: that&apos;s the gap.
+        </P>
+        <P>
+          It shows up most on the hard turns. A few-shot example can teach
+          the model to sound warm. It rarely teaches the model to{" "}
+          <em>disagree</em> — to push back on a leading question, decline
+          something that cuts against what the character believes, or hold
+          a position under pressure. That behavior falls out of a belief
+          (&ldquo;most interviews fail in the first ninety seconds&rdquo;)
+          far more reliably than out of a sample reply.{" "}
+          <NoteAccent>
+            Beliefs are what keep a persona from collapsing into a
+            yes-machine the moment the conversation gets interesting.
+          </NoteAccent>
+        </P>
+
+        <H2>&ldquo;Ask when uncertain&rdquo; is a different lever</H2>
+        <P>
+          You might handle the &ldquo;what it shouldn&apos;t do&rdquo; part
+          by telling the model to ask for clarification instead of
+          assuming. That&apos;s a genuinely good instinct — but it solves a
+          different problem than a named blind spot does.{" "}
+          <em>Ask when uncertain</em> covers cases where the model{" "}
+          <em>lacks information</em>. A constraint covers cases where the
+          model <em>knows exactly what to do and shouldn&apos;t</em>.
+        </P>
+        <P>
+          The space between them is where confident mistakes live. A model
+          that&apos;s sure it should hand out medical dosing, or happily
+          role-play outside its lane, isn&apos;t uncertain — so it never
+          trips the &ldquo;ask me first&rdquo; rule. Naming the blind spot
+          (&ldquo;you won&apos;t give clinical advice — instead you&apos;ll
+          point to a professional&rdquo;) catches the confident-but-wrong
+          case that a clarification prompt sails right past. They&apos;re
+          complements, not substitutes: clarification for what the persona
+          doesn&apos;t know, constraints for what it won&apos;t do.
+        </P>
+
         <H2>A note on giving the model a face</H2>
         <P>
           This article teaches the persona technique because it&apos;s a
