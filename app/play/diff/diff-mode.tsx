@@ -22,6 +22,7 @@ import { REFLECTION } from "@/lib/reflection-questions";
 import { InfoTip } from "@/components/info-tip";
 import { UserMessageTip } from "@/components/play/config-help";
 import { ConfigPanel, type ConfigState } from "@/components/play/config-panel";
+import { TemperatureNote } from "@/components/play/temperature-note";
 import { TurnRow } from "@/components/play/turn-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { ReflectionCard } from "@/components/play/reflection-card";
@@ -447,6 +448,8 @@ export function DiffMode() {
           connected={bReady}
         />
       </div>
+
+      <TemperatureNote />
 
       {activeExample && turns.length === 0 && (
         <SampleRunCard
