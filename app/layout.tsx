@@ -39,7 +39,7 @@ function siteOrigin(): string {
 }
 
 const DESCRIPTION =
-  "A playground for people in UX — designers, researchers, writers, prototypers — to learn how to shape AI model behaviors. Learn by doing. Create artifacts you can use later.";
+  "A hands-on playground for UX designers and researchers to learn a new craft: designing how an AI behaves — its tone, persona, and boundaries. Not about using AI to do your work; about learning to direct the model itself.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin()),
