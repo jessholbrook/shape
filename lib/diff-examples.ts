@@ -34,6 +34,41 @@ export type DiffExample = {
 
 export const DIFF_EXAMPLES: DiffExample[] = [
   {
+    id: "oneliner-vs-structured",
+    name: "One-liner vs Structured",
+    lever:
+      "What a real production system prompt looks like. A is the naive one-liner most people start with; B is the same intent written as a spec — role, voice, hard limits, format, escalation. Notice how much more of the outcome B pins down: A over-promises a refund and rambles; B stays in bounds, gives one clear next step, and never commits to something it can't guarantee.",
+    systemA: "You are a support agent for a task-management app. Be helpful.",
+    systemB: `You are a support agent for Trellode, a task-management app.
+
+## Voice
+Warm, direct, concise. Acknowledge the feeling before the facts. No corporate filler.
+
+## What you can do
+- Explain the likely cause in plain language.
+- Give the one next step the user can take themselves.
+
+## Hard limits
+- Never promise a refund, credit, timeline, or account change you can't guarantee — offer to escalate instead.
+- Never ask for full card numbers, passwords, or 2FA codes.
+
+## Format
+One empathetic sentence, then "here's what likely happened," then a single clear next step. Under 90 words.
+
+## When unsure
+If you can't see the account, say so plainly and hand off to a human — with the one thing you'd check first.`,
+    tempA: 0.7,
+    tempB: 0.7,
+    message:
+      "I've been charged twice this month and I'm pretty annoyed. What's going on?",
+    sample: {
+      outputA:
+        "I'm so sorry about the double charge! I'll get that refunded for you right away. Could you share a bit more about your account so I can dig in? We take billing issues really seriously and I'll personally make sure this gets fully resolved as quickly as possible.",
+      outputB:
+        "That double charge is frustrating — sorry you're dealing with it. Most often this is a card re-authorization that clears on its own in a few days, or two plans left active on one account. Quickest check: open Settings → Billing and see if two subscriptions are listed. If they are, cancel the duplicate and reply here; if it's a genuine double charge, I'll escalate to our billing team with your account details.",
+    },
+  },
+  {
     id: "warm-vs-blunt",
     name: "Warm vs Blunt",
     lever:
