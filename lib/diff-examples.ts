@@ -23,6 +23,13 @@ export type DiffExample = {
   message: string;
   /** Recorded outputs for the message above — shown as a sample run. */
   sample: { outputA: string; outputB: string };
+  /**
+   * Optional recorded multi-sample spread. When present, the sample card shows
+   * several runs per config instead of one — the only way to *see* what
+   * temperature does: a low-temp config repeats almost verbatim, a high-temp
+   * config rerolls each time. A definition can't teach this; a spread can.
+   */
+  sampleSpread?: { outputsA: string[]; outputsB: string[] };
 };
 
 export const DIFF_EXAMPLES: DiffExample[] = [
@@ -96,6 +103,20 @@ export const DIFF_EXAMPLES: DiffExample[] = [
       outputA: "Find your calm in the chaos of parenting.",
       outputB:
         "Five stolen minutes, fully yours — breathe before the next snack request.",
+    },
+    sampleSpread: {
+      // Temp 0.1 — three samples, nearly identical run to run.
+      outputsA: [
+        "Find your calm in the chaos of parenting.",
+        "Find your calm in the chaos of parenting.",
+        "Find calm in the chaos of parenting.",
+      ],
+      // Temp 1.0 — three samples, a different swing each time.
+      outputsB: [
+        "Five stolen minutes, fully yours — breathe before the next snack request.",
+        "Because “I just need a minute” deserves an app that gives you one.",
+        "Peace, tucked into the pauses between pickups and lunchboxes.",
+      ],
     },
   },
   {
