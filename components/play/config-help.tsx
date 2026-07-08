@@ -104,6 +104,10 @@ export const TemperatureTip = (
       same prompt can give a different answer each run. Low keeps it focused
       and repeatable; high makes it varied and surprising.
     </span>
+    <span className="block mt-2 text-canvas/75">
+      The tell: run the same prompt a few times. At low temperature the answer
+      barely changes; at high temperature it rerolls each time.
+    </span>
     <span className="block mt-2">
       <strong>0</strong> — identical every time, good for tests and rubrics.
     </span>

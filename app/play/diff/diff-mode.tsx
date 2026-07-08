@@ -260,8 +260,8 @@ export function DiffMode() {
     }
   }
 
-  async function runBoth() {
-    const userMessage = pendingMessage.trim();
+  async function runBoth(overrideMessage?: string) {
+    const userMessage = (overrideMessage ?? pendingMessage).trim();
     if (!userMessage) return;
     // Pins simulate carrying context forward; in conversation mode the real
     // history does that, so pins only apply to independent runs.
@@ -288,6 +288,14 @@ export function DiffMode() {
       streamOne(turnId, "B", configB, historyB, apiMessage),
     ]);
     setRunning(false);
+  }
+
+  // Re-run the most recent message unchanged, so a user can watch how much
+  // each config moves run-to-run. This is the tell for temperature: a low-temp
+  // config barely changes, a high-temp one rerolls. No need to retype.
+  function rollAgain() {
+    const last = turns[turns.length - 1];
+    if (last) runBoth(last.userMessage);
   }
 
   function clearSession() {
@@ -445,7 +453,7 @@ export function DiffMode() {
           example={activeExample}
           canRun={!!canRun}
           running={running}
-          onRunLive={runBoth}
+          onRunLive={() => runBoth()}
         />
       )}
 
@@ -490,6 +498,17 @@ export function DiffMode() {
                   Highlight diffs
                 </span>
               </label>
+              {!conversation && (
+                <button
+                  type="button"
+                  onClick={rollAgain}
+                  disabled={running}
+                  title="Re-run the last message unchanged through both configs. Watch how much each one moves — that spread is temperature."
+                  className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink underline decoration-highlight underline-offset-4 decoration-2 disabled:opacity-40 disabled:no-underline disabled:text-ink-quiet disabled:cursor-not-allowed"
+                >
+                  ↻ Roll again
+                </button>
+              )}
               <button
                 type="button"
                 onClick={clearSession}
@@ -593,7 +612,7 @@ export function DiffMode() {
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
             type="button"
-            onClick={runBoth}
+            onClick={() => runBoth()}
             disabled={!canRun}
             className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ink/90 transition-colors"
           >
@@ -666,19 +685,47 @@ function SampleRunCard({
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {(["A", "B"] as const).map((which) => (
-          <div
-            key={which}
-            className="bg-canvas border border-line rounded-[12px] p-4 flex flex-col gap-2"
-          >
-            <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
-              Config {which} — sample
-            </span>
-            <p className="font-mono text-[13px] leading-[1.6] text-ink whitespace-pre-wrap break-words">
-              {which === "A" ? example.sample.outputA : example.sample.outputB}
-            </p>
-          </div>
-        ))}
+        {(["A", "B"] as const).map((which) => {
+          const spread = example.sampleSpread;
+          const samples = spread
+            ? which === "A"
+              ? spread.outputsA
+              : spread.outputsB
+            : [which === "A" ? example.sample.outputA : example.sample.outputB];
+          const temp = which === "A" ? example.tempA : example.tempB;
+          return (
+            <div
+              key={which}
+              className="bg-canvas border border-line rounded-[12px] p-4 flex flex-col gap-2"
+            >
+              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+                Config {which}
+                {spread ? ` — temp ${temp} · ${samples.length} samples` : " — sample"}
+              </span>
+              <div className="flex flex-col gap-2">
+                {samples.map((text, i) => (
+                  <div
+                    key={i}
+                    className={
+                      spread
+                        ? "border-l-2 border-line pl-2.5 flex flex-col gap-0.5"
+                        : ""
+                    }
+                  >
+                    {spread && (
+                      <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-ink-quiet">
+                        Run {i + 1}
+                      </span>
+                    )}
+                    <p className="font-mono text-[13px] leading-[1.6] text-ink whitespace-pre-wrap break-words">
+                      {text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <p className="font-sans text-[13px] leading-[1.55] text-ink-muted border-l-2 border-highlight pl-3">
@@ -697,8 +744,9 @@ function SampleRunCard({
           <span className="text-highlight">→</span>
         </button>
         <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
-          Same message, your selected models — outputs will differ from the
-          sample
+          {example.sampleSpread
+            ? "Then hit ↻ Roll again a few times to watch it happen live"
+            : "Same message, your selected models — outputs will differ from the sample"}
         </span>
       </div>
     </div>
