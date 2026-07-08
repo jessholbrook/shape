@@ -25,11 +25,22 @@ measurable"; the inversion teaches "choosing the right criteria is the skill."
 rank these correctly?" check) — mirroring the Independent/Conversation toggle
 shipped for Diff Mode. Roughly a day.
 
-**Decision:** Park. Good idea but a meaningfully different mode, not a tweak;
-hold off on a single data point. Revisit if the theme recurs in feedback.
+**Decision (updated 2026-06-16 → 2026-07-08):** ~~Park; hold off on a single
+data point.~~ **Promoted to a real candidate for the next build cycle.** A
+second, independent tester (launch day, `/play/evals`) landed on the *same*
+inversion unprompted — "maybe rubric design is the experimental task, based on
+evaluating a set of model outputs, rather than seeing how a given rubric can be
+applied to varying outputs." That's the "revisit if the theme recurs" trigger
+firing: two independent testers, pre-launch and at launch, same idea. Still not
+a launch-week patch (it's a new mode, not a fix) — but it's earned a slot in the
+next round rather than staying parked.
 
-**Related meta-note from the same tester:** the playgrounds share components
-(provider/model/temp row, save bar, etc.), which they liked but wondered if
-consistency was constraining each playground's "native" design. Our read: the
-shared levers are real and the coherence is intentional for a teaching tool —
-no action, but worth holding as a north star when designing new surfaces.
+**Related meta-note — now also recurred (2 testers).** Both testers flagged the
+same thing about the shared components (provider/model/temp row, save bar, the
+mode-toggle pattern): they *like* the consistency for onboarding comfort, but
+wonder whether it constrains each playground's "native" design — e.g. what would
+Eval Lab be if it weren't shaped to match the others? Our read holds: the shared
+levers are real and the coherence is intentional for a teaching tool. But with
+two independent data points, treat it as a genuine north-star tension when
+designing the next surface — the rubric-inversion mode above is the natural
+place to test whether a more "native" playground shape earns its divergence.
