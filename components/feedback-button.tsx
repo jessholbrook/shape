@@ -15,6 +15,8 @@ export function FeedbackButton() {
   const [text, setText] = useState("");
   const [kind, setKind] = useState<Kind>("feedback");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  // Honeypot: hidden from people, tempting to bots. Left empty by real users.
+  const [website, setWebsite] = useState("");
 
   function openModal() {
     setOpen(true);
@@ -38,6 +40,7 @@ export function FeedbackButton() {
         body: JSON.stringify({
           body,
           kind,
+          website,
           url: window.location.href,
           userAgent: navigator.userAgent,
           viewport: `${window.innerWidth}×${window.innerHeight}`,
@@ -126,6 +129,18 @@ export function FeedbackButton() {
                   </KindChip>
                 </div>
               </fieldset>
+
+              {/* Honeypot — off-screen and aria-hidden; only bots fill it. */}
+              <input
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                className="absolute left-[-9999px] w-px h-px opacity-0"
+              />
 
               <label className="flex flex-col gap-1.5">
                 <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet">

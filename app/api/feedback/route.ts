@@ -9,10 +9,23 @@
  * "not configured" message.
  */
 
+import {
+  clientIp,
+  forbidden,
+  isSameOrigin,
+  rateLimit,
+  tooManyRequests,
+} from "@/lib/api-guard";
+
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 const LINEAR_URL = "https://api.linear.app/graphql";
+
+// Feedback is low-frequency by nature; a public endpoint that files Linear
+// tickets should be tight. 5 submissions per 10 minutes per IP.
+const RATE_LIMIT = 5;
+const RATE_WINDOW_MS = 10 * 60 * 1000;
 
 type FeedbackBody = {
   body?: string;
@@ -20,20 +33,42 @@ type FeedbackBody = {
   url?: string;
   userAgent?: string;
   viewport?: string;
+  /** Honeypot — real UIs leave this empty; bots that fill every field trip it. */
+  website?: string;
 };
 
 export async function POST(req: Request) {
+  // Only our own pages should be filing tickets. Blocks header-less bots and
+  // cross-origin abuse before we touch Linear.
+  if (!isSameOrigin(req)) return forbidden();
+
   const apiKey = process.env.LINEAR_API_KEY;
   const teamId = process.env.LINEAR_TEAM_ID;
   if (!apiKey || !teamId) {
     return jsonError(503, "Feedback backend is not configured.");
   }
 
+  const gate = rateLimit(
+    `feedback:${clientIp(req)}`,
+    RATE_LIMIT,
+    RATE_WINDOW_MS,
+    Date.now(),
+  );
+  if (!gate.ok) return tooManyRequests(gate.retryAfter);
+
   let body: FeedbackBody;
   try {
     body = (await req.json()) as FeedbackBody;
   } catch {
     return jsonError(400, "Invalid JSON body.");
+  }
+
+  // Honeypot: pretend success so bots don't learn to adapt, but file nothing.
+  if (typeof body.website === "string" && body.website.trim() !== "") {
+    return new Response(JSON.stringify({ ok: true, identifier: null, url: null }), {
+      status: 200,
+      headers: { "content-type": "application/json", "cache-control": "no-store" },
+    });
   }
 
   const text = (body.body ?? "").trim();
