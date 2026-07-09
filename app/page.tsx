@@ -201,8 +201,7 @@ function BridgeCard({
         </span>
       </div>
       <p className="font-display text-[22px] md:text-[26px] leading-[1.2] text-ink mt-6">
-        <span className="text-ink-quiet">{kicker}</span>{" "}
-        <span className="italic">{statement}</span>
+        <span className="text-ink-quiet">{kicker}</span> {statement}
       </p>
     </Link>
   );
