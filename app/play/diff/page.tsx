@@ -14,7 +14,7 @@ export default function DiffPage() {
   return (
     <Shell>
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 pt-16 md:pt-20 pb-32">
-        <SectionNumber label="Playground">02</SectionNumber>
+        <SectionNumber>02</SectionNumber>
 
         <h1 className="font-display text-[48px] md:text-[64px] leading-[1.0] tracking-tight text-ink mt-6">
           Diff <span className="italic">mode</span>

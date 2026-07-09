@@ -12,7 +12,7 @@ export default function Home() {
     <Shell>
       {/* HERO */}
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 pt-16 md:pt-24 pb-16 md:pb-20">
-        <SectionNumber label="The pitch">01</SectionNumber>
+        <SectionNumber>01</SectionNumber>
 
         <h1 className="font-display text-[64px] sm:text-[88px] md:text-[120px] leading-[0.95] tracking-tight text-ink mt-8 max-w-5xl">
           Shape <span className="italic">model</span> behavior.
@@ -53,7 +53,7 @@ export default function Home() {
 
       {/* HOW IT WORKS */}
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
-        <SectionNumber label="How it works">02</SectionNumber>
+        <SectionNumber>02</SectionNumber>
         <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
           Three steps to <span className="italic">get going</span>.
         </h2>
@@ -81,7 +81,7 @@ export default function Home() {
 
       {/* BRIDGE */}
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
-        <SectionNumber label="The frame">03</SectionNumber>
+        <SectionNumber>03</SectionNumber>
         <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
           You already think like a <span className="italic">behavior designer</span>.
         </h2>
@@ -118,7 +118,7 @@ export default function Home() {
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <div>
-            <SectionNumber label="Playgrounds">04</SectionNumber>
+            <SectionNumber>04</SectionNumber>
             <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
               Play and <span className="italic">learn</span>.
             </h2>

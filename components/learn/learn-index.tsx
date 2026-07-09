@@ -136,15 +136,11 @@ function ModuleRow({
             {m.num}
           </span>
           <div className="min-w-0">
-            <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
-              {m.kicker}
-              {m.readMinutes && (
-                <>
-                  {" · "}
-                  <span>{m.readMinutes} min read</span>
-                </>
-              )}
-            </span>
+            {m.readMinutes && (
+              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+                {m.readMinutes} min read
+              </span>
+            )}
             <h2 className="font-display text-[26px] md:text-[30px] leading-[1.15] text-ink mt-1">
               {m.title}
               {m.italic && (
@@ -184,9 +180,6 @@ function ModuleRow({
             <span className="text-ink-muted">{m.playground.label}</span>
           </span>
         )}
-        <span>
-          Artifact — <span className="text-ink-muted">{m.artifact}</span>
-        </span>
         {ready && (
           <span className="ml-auto font-mono text-[12px] text-ink group-hover:text-highlight transition-colors">
             Open →

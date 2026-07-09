@@ -14,7 +14,7 @@ export default function PersonaPage() {
   return (
     <Shell>
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 pt-16 md:pt-20 pb-32">
-        <SectionNumber label="Playground">04</SectionNumber>
+        <SectionNumber>04</SectionNumber>
 
         <h1 className="font-display text-[48px] md:text-[64px] leading-[1.0] tracking-tight text-ink mt-6">
           Persona <span className="italic">lab</span>
