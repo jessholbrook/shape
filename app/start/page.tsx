@@ -12,7 +12,7 @@ export default function StartPage() {
   return (
     <Shell>
       <section className="mx-auto max-w-[860px] px-6 md:px-12 pt-16 md:pt-20 pb-32">
-        <SectionNumber label="Setup">00</SectionNumber>
+        <SectionNumber>00</SectionNumber>
 
         <h1 className="font-display text-[56px] md:text-[80px] leading-[0.98] tracking-tight text-ink mt-6">
           Start <span className="italic">shaping</span>.
