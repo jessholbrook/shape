@@ -115,12 +115,35 @@ export async function probeWebGPUAdapter(): Promise<void> {
 }
 
 /**
- * Turn WebLLM's low-level GPU errors into something a designer can act on.
+ * A GPU-adapter failure means the browser genuinely can't run the in-browser
+ * model — surface it via the "unsupported" banner, not a retryable error.
+ */
+function isUnsupportedGpuError(raw: string): boolean {
+  return /compatible gpu|requestadapter|no adapter|gpu adapter|webgpu/i.test(raw);
+}
+
+/**
+ * A model-download failure — WebLLM fetches the weights through the Cache API,
+ * so a failed shard surfaces as "Failed to execute 'add' on 'Cache': Request
+ * failed", "Failed to fetch", etc. Transient and retryable (network, VPN,
+ * corporate proxy, or a blocked model host), NOT an unsupported browser.
+ */
+function isModelDownloadError(raw: string): boolean {
+  return /failed to execute 'add' on 'cache'|request failed|failed to fetch|networkerror|err_(internet|network|connection)|fetch.*model|download|load.*model|http (4|5)\d\d/i.test(
+    raw,
+  );
+}
+
+/**
+ * Turn WebLLM's low-level errors into something a designer can act on.
  * Returns the original message for anything we don't recognize.
  */
 export function humanizeWebLLMError(raw: string): string {
-  if (/compatible gpu|requestadapter|no adapter|gpu adapter|webgpu/i.test(raw)) {
+  if (isUnsupportedGpuError(raw)) {
     return "This browser exposes WebGPU but couldn't find a compatible GPU, so the free in-browser model can't run here. This is common on Linux without GPU drivers, in some virtual machines, or in browsers with partial support. Bring your own Anthropic or OpenAI key to use the playgrounds, or try Chrome or Edge on a machine with a supported GPU.";
+  }
+  if (isModelDownloadError(raw)) {
+    return "Couldn't download the in-browser model — the model files failed to load. This is usually a network hiccup, a VPN or corporate proxy, or a blocked model host. Check your connection and try again, or bring your own Anthropic or OpenAI key to skip the download entirely.";
   }
   return raw;
 }
@@ -196,9 +219,11 @@ export async function getEngine(modelId: string): Promise<MLCEngine> {
     } catch (err) {
       const raw = err instanceof Error ? err.message : String(err);
       const message = humanizeWebLLMError(raw);
-      // A GPU-adapter failure is really an "unsupported browser" condition —
-      // surface it via the banner path, not a transient error state.
-      if (message !== raw) {
+      // Only a GPU-adapter failure is a true "unsupported browser" condition
+      // (banner path). A failed model download is transient and retryable, so
+      // it stays an error state the playground can surface and the user can
+      // retry — a failed init leaves `engine` null, so the next run re-fetches.
+      if (isUnsupportedGpuError(raw)) {
         setStatus({ kind: "unsupported" });
       } else {
         setStatus({ kind: "error", message });
