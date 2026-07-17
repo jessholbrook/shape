@@ -3,7 +3,8 @@ export type ProviderId = "webllm" | "anthropic" | "openai" | "gemini";
 export type Provider = {
   id: ProviderId;
   name: string;
-  keyPrefix: string;
+  /** Accepted key prefixes; empty = no prefix requirement. */
+  keyPrefixes: string[];
   keyMinLength: number;
   signupUrl: string;
   consoleUrl: string;
@@ -29,7 +30,7 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
   webllm: {
     id: "webllm",
     name: "Free (in browser)",
-    keyPrefix: "",
+    keyPrefixes: [],
     keyMinLength: 0,
     signupUrl: "",
     consoleUrl: "",
@@ -76,7 +77,7 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
   anthropic: {
     id: "anthropic",
     name: "Anthropic",
-    keyPrefix: "sk-ant-",
+    keyPrefixes: ["sk-ant-"],
     keyMinLength: 40,
     signupUrl: "https://console.anthropic.com/",
     consoleUrl: "https://console.anthropic.com/settings/keys",
@@ -108,7 +109,7 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
   openai: {
     id: "openai",
     name: "OpenAI",
-    keyPrefix: "sk-",
+    keyPrefixes: ["sk-"],
     keyMinLength: 40,
     signupUrl: "https://platform.openai.com/",
     consoleUrl: "https://platform.openai.com/api-keys",
@@ -133,7 +134,7 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
   gemini: {
     id: "gemini",
     name: "Google Gemini",
-    keyPrefix: "AIza",
+    keyPrefixes: ["AIza", "AQ"],
     keyMinLength: 30,
     signupUrl: "https://aistudio.google.com/",
     consoleUrl: "https://aistudio.google.com/apikey",
