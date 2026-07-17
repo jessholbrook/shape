@@ -66,3 +66,35 @@ so this is polish, not correctness.
 test" ping catches a bad key immediately; dynamic fetch is the durable fix but
 a bigger change than the launch warranted. Revisit next time a model 404
 surfaces in feedback.
+
+## Tone Dial — reverse mode (edit the output, infer the dials)
+
+**From:** beta feedback (Linear #118), `/play/tone`, 2026-07-16.
+
+**The idea:** the Tone Dial runs forward today — set dials → compose a system
+prompt → generate output. A tester proposed running it **backwards**: let the
+user edit the output to read how they want, then have the model infer which
+dial weights (warmth, verbosity, energy, directness, concreteness, structure)
+and composed system prompt would produce that. "An element of recursive
+learning and improvement."
+
+**Why it's interesting — and why it's parked with a theme, not alone:** this
+is the *same meta-pattern* as the Eval Lab "design a rubric" inversion above:
+work from the desired result back to the configuration, instead of config →
+result. Two different playgrounds, one recurring request. When the inverse
+direction keeps surfacing across surfaces, it's pointing at a product
+direction ("reverse mode" as a general capability) rather than three separate
+bolt-ons.
+
+**Shape if we build it:** the core is an inference loop — meta-prompt the model
+to emit structured dial values (JSON matching `ToneValues`) that best match
+the user's edited target, then snap the dials + composed prompt to them.
+Real caveats: small in-browser (WebLLM) models are unreliable at structured
+inference, so this likely needs a BYOK model to feel good; and the reverse-flow
+UX (edit target → "infer settings" → review the diff the model proposes) needs
+its own design. No clean surgical slice — the inference loop *is* the feature.
+
+**Decision:** Park. Genuine v2 feature, not a launch patch. Third data point on
+the "run the playground backwards" theme (Eval rubric inversion + this) —
+worth a deliberate cross-playground design pass on "reverse mode" rather than
+building it once per playground. Revisit alongside the Eval inversion.
