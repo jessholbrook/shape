@@ -142,26 +142,28 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
     keyMinLength: 20,
     signupUrl: "https://aistudio.google.com/",
     consoleUrl: "https://aistudio.google.com/apikey",
-    defaultModel: "gemini-2.5-flash",
+    defaultModel: "gemini-3.5-flash",
+    // Google retires Gemini models on a roughly quarterly cadence (the 2.5
+    // line is already deprecated), so these IDs need periodic review. Pricing
+    // is approximate — the app shows an estimate and defers to Google's bill.
     models: [
       {
-        id: "gemini-2.5-pro",
-        name: "Gemini 2.5 Pro",
-        // Base tier pricing (≤200K context); Google bills higher above that.
-        inputPer1M: 1.25,
-        outputPer1M: 10,
+        id: "gemini-3.1-pro",
+        name: "Gemini 3.1 Pro",
+        inputPer1M: 2,
+        outputPer1M: 12,
         tier: "frontier",
       },
       {
-        id: "gemini-2.5-flash",
-        name: "Gemini 2.5 Flash",
+        id: "gemini-3.5-flash",
+        name: "Gemini 3.5 Flash",
         inputPer1M: 0.3,
         outputPer1M: 2.5,
         tier: "balanced",
       },
       {
-        id: "gemini-2.5-flash-lite",
-        name: "Gemini 2.5 Flash-Lite",
+        id: "gemini-3.1-flash-lite",
+        name: "Gemini 3.1 Flash-Lite",
         inputPer1M: 0.1,
         outputPer1M: 0.4,
         tier: "fast",
