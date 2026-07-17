@@ -30,7 +30,7 @@ export function WebLLMUnsupportedBanner({ show }: { show: boolean }) {
         This browser can&apos;t run the free in-browser models — there&apos;s
         no compatible GPU here (common on Linux without drivers or in a virtual
         machine). Chrome or Edge on a machine with a supported GPU works, or
-        bring your own key to use Anthropic or OpenAI instead.
+        bring your own key to use Anthropic, OpenAI, or Google instead.
       </p>
       <Link
         href="/settings/keys"

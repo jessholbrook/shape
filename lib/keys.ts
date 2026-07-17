@@ -45,10 +45,14 @@ export function validateKey(providerId: ProviderId, key: string): KeyValidation 
   const provider = PROVIDERS[providerId];
   const trimmed = key.trim();
   if (!trimmed) return { ok: false, reason: "Key is empty." };
-  if (!trimmed.startsWith(provider.keyPrefix)) {
+  if (
+    provider.keyPrefixes.length > 0 &&
+    !provider.keyPrefixes.some((prefix) => trimmed.startsWith(prefix))
+  ) {
+    const list = provider.keyPrefixes.map((p) => `"${p}"`).join(" or ");
     return {
       ok: false,
-      reason: `Expected key to start with "${provider.keyPrefix}".`,
+      reason: `Expected key to start with ${list}.`,
     };
   }
   if (trimmed.length < provider.keyMinLength) {

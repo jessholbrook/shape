@@ -173,7 +173,7 @@ function KeyEntry({
               if (error) setError(null);
               if (test.status !== "idle") setTest({ status: "idle" });
             }}
-            placeholder={`${provider.keyPrefix}...`}
+            placeholder={`${provider.keyPrefixes[0] ?? ""}...`}
             className="w-full bg-canvas border border-line rounded-[12px] px-4 py-3 font-mono text-[14px] text-ink placeholder:text-ink-quiet focus:border-ink focus:outline-none"
           />
           {error && (

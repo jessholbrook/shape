@@ -1,9 +1,10 @@
-export type ProviderId = "webllm" | "anthropic" | "openai";
+export type ProviderId = "webllm" | "anthropic" | "openai" | "gemini";
 
 export type Provider = {
   id: ProviderId;
   name: string;
-  keyPrefix: string;
+  /** Accepted key prefixes; empty = no prefix requirement. */
+  keyPrefixes: string[];
   keyMinLength: number;
   signupUrl: string;
   consoleUrl: string;
@@ -29,7 +30,7 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
   webllm: {
     id: "webllm",
     name: "Free (in browser)",
-    keyPrefix: "",
+    keyPrefixes: [],
     keyMinLength: 0,
     signupUrl: "",
     consoleUrl: "",
@@ -76,7 +77,7 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
   anthropic: {
     id: "anthropic",
     name: "Anthropic",
-    keyPrefix: "sk-ant-",
+    keyPrefixes: ["sk-ant-"],
     keyMinLength: 40,
     signupUrl: "https://console.anthropic.com/",
     consoleUrl: "https://console.anthropic.com/settings/keys",
@@ -108,7 +109,7 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
   openai: {
     id: "openai",
     name: "OpenAI",
-    keyPrefix: "sk-",
+    keyPrefixes: ["sk-"],
     keyMinLength: 40,
     signupUrl: "https://platform.openai.com/",
     consoleUrl: "https://platform.openai.com/api-keys",
@@ -126,6 +127,45 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
         name: "GPT-4o mini",
         inputPer1M: 0.15,
         outputPer1M: 0.6,
+        tier: "fast",
+      },
+    ],
+  },
+  gemini: {
+    id: "gemini",
+    name: "Google Gemini",
+    // Google issues several key formats (legacy "AIza…", newer "AQ…", and
+    // more) and keeps changing them, so a client-side prefix allowlist just
+    // blocks valid keys. Skip the prefix check — "Save & test" hits the real
+    // API and is the authoritative validator.
+    keyPrefixes: [],
+    keyMinLength: 20,
+    signupUrl: "https://aistudio.google.com/",
+    consoleUrl: "https://aistudio.google.com/apikey",
+    defaultModel: "gemini-3.5-flash",
+    // Google retires Gemini models on a roughly quarterly cadence (the 2.5
+    // line is already deprecated), so these IDs need periodic review. Pricing
+    // is approximate — the app shows an estimate and defers to Google's bill.
+    models: [
+      {
+        id: "gemini-3.1-pro",
+        name: "Gemini 3.1 Pro",
+        inputPer1M: 2,
+        outputPer1M: 12,
+        tier: "frontier",
+      },
+      {
+        id: "gemini-3.5-flash",
+        name: "Gemini 3.5 Flash",
+        inputPer1M: 0.3,
+        outputPer1M: 2.5,
+        tier: "balanced",
+      },
+      {
+        id: "gemini-3.1-flash-lite",
+        name: "Gemini 3.1 Flash-Lite",
+        inputPer1M: 0.1,
+        outputPer1M: 0.4,
         tier: "fast",
       },
     ],
