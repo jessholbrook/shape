@@ -134,8 +134,12 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
   gemini: {
     id: "gemini",
     name: "Google Gemini",
-    keyPrefixes: ["AIza", "AQ"],
-    keyMinLength: 30,
+    // Google issues several key formats (legacy "AIza…", newer "AQ…", and
+    // more) and keeps changing them, so a client-side prefix allowlist just
+    // blocks valid keys. Skip the prefix check — "Save & test" hits the real
+    // API and is the authoritative validator.
+    keyPrefixes: [],
+    keyMinLength: 20,
     signupUrl: "https://aistudio.google.com/",
     consoleUrl: "https://aistudio.google.com/apikey",
     defaultModel: "gemini-2.5-flash",
