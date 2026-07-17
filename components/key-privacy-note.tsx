@@ -26,8 +26,9 @@ export function KeyPrivacyNote() {
           in one click from Keys.
         </Point>
         <Point>
-          <strong>Anthropic goes direct.</strong> Calls run straight from your
-          browser to Anthropic&apos;s API. The key never passes through us.
+          <strong>Anthropic and Google go direct.</strong> Calls to Anthropic
+          and Google Gemini run straight from your browser to their APIs. The
+          key never passes through us.
         </Point>
         <Point>
           <strong>OpenAI takes one hop.</strong> OpenAI blocks calls made from a
