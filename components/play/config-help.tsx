@@ -47,8 +47,8 @@ export const ProviderTip = (
       one-time download (~280MB–2GB) on first use.
     </span>
     <span className="block mt-2">
-      <strong>Anthropic / OpenAI:</strong> sharper and faster, but need a key
-      and bill you per token.
+      <strong>Anthropic / OpenAI / Google:</strong> sharper and faster, but
+      need a key and bill you per token.
     </span>
     <span className="block mt-2 text-canvas/75">
       Trade-off: quality vs. cost &amp; privacy.

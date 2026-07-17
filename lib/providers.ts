@@ -1,4 +1,4 @@
-export type ProviderId = "webllm" | "anthropic" | "openai";
+export type ProviderId = "webllm" | "anthropic" | "openai" | "gemini";
 
 export type Provider = {
   id: ProviderId;
@@ -126,6 +126,39 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
         name: "GPT-4o mini",
         inputPer1M: 0.15,
         outputPer1M: 0.6,
+        tier: "fast",
+      },
+    ],
+  },
+  gemini: {
+    id: "gemini",
+    name: "Google Gemini",
+    keyPrefix: "AIza",
+    keyMinLength: 30,
+    signupUrl: "https://aistudio.google.com/",
+    consoleUrl: "https://aistudio.google.com/apikey",
+    defaultModel: "gemini-2.5-flash",
+    models: [
+      {
+        id: "gemini-2.5-pro",
+        name: "Gemini 2.5 Pro",
+        // Base tier pricing (≤200K context); Google bills higher above that.
+        inputPer1M: 1.25,
+        outputPer1M: 10,
+        tier: "frontier",
+      },
+      {
+        id: "gemini-2.5-flash",
+        name: "Gemini 2.5 Flash",
+        inputPer1M: 0.3,
+        outputPer1M: 2.5,
+        tier: "balanced",
+      },
+      {
+        id: "gemini-2.5-flash-lite",
+        name: "Gemini 2.5 Flash-Lite",
+        inputPer1M: 0.1,
+        outputPer1M: 0.4,
         tier: "fast",
       },
     ],
