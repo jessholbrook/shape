@@ -60,6 +60,12 @@ export async function POST(req: Request) {
       headers: {
         "content-type": "application/json",
         authorization: `Bearer ${key}`,
+        // Cerebras sits behind a Cloudflare WAF that 403s server-to-server
+        // requests with no/suspicious User-Agent (returning an HTML block
+        // page, not JSON). Send a real UA + Accept so the call gets through.
+        "user-agent":
+          "Mozilla/5.0 (compatible; ShapeModels/1.0; +https://shape-models.com)",
+        accept: "application/json, text/event-stream",
       },
       body,
     });
