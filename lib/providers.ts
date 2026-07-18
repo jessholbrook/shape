@@ -184,29 +184,30 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
     keyMinLength: 20,
     signupUrl: "https://cloud.cerebras.ai/",
     consoleUrl: "https://cloud.cerebras.ai/platform/apikeys",
-    defaultModel: "gpt-oss-120b",
+    defaultModel: "zai-glm-4.7",
     // Cerebras is an OpenAI-compatible endpoint prized for raw speed (Diff
-    // Mode's elapsed timer makes the tokens/sec gap visible). Its catalog is
-    // unusually volatile — it collapsed from ~a dozen models to two in mid-2026
-    // — which is the strongest case for the dynamic model-fetch parked in
-    // BACKLOG.md. These are the current public models; verify with Save & test
-    // and adjust. Pricing is approximate.
+    // Mode's elapsed timer makes the tokens/sec gap visible). Its catalog AND
+    // per-account free access are unusually volatile (it collapsed from ~a
+    // dozen models to two in mid-2026, and which of those are free vs. paid
+    // shifts) — the strongest case for the dynamic model-fetch parked in
+    // BACKLOG.md. Default to the more-likely-free model; gpt-oss-120b tends to
+    // need a paid plan. Pricing is approximate.
     models: [
-      {
-        id: "gpt-oss-120b",
-        name: "GPT-OSS 120B",
-        inputPer1M: 0.25,
-        outputPer1M: 0.69,
-        tier: "frontier",
-        blurb: "OpenAI open weights · extremely fast on Cerebras",
-      },
       {
         id: "zai-glm-4.7",
         name: "GLM 4.7",
         inputPer1M: 0.4,
         outputPer1M: 0.4,
         tier: "balanced",
-        blurb: "Zhipu · on the Cerebras free tier",
+        blurb: "Zhipu · usually on the Cerebras free tier",
+      },
+      {
+        id: "gpt-oss-120b",
+        name: "GPT-OSS 120B",
+        inputPer1M: 0.25,
+        outputPer1M: 0.69,
+        tier: "frontier",
+        blurb: "OpenAI open weights · fastest, may need a paid plan",
       },
     ],
   },
