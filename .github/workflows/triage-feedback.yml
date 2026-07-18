@@ -1,0 +1,79 @@
+# Feedback triage — the one automated stage of the "software factory".
+# See .github/TRIAGE.md for the design and the safety rails.
+#
+# SKETCH: this encodes the intended trigger, permissions, prompt, and rails.
+# Verify the `anthropics/claude-code-action` version + input names against its
+# current docs before enabling, and add the ANTHROPIC_API_KEY secret. Without
+# the secret the job is inert.
+
+name: Triage feedback
+
+on:
+  issues:
+    types: [opened]
+
+# Least privilege: label + comment on issues, read the repo (for BACKLOG.md).
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    # Only touch in-app feedback issues, never normal engineering issues.
+    if: >-
+      startsWith(github.event.issue.title, '[Feedback]') ||
+      startsWith(github.event.issue.title, '[Bug]') ||
+      startsWith(github.event.issue.title, '[Idea]')
+    steps:
+      - uses: actions/checkout@v4 # so the agent can read BACKLOG.md
+
+      - name: Triage the issue
+        uses: anthropics/claude-code-action@v1 # verify version before enabling
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # gh is available to the action; scope it to read + label + one comment.
+          allowed_tools: >-
+            Read,Grep,
+            Bash(gh issue view:*),
+            Bash(gh issue list:*),
+            Bash(gh label list:*),
+            Bash(gh issue edit ${{ github.event.issue.number }} --add-label:*),
+            Bash(gh issue comment ${{ github.event.issue.number }}:*)
+          prompt: |
+            You are the triage stage of Shape's feedback pipeline. Triage issue
+            #${{ github.event.issue.number }} in ${{ github.repository }}.
+
+            Do EXACTLY these steps, then stop:
+
+            1. Read the issue title + body (gh issue view). The body has a
+               "URL:" line — use it to identify the surface (home, learn, a
+               specific playground, keys, notebook, infra).
+
+            2. Classify:
+               - kind: exactly one of bug | idea | question | praise
+               - surface: one area:* label from the set in gh label list
+               - severity (for bugs only): note it in the comment, don't label
+
+            3. Recurrence check:
+               - Read BACKLOG.md. Does this echo a parked theme
+                 (e.g. "reverse mode" / inversion, readability/visual-noise)?
+               - `gh issue list --state open` and skim titles for a duplicate.
+               - If it recurs or duplicates, plan to add the `recurring` label
+                 and name the match in the comment.
+
+            4. Apply labels with `gh issue edit --add-label` (kind + area, plus
+               `recurring` and/or `needs-info` if warranted). Only use labels
+               that already exist in `gh label list`.
+
+            5. Post ONE comment (`gh issue comment`) — at most 4 lines:
+               classification, recurrence (with a link if any), and a SUGGESTED
+               disposition: build / park / needs-info / skip. Frame it as a
+               suggestion for the maintainer, not a decision.
+
+            HARD RULES — do not violate:
+            - Do NOT modify code, open PRs, push commits, or run a build.
+            - Do NOT close, reopen, edit the body of, or reassign the issue.
+            - Post at most ONE comment. Labels + that comment are your only
+              side effects. If you're unsure how to classify, apply
+              `needs-info` and say what's missing.
