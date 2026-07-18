@@ -3,6 +3,7 @@ import { PROVIDERS } from "../providers";
 import { anthropicChat, pingAnthropic } from "./anthropic";
 import { openaiChat, pingOpenAI } from "./openai";
 import { geminiChat, pingGemini } from "./gemini";
+import { cerebrasChat, pingCerebras } from "./cerebras";
 import { webllmChat } from "./webllm";
 import type { ChatCall, ChatEvent } from "./types";
 
@@ -12,6 +13,7 @@ function dispatch(call: ChatCall): AsyncIterable<ChatEvent> {
   if (call.provider === "webllm") return webllmChat(call);
   if (call.provider === "anthropic") return anthropicChat(call);
   if (call.provider === "gemini") return geminiChat(call);
+  if (call.provider === "cerebras") return cerebrasChat(call);
   return openaiChat(call);
 }
 
@@ -46,6 +48,8 @@ export async function testConnection(
       await pingAnthropic(apiKey, defaultModel);
     } else if (providerId === "gemini") {
       await pingGemini(apiKey, defaultModel);
+    } else if (providerId === "cerebras") {
+      await pingCerebras(apiKey, defaultModel);
     } else {
       await pingOpenAI(apiKey, defaultModel);
     }

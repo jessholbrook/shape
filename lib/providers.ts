@@ -1,4 +1,9 @@
-export type ProviderId = "webllm" | "anthropic" | "openai" | "gemini";
+export type ProviderId =
+  | "webllm"
+  | "anthropic"
+  | "openai"
+  | "gemini"
+  | "cerebras";
 
 export type Provider = {
   id: ProviderId;
@@ -167,6 +172,46 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
         inputPer1M: 0.1,
         outputPer1M: 0.4,
         tier: "fast",
+      },
+    ],
+  },
+  cerebras: {
+    id: "cerebras",
+    name: "Cerebras",
+    // Keys are "csk-…" today, but skip the prefix gate — "Save & test" against
+    // the real API is the authoritative check (see the Gemini note above).
+    keyPrefixes: [],
+    keyMinLength: 20,
+    signupUrl: "https://cloud.cerebras.ai/",
+    consoleUrl: "https://cloud.cerebras.ai/platform/apikeys",
+    defaultModel: "llama3.1-8b",
+    // Cerebras is an OpenAI-compatible endpoint prized for raw speed (Diff
+    // Mode's elapsed timer makes the tokens/sec gap visible). Model IDs and
+    // pricing move — verify with Save & test and adjust. Pricing is approximate.
+    models: [
+      {
+        id: "llama-4-scout-17b-16e-instruct",
+        name: "Llama 4 Scout",
+        inputPer1M: 0.65,
+        outputPer1M: 0.85,
+        tier: "frontier",
+        blurb: "Meta · ~2,600 tok/s on Cerebras",
+      },
+      {
+        id: "llama-3.3-70b",
+        name: "Llama 3.3 70B",
+        inputPer1M: 0.85,
+        outputPer1M: 1.2,
+        tier: "balanced",
+        blurb: "Meta · high quality, still very fast",
+      },
+      {
+        id: "llama3.1-8b",
+        name: "Llama 3.1 8B",
+        inputPer1M: 0.1,
+        outputPer1M: 0.1,
+        tier: "fast",
+        blurb: "Meta · fastest · ~1,800 tok/s",
       },
     ],
   },
