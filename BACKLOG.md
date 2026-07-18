@@ -66,3 +66,32 @@ so this is polish, not correctness.
 test" ping catches a bad key immediately; dynamic fetch is the durable fix but
 a bigger change than the launch warranted. Revisit next time a model 404
 surfaces in feedback.
+
+## Custom OpenAI-compatible endpoints + aggregators (OpenRouter, endpoint selector)
+
+**From:** beta feedback (Linear #122), `/play`, 2026-07-18 — "OpenRouter support
+plus endpoint selector for allllll the models. Also Cerebras for speed."
+
+**Shipped part:** Cerebras landed as a named provider (it's OpenAI-compatible,
+small fixed model list, proxied like OpenAI) — that covers the "speed
+comparison" ask directly, since Diff Mode's elapsed timer surfaces the
+tokens/sec gap.
+
+**Parked part — the general version:** OpenRouter and an arbitrary "endpoint
+selector" are the same underlying feature: let the user point Shape's
+OpenAI-compatible client at any base URL (OpenRouter, Groq, Together, a local
+LM Studio, …) with their own key + model. The adapter is mostly reuse
+(`openai-compatible.ts` already generalizes URL + key header).
+
+**Why it's parked, not built:** OpenRouter's whole value is *breadth* —
+hundreds of models — so hardcoding a model list is untenable. Doing it well
+**requires the dynamic model-list fetch parked above** ("Provider models —
+fetch dynamically"). They're one project: a custom-endpoint provider whose
+model picker is populated from the endpoint's `/models` response, with pricing
+unknown (aggregators pass through varied rates) so cost estimates degrade
+gracefully to "—". Also needs per-endpoint CORS-vs-proxy handling and a UX for
+entering base URL + key + model.
+
+**Decision:** Park the general endpoint-selector/OpenRouter piece; build it
+together with dynamic model fetching. Cerebras (the bounded, speed-focused
+slice) shipped now.

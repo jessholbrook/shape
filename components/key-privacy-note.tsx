@@ -31,10 +31,10 @@ export function KeyPrivacyNote() {
           key never passes through us.
         </Point>
         <Point>
-          <strong>OpenAI takes one hop.</strong> OpenAI blocks calls made from a
-          browser, so those requests pass through a thin proxy on our edge —
-          your key is used for that one request in memory, never logged or
-          stored.
+          <strong>OpenAI and Cerebras take one hop.</strong> Those APIs block
+          (or don&apos;t allow) direct browser calls, so their requests pass
+          through a thin proxy on our edge — your key is used for that one
+          request in memory, never logged or stored.
         </Point>
         <Point>
           <strong>Don&apos;t take our word for it.</strong> Shape is{" "}
