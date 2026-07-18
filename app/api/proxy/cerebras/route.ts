@@ -16,7 +16,11 @@ import {
   tooManyRequests,
 } from "@/lib/api-guard";
 
-export const runtime = "edge";
+// Node.js runtime (not edge) on purpose: Vercel's Edge runs on Cloudflare's
+// network, and Cerebras is Cloudflare-fronted, so edge subrequests get a 403
+// WAF block page. Node serverless egresses from different (AWS) IPs that clear
+// it. Streaming the upstream body back still works on this runtime.
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const CEREBRAS_URL = "https://api.cerebras.ai/v1/chat/completions";
