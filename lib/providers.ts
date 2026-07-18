@@ -184,34 +184,29 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
     keyMinLength: 20,
     signupUrl: "https://cloud.cerebras.ai/",
     consoleUrl: "https://cloud.cerebras.ai/platform/apikeys",
-    defaultModel: "llama3.1-8b",
+    defaultModel: "gpt-oss-120b",
     // Cerebras is an OpenAI-compatible endpoint prized for raw speed (Diff
-    // Mode's elapsed timer makes the tokens/sec gap visible). Model IDs and
-    // pricing move — verify with Save & test and adjust. Pricing is approximate.
+    // Mode's elapsed timer makes the tokens/sec gap visible). Its catalog is
+    // unusually volatile — it collapsed from ~a dozen models to two in mid-2026
+    // — which is the strongest case for the dynamic model-fetch parked in
+    // BACKLOG.md. These are the current public models; verify with Save & test
+    // and adjust. Pricing is approximate.
     models: [
       {
-        id: "llama-4-scout-17b-16e-instruct",
-        name: "Llama 4 Scout",
-        inputPer1M: 0.65,
-        outputPer1M: 0.85,
+        id: "gpt-oss-120b",
+        name: "GPT-OSS 120B",
+        inputPer1M: 0.25,
+        outputPer1M: 0.69,
         tier: "frontier",
-        blurb: "Meta · ~2,600 tok/s on Cerebras",
+        blurb: "OpenAI open weights · extremely fast on Cerebras",
       },
       {
-        id: "llama-3.3-70b",
-        name: "Llama 3.3 70B",
-        inputPer1M: 0.85,
-        outputPer1M: 1.2,
+        id: "zai-glm-4.7",
+        name: "GLM 4.7",
+        inputPer1M: 0.4,
+        outputPer1M: 0.4,
         tier: "balanced",
-        blurb: "Meta · high quality, still very fast",
-      },
-      {
-        id: "llama3.1-8b",
-        name: "Llama 3.1 8B",
-        inputPer1M: 0.1,
-        outputPer1M: 0.1,
-        tier: "fast",
-        blurb: "Meta · fastest · ~1,800 tok/s",
+        blurb: "Zhipu · on the Cerebras free tier",
       },
     ],
   },
