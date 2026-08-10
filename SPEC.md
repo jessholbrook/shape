@@ -128,6 +128,7 @@ Every meaningful action in Shape produces an **artifact**. Artifacts are first-c
 | **System Prompt Surgery** | Diagnosing prompt failures | (Exercise, not artifact) |
 | **Failure Museum** | Pattern recognition | (Browsable gallery) |
 | **Conversation Choreographer** | Multi-turn flow design | Behavior Spec |
+| **Spread** *(proposed, §14)* | Outputs are a distribution, not a value | Stability Report |
 
 ## 8. Curriculum sketch — "Behavior Designer 101 → 301"
 
@@ -317,3 +318,166 @@ Implementation: a single Next.js Route Handler `/api/demo` that proxies to which
 - [ ] Build the BYOK flow + cost dashboard.
 - [ ] Build Diff Mode end-to-end.
 - [ ] Ship v0.1 to a friendly group of 5–10 designer/researcher beta users.
+
+---
+
+## 14. Spread — v0.1 spec
+
+*First build from the Part II arc (see `BACKLOG.md` → "Part II"). Pairs with proposed Module 09, "Distributions, not outputs."*
+
+### Purpose
+
+Run the **same** configuration N times and look at the spread. Diff Mode is A/B across configs; Spread is A/A across samples.
+
+The lesson it delivers, in one line: **you've been designing against n=1 this whole time.** Every other playground on the site shows one output per run, which quietly trains the habit of judging a spec by its luckiest sample. Spread breaks that, and it retroactively changes how a reader uses Diff Mode, Tone Dial, and Persona Workshop.
+
+The teaching payload is *not* "here are 8 outputs, notice they differ." That's a novelty. It's: **which clauses of your spec actually held?**
+
+### User flow
+
+1. User lands on `/play/spread`.
+2. One config panel — provider, model, system prompt, temperature (reuse `ConfigPanel`).
+3. One user message, plus a **run count** control: 3 / 5 / 10, default 5.
+4. Below the config, an **assertions** list — checkable claims about what the spec should guarantee. Each is a plain-language row, no regex required:
+   - `contains` / `excludes` — a word or phrase
+   - `maxWords` / `minWords` — a number
+   - Optional human label ("Stays under 30 words")
+5. "Run" fires N generations. Cards stream into a results grid.
+6. When all runs settle, the **Stability Report** renders above the grid:
+   - Headline: *"Your spec held on 3 of 5 clauses."*
+   - Per-assertion hit rate with a bar — `8/10`, `10/10`, `4/10`.
+   - Runs re-sorted **most-typical → most-outlier**.
+7. Clicking any two run cards opens a word-level diff between them (reuses Diff Mode's existing rendering).
+8. Reflection card, then save as a **Stability Report** artifact.
+
+### Why assertions are deterministic and local
+
+Every assertion in v0.1 is evaluated **in the browser, with zero extra API calls**. No LLM judging.
+
+This is a deliberate boundary, not a shortcut. LLM-as-judge — and the discovery that the judge is biased — is the entire payload of proposed Module 12. Putting a judge in Module 09 would spend that lesson early and make this playground cost N+1 calls per run instead of N. Deterministic checks keep Spread cheap, fast, and honest about what it can measure.
+
+The tradeoff to state plainly in the UI copy: assertions catch *mechanical* drift (length, forbidden words, required mentions), not *tonal* drift. Tonal spread is what the outlier ranking and the pairwise diff are for — the human still reads those.
+
+### Typicality ranking (the medoid)
+
+To sort runs from most-typical to most-outlier we need a similarity matrix over N outputs.
+
+- **Ranking pass:** cheap token-set Jaccard over all N·(N−1)/2 pairs. Picks the medoid (the run most similar to all others) and orders the rest by distance from it.
+- **Detail pass:** the existing `diffWords` LCS in `lib/diff-words.ts` runs **only** on the one pair the user actually opens.
+
+This split matters. `diffWords` is O(n·m) DP; at N=10 with ~300-token outputs, running it across all 45 pairs is ~4M cells on the main thread and will jank. Jaccard for ranking, LCS for detail. The `divergenceRatio` guard we already shipped applies unchanged to the detail view.
+
+### UI sketch
+
+```
++----------------------------------------------------------------------------+
+|  CONFIG                                                                     |
+|  Provider: Anthropic   Model: Sonnet 4.6   Temp: 0.7  [---o-----]          |
+|  System prompt:  [ textarea ]                                              |
++----------------------------------------------------------------------------+
+|  ASSERTIONS                                                                 |
+|  [contains v] [ product name        ]  [x]                                 |
+|  [maxWords v] [ 30                  ]  [x]                                 |
+|  [excludes v] [ !                   ]  [x]                          [+ Add]|
++----------------------------------------------------------------------------+
+|  User message: [ ______________________________ ]  Runs: [5 v]   [ Run ]   |
++----------------------------------------------------------------------------+
+|  STABILITY REPORT            Your spec held on 2 of 3 clauses.             |
+|  contains "product name"   ########__  8/10                                |
+|  maxWords 30               ##########  10/10                               |
+|  excludes "!"              ####______  4/10   <- the one that isn't real   |
++----------------------------------------------------------------------------+
+|  RUNS  (most typical -> most outlier)                                       |
+|  +----------+ +----------+ +----------+ +----------+ +----------+          |
+|  | run 3  * | | run 1    | | run 5    | | run 2    | | run 4  ! |          |
+|  | median   | |          | |          | |          | | outlier  |          |
+|  +----------+ +----------+ +----------+ +----------+ +----------+          |
+|  [ Compare two runs ]                     [ Save as Stability Report ]     |
++----------------------------------------------------------------------------+
+```
+
+### Cost, rate limits, and the WebLLM problem
+
+N runs cost N times as much, so the run button shows a **cost preview** before firing (`~$0.02 for 5 runs`) using the existing `calcCost` estimate.
+
+Two real constraints that will bite in implementation:
+
+- **BYOK rate limits.** Firing 10 parallel requests trips per-minute limits on entry-tier Anthropic and OpenAI keys. Cap concurrency at **4** and queue the rest, streaming cards as slots free up.
+- **WebLLM is serial.** The in-browser engine holds a single GPU context, so N runs execute **sequentially**, not in parallel. On the default Llama-3.2-1B that's slow enough to feel broken. Mitigation: when provider is `webllm`, default run count to **3**, cap at **5**, and show explicit "run 2 of 3" progress. This matters because WebLLM is the *default* provider — the free path hits the worst case first.
+
+### Artifact — Stability Report (data model)
+
+New `DraftKind: "spread"`. Reuses `DiffDraftConfig` for the config half.
+
+```ts
+export type SpreadAssertion = {
+  id: string;
+  kind: "contains" | "excludes" | "maxWords" | "minWords";
+  value: string;          // phrase, or number-as-string for word counts
+  label?: string;         // optional human phrasing
+};
+
+export type SpreadRun = {
+  id: string;
+  text: string;
+  status: "done" | "error";
+  error?: string;
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number;
+  elapsedMs: number;
+  /** Jaccard distance from the medoid, 0–1. */
+  distance?: number;
+};
+
+export type SpreadDraft = {
+  kind: "spread";
+  config: DiffDraftConfig;
+  userMessage: string;
+  runCount: number;
+  runs: SpreadRun[];
+  assertions: SpreadAssertion[];
+  reflection?: string;
+};
+```
+
+Registration checklist in `lib/drafts.ts`: add to the `DraftKind` union, the `Draft` union, `KNOWN_KINDS`, `DraftInput`, and `draftEditorHref`. In `lib/kinds.ts`: `ARTIFACT_KIND_LABEL.spread = "Stability Report"`, `DRAFT_KIND_SHORT_LABEL.spread = "Spread"`.
+
+### What this reuses
+
+Most of it. That's why it's the cheap first build.
+
+| Existing | Used for |
+|---|---|
+| `runChat` (`lib/providers/index`) | Unchanged — called N times |
+| `ConfigPanel` / `ConfigState` | One instance instead of Diff Mode's two |
+| `OutputPanel` / `OutputState` | Run cards (needs a compact variant) |
+| `diffWords` + `divergenceRatio` | The pairwise detail view only |
+| `DraftSaveBar`, `lib/drafts.ts`, `lib/download.ts` | Save / export / notebook |
+| `recordUsage`, `calcCost` (`lib/usage.ts`) | Cost preview + per-run cost |
+| `useKeys`, `useDraftEditing`, `useDefaultProvider`, `useUnsavedWork` | Standard playground plumbing |
+| `MissingKeyBanner`, `WebLLMUnsupportedBanner`, `TemperatureNote`, `ConceptLink`, `ReflectionCard` | Standard playground furniture |
+
+### New code
+
+- `app/play/spread/page.tsx` + `app/play/spread/spread-mode.tsx`
+- `components/play/assertion-row.tsx` — mirrors the existing `eval-case-row.tsx` / `probe-row.tsx` pattern
+- `components/play/spread-run-card.tsx`
+- `lib/spread.ts` — assertion evaluation, Jaccard similarity, medoid selection, stability math
+- Draft/kind registrations above; a Module 09 entry in `lib/curriculum.ts`; a Spread row in §7's playground catalog; a reflection question in `lib/reflection-questions.ts`
+
+### Acceptance criteria
+
+- A user can run one config N times, watch N cards stream in, and see a Stability Report scoring each assertion as a hit rate over the N runs.
+- Runs are ordered most-typical to most-outlier, and any two can be opened in a word-level diff.
+- Cost preview appears **before** the run fires and is within an order of magnitude of the actual charge.
+- With `webllm` selected, runs execute sequentially with visible per-run progress and a lower default count — no silent multi-minute hang.
+- The session saves as a Stability Report artifact that reopens with config, assertions, runs, and reflection intact.
+- Assertions are evaluated locally: total API calls for a run equals N exactly.
+
+### Out of scope for v0.1
+
+- **LLM-judged assertions** — belongs to Module 12 ("Judging at scale"), where the judge's own bias is the lesson.
+- **Temperature sweep** — running 0.0 / 0.7 / 1.0 instead of one fixed temp. Good v1.1; muddies the first lesson.
+- **Cross-model spread** — that's the separate Portability demo.
+- **Import assertions from a saved Behavior Spec** — the highest-value follow-on. `ToneDraft` artifacts already exist, so a Module 02 Behavior Spec could seed the assertion list directly and close the curriculum loop: write the spec, then find out which lines of it are real. Deferred only because it needs the Behavior Spec's prose broken into structured clauses.
