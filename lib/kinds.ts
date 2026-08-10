@@ -13,6 +13,7 @@ export const ARTIFACT_KIND_LABEL: Record<DraftKind, string> = {
   evals: "Eval Scorecard",
   choreographer: "Conversation",
   spread: "Stability Report",
+  race: "Speed Trial",
 };
 
 /**
@@ -27,4 +28,5 @@ export const DRAFT_KIND_SHORT_LABEL: Record<DraftKind, string> = {
   evals: "Evals",
   choreographer: "Flow",
   spread: "Spread",
+  race: "Race",
 };

@@ -128,7 +128,8 @@ Every meaningful action in Shape produces an **artifact**. Artifacts are first-c
 | **System Prompt Surgery** | Diagnosing prompt failures | (Exercise, not artifact) |
 | **Failure Museum** | Pattern recognition | (Browsable gallery) |
 | **Conversation Choreographer** | Multi-turn flow design | Behavior Spec |
-| **Spread** *(proposed, §14)* | Outputs are a distribution, not a value | Stability Report |
+| **Spread** *(§14)* | Outputs are a distribution, not a value | Stability Report |
+| **Race** *(§15)* | What quality costs in time and money | Speed Trial |
 
 ## 8. Curriculum sketch — "Behavior Designer 101 → 301"
 
@@ -481,3 +482,55 @@ Most of it. That's why it's the cheap first build.
 - **Temperature sweep** — running 0.0 / 0.7 / 1.0 instead of one fixed temp. Good v1.1; muddies the first lesson.
 - **Cross-model spread** — that's the separate Portability demo.
 - **Import assertions from a saved Behavior Spec** — the highest-value follow-on. `ToneDraft` artifacts already exist, so a Module 02 Behavior Spec could seed the assertion list directly and close the curriculum loop: write the spec, then find out which lines of it are real. Deferred only because it needs the Behavior Spec's prose broken into structured clauses.
+
+---
+
+## 15. Race — v0.1 spec (built)
+
+*Second build from the Part II arc. The lighter of the two demos; pairs loosely with proposed Module 09.*
+
+### Purpose
+
+One prompt, two models, at once. Race measures what every other playground ignores: **time and money**.
+
+Diff Mode already renders two configs side by side, so Race has to earn its place. It does it by changing both the axis and the question. Diff Mode's axis is the *prompt* and its question is "what changed in the text." Race's axis is the *model* and its question is "what did that quality cost you."
+
+### The three measures
+
+- **Time to first token** — what a user actually experiences as "slow." Diff Mode only shows total elapsed, which is dominated by how much the model chose to write.
+- **Throughput (tok/s)** — measured across the generation phase only, first token to last. Folding the initial wait into this would blend queueing and decoding into one misleading number.
+- **Cost** — per run, plus the ratio.
+
+A stacked timeline bar splits each lane into wait and generation, scaled to the slower lane.
+
+### The verdict is the lesson
+
+The headline states the gap in plain multiples — *"Lane B finished 3× faster and cost 8× less"* — and then immediately asks **which one you'd ship**, with a note field.
+
+That order is the whole design. The numbers are the easy part; a designer who reads them without being made to decide defaults to the better-sounding model every time. The pick and its rationale save into the artifact, which is what turns a stopwatch into a design exercise.
+
+When the two speed measures disagree — one lane wins total time while the other starts answering sooner — a second line calls it out, because that split is the most interesting result Race can produce.
+
+### Honest-measurement rules
+
+- **Each lane clocks its own request**, not the Run click, so per-lane numbers stay true even when the two can't genuinely run at once.
+- **Both lanes on WebLLM can't race.** The in-browser engine holds a single GPU context and serializes them. The per-lane numbers remain honest, but the side-by-side visual isn't a contest, so a banner says so explicitly rather than letting the timeline imply a fair fight.
+- **Free lanes produce no cost ratio.** A zero-cost divisor makes the ratio meaningless rather than infinite; the comparison returns null and the UI reads "free."
+- **Single-chunk responses produce no throughput.** No generation window means null, not Infinity.
+- **First in-browser run includes the model download**, which is flagged in the run bar.
+
+### Defaults
+
+- **With a key:** frontier vs the provider's fast tier — same vendor, same prompt, very different bill. The sharpest version of the tradeoff.
+- **Without a key:** two in-browser models of very different size (Llama 3.2 3B vs Qwen 2.5 0.5B). A real speed difference that works with zero setup, with the contention banner explaining that they take turns.
+
+### Artifact — Speed Trial
+
+`DraftKind: "race"`. Carries two configs like Diff Mode (`configA` / `configB`), both lane results with their timings, and the `pick` + `pickNote`. Wired through the notebook section and summary, the PDF export, kind labels, editor href, and import validation.
+
+### Out of scope for v0.1
+
+- **More than two lanes.** Two is the comparison a person can actually hold in their head.
+- **Repeated runs for a stable median.** One race is a sample of one — the honest version of that lesson is Spread, and pointing Race users there is better than half-solving it here.
+- **Quality scoring.** Deliberately human: the point is that the tradeoff is a judgment call, not a metric.
+

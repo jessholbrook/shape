@@ -14,6 +14,15 @@ import {
 } from "@/lib/refusal";
 import { aggregateScore, caseScore, SCORE_MAX } from "@/lib/evals";
 import { assertionLabel, buildReport, rankRuns } from "@/lib/spread";
+import {
+  buildVerdict,
+  formatCost,
+  formatFactor,
+  formatMs,
+  tokensPerSecond,
+  totalMs,
+  ttftMs,
+} from "@/lib/race";
 import type {
   ChoreographerDraft,
   DiffDraft,
@@ -21,6 +30,7 @@ import type {
   EvalsDraft,
   PersonaDraft,
   RefusalDraft,
+  RaceDraft,
   SpreadDraft,
   ToneDraft,
 } from "@/lib/drafts";
@@ -115,7 +125,7 @@ function modelLabel(provider: keyof typeof PROVIDERS, model: string): string {
 /** Header meta line. Diff drafts carry per-side configs instead of a single
  *  top-level model, so they get an A/B summary. */
 function draftMeta(draft: Draft): string {
-  if (draft.kind === "diff") {
+  if (draft.kind === "diff" || draft.kind === "race") {
     const a = modelLabel(draft.configA.provider, draft.configA.model);
     const b = modelLabel(draft.configB.provider, draft.configB.model);
     return `A: ${a} · B: ${b}`;
@@ -152,6 +162,8 @@ function KindBody({ draft }: { draft: Draft }) {
       return <ChoreographerBody draft={draft} />;
     case "spread":
       return <SpreadBody draft={draft} />;
+    case "race":
+      return <RaceBody draft={draft} />;
   }
 }
 
@@ -494,6 +506,73 @@ function SpreadBody({ draft }: { draft: SpreadDraft }) {
           <MonoBlock>{run.text || run.error || "Not run."}</MonoBlock>
         </Section>
       ))}
+    </>
+  );
+}
+
+function RaceBody({ draft }: { draft: RaceDraft }) {
+  const verdict = buildVerdict(draft.laneA, draft.laneB);
+  const lanes = [
+    { label: "Lane A", config: draft.configA, result: draft.laneA, id: "a" },
+    { label: "Lane B", config: draft.configB, result: draft.laneB, id: "b" },
+  ] as const;
+  const winnerLabel =
+    verdict.speed?.winner === "a"
+      ? "Lane A"
+      : verdict.speed?.winner === "b"
+      ? "Lane B"
+      : null;
+  return (
+    <>
+      <Section label="Prompt">
+        <MonoBlock>{draft.configA.system}</MonoBlock>
+        <div className="mt-3">
+          <Exchange who="User message">{draft.userMessage}</Exchange>
+        </div>
+      </Section>
+      <Section label="Result">
+        {winnerLabel && verdict.speed ? (
+          <p className="font-sans text-[14px] leading-[1.6] text-ink">
+            {winnerLabel} finished {formatFactor(verdict.speed.factor)} faster
+            {verdict.cost?.winner
+              ? `, and ${
+                  verdict.cost.winner === "a" ? "Lane A" : "Lane B"
+                } cost ${formatFactor(verdict.cost.factor)} less.`
+              : "."}
+          </p>
+        ) : (
+          <p className="font-sans text-[14px] leading-[1.6] text-ink-muted">
+            No completed comparison.
+          </p>
+        )}
+      </Section>
+      {lanes.map((lane) => {
+        const tps = tokensPerSecond(lane.result);
+        return (
+          <Section
+            key={lane.id}
+            label={`${lane.label} — ${modelLabel(
+              lane.config.provider,
+              lane.config.model,
+            )}${draft.pick === lane.id ? " · would ship" : ""}`}
+          >
+            <p className="font-mono text-[11px] text-ink-muted mb-2">
+              first token {formatMs(ttftMs(lane.result))} · total{" "}
+              {formatMs(totalMs(lane.result))}
+              {tps ? ` · ${Math.round(tps)} tok/s` : ""} ·{" "}
+              {formatCost(lane.result.costUsd)}
+            </p>
+            <MonoBlock>
+              {lane.result.text || lane.result.error || "Not run."}
+            </MonoBlock>
+          </Section>
+        );
+      })}
+      {draft.pickNote?.trim() && (
+        <Section label="Why that one">
+          <Prose>{draft.pickNote.trim()}</Prose>
+        </Section>
+      )}
     </>
   );
 }

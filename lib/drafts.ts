@@ -5,6 +5,7 @@ import type { Probe, ProbeResult } from "./refusal";
 import type { Criterion, EvalCase, CaseResult } from "./evals";
 import type { ChoreographedTurn } from "./choreographer";
 import type { Assertion, SpreadRun } from "./spread";
+import type { LaneId, RaceResult } from "./race";
 
 const DRAFTS_KEY = "shape:drafts:log";
 const MAX_DRAFTS = 100;
@@ -16,7 +17,8 @@ export type DraftKind =
   | "refusal"
   | "evals"
   | "choreographer"
-  | "spread";
+  | "spread"
+  | "race";
 
 export type DiffDraftConfig = {
   provider: ProviderId;
@@ -218,6 +220,25 @@ export type SpreadDraft = {
   updatedAt: number;
 };
 
+export type RaceDraft = {
+  id: string;
+  kind: "race";
+  title: string;
+  /** Two lanes, like Diff Mode — but the axis is the model, not the prompt. */
+  configA: DiffDraftConfig;
+  configB: DiffDraftConfig;
+  userMessage: string;
+  laneA: RaceResult;
+  laneB: RaceResult;
+  /** Which lane the user would actually ship, once they've seen the cost. */
+  pick?: LaneId | null;
+  pickNote?: string;
+  /** The user's answer to the playground's reflection question, if they jotted one. */
+  reflection?: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
 export type Draft =
   | DiffDraft
   | ToneDraft
@@ -225,7 +246,8 @@ export type Draft =
   | RefusalDraft
   | EvalsDraft
   | ChoreographerDraft
-  | SpreadDraft;
+  | SpreadDraft
+  | RaceDraft;
 
 const KNOWN_KINDS: DraftKind[] = [
   "diff",
@@ -235,6 +257,7 @@ const KNOWN_KINDS: DraftKind[] = [
   "evals",
   "choreographer",
   "spread",
+  "race",
 ];
 
 function read(): Draft[] {
@@ -288,7 +311,8 @@ export type DraftInput =
   | (Omit<ChoreographerDraft, "id" | "createdAt" | "updatedAt"> & {
       id?: string;
     })
-  | (Omit<SpreadDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
+  | (Omit<SpreadDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
+  | (Omit<RaceDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
 
 /**
  * Save a draft. If `data.id` matches an existing draft, it's updated in place;
@@ -393,7 +417,8 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     kind !== "refusal" &&
     kind !== "evals" &&
     kind !== "choreographer" &&
-    kind !== "spread"
+    kind !== "spread" &&
+    kind !== "race"
   ) {
     return { ok: false, reason: `Unknown draft kind: ${String(kind)}` };
   }
@@ -446,6 +471,13 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     }
     if (typeof d.systemPrompt !== "string") {
       return { ok: false, reason: "Spread draft is missing systemPrompt." };
+    }
+  } else if (kind === "race") {
+    if (!isObject(d.configA) || !isObject(d.configB)) {
+      return { ok: false, reason: "Race draft is missing configA / configB." };
+    }
+    if (!isObject(d.laneA) || !isObject(d.laneB)) {
+      return { ok: false, reason: "Race draft is missing lane results." };
     }
   }
   return { ok: true };
@@ -522,6 +554,8 @@ export function draftEditorHref(draft: Draft): string {
       return `/play/choreographer?draft=${draft.id}`;
     case "spread":
       return `/play/spread?draft=${draft.id}`;
+    case "race":
+      return `/play/race?draft=${draft.id}`;
   }
 }
 

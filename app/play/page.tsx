@@ -100,6 +100,16 @@ const PLAYGROUNDS: Playground[] = [
     artifact: "Stability Report",
     status: "ready",
   },
+  {
+    num: "08",
+    href: "/play/race",
+    title: "Race",
+    italic: "lab",
+    blurb:
+      "One prompt, two models, at once. Watch what the better answer actually costs — in seconds and in dollars.",
+    artifact: "Speed Trial",
+    status: "ready",
+  },
 ];
 
 export default function PlayPage() {

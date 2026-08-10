@@ -19,6 +19,7 @@ export const REFLECTION: {
   evals: ReflectionQuestion;
   choreographer: ReflectionQuestion;
   spread: ReflectionQuestion;
+  race: ReflectionQuestion;
 } = {
   diffIndependent: {
     question:
@@ -64,6 +65,11 @@ export const REFLECTION: {
     // Points at Evaluation as the nearest existing frame for measuring
     // behavior. Repoint at the Module 09 article ("Distributions, not
     // outputs") once it lands.
+    concept: { href: "/learn/evaluation", label: "Evaluation" },
+  },
+  race: {
+    question:
+      "How much better was the slower one, really — and is that worth what it cost?",
     concept: { href: "/learn/evaluation", label: "Evaluation" },
   },
 };
