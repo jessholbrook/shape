@@ -95,3 +95,118 @@ entering base URL + key + model.
 **Decision:** Park the general endpoint-selector/OpenRouter piece; build it
 together with dynamic model fetching. Cerebras (the bounded, speed-focused
 slice) shipped now.
+
+## Part II — advanced curriculum (modules 09–12 + three demos)
+
+**From:** design conversation, 2026-08-10 — "what would next-level lessons and
+demos look like, for folks who understand what we already have on the site?"
+
+**Where the current ceiling is:** modules 01–08 all sit inside one frame —
+*the model is a surface you style*. Write a system prompt, read an output,
+judge it. Voice, persona, refusal, format, even multi-turn: the designer
+controls the instruction, the model produces text, the designer evaluates
+n=1. That frame is the right first course, and it's also the first thing that
+breaks in real work.
+
+**The Part II frame shift:** the model is a *system* you can't fully control,
+that *acts*, *in time*, on *context you supplied without realizing it*. Every
+module below should open by breaking something the reader already believes —
+these are for people who finished Part I, so none of them should re-teach.
+
+### Module 09 — Distributions, not outputs
+
+*You already know how to write a prompt and read the output. You've been
+designing against n=1 the whole time.*
+
+The real object isn't an output, it's a distribution. Run a Module 02 tone
+spec ten times and watch which clauses hold and which are coin flips. Design
+for the 10th-percentile response, not the one that got screenshotted for the
+deck. Temperature stops being a mystery slider and becomes a spread control.
+
+- **Playground: Spread** — same prompt run N times, outputs clustered and
+  diffed against each other. Diff Mode is A/B across prompts; this is A/A
+  across samples.
+- **Artifact: Stability Report** — which lines of your Behavior Spec survive
+  resampling.
+
+### Module 10 — Context is the interface
+
+*You already know the system prompt is a design surface. It's maybe 10% of
+what the model reads.*
+
+Retrieved docs, tool results, prior turns, pasted user content, memory. The
+designer's real job is composing what the model *sees* — an IA problem, not a
+copywriting one. The demo that lands it: same question, three context payloads
+(nothing / a good doc / a stale contradicting doc). The model confidently
+repeats the stale doc in a perfect brand voice — a design failure wearing a
+successful output's clothes. Prompt injection belongs here too: untrusted text
+is just context you didn't author.
+
+- **Playground: Context Lab** — paste sources, toggle them on and off, watch
+  grounding, conflict, and staleness behavior change.
+- **Artifact: Context Map** — what's in the window, who authored it, how much
+  to trust it.
+
+### Module 11 — Designing agency
+
+*You already know how to shape what it says. Now it does things.*
+
+The biggest genuine leap in the set. Tools, permission, initiative, repair.
+When does it ask versus act? What happens when it's wrong halfway through? The
+punchline designers rarely see coming: **a tool description is a prompt** —
+you shape behavior by writing the docs the model reads about its own
+capabilities.
+
+- **Playground: Tool Bench** — write tool schemas and descriptions for a
+  stubbed toolset (`search`, `send_email`, `delete_file` — no real side
+  effects), run scenarios, watch it over-ask (annoying) or over-act
+  (terrifying).
+- **Artifact: Agency Policy** — the ask/act boundary, written down.
+
+### Module 12 — Judging at scale
+
+*You already built a rubric in Module 06. Now automate it, then discover your
+judge is biased.*
+
+LLM-as-judge, followed immediately by the calibration check: swap the order of
+two answers, pad one with filler, watch the scores move. Teaching designers to
+distrust the automation they just built is the most advanced idea on this list
+and the one that transfers hardest back to non-AI work.
+
+- Extends the existing Eval Workshop rather than adding a new playground.
+- **Artifact: Calibrated Judge** — a judge prompt *plus* its known biases.
+
+### Three demos (light, shareable, not full modules)
+
+- **Race** — same prompt, two providers, side by side, live, with a cost
+  counter running. Speed-vs-quality stops being abstract the moment you watch
+  it. This is the payoff for the Cerebras work.
+- **Portability** — same Behavior Spec across three models. Is it a spec, or a
+  model-specific incantation? Much of what people write is the latter and
+  they've never checked.
+- **Reverse Tone Dial** — edit the output you want, model infers the dial
+  positions. *Specification by demonstration*, and the natural Part II
+  inversion of the whole curriculum: Part I writes a spec and reads an output;
+  Part II writes an output and infers the spec. **Note the recurring theme** —
+  this is the same move as the parked "Eval Lab — Design a rubric" inversion
+  above. Inversion has now surfaced independently three times in feedback,
+  which makes it the strongest single signal we have.
+
+### Explicitly out of scope
+
+Fine-tuning, RAG-as-a-technology, context-window trivia, agent frameworks. All
+of it pulls the site toward "AI engineering tutorial" and away from what makes
+it good. The designer's frame stays intact through every module above.
+
+### Build cost, roughly
+
+Race, Portability, and Spread are close to free — same provider layer, just
+loop or fan out the existing call. Context Lab is a text-source panel plus
+prompt assembly. Tool Bench is the only one needing real new plumbing
+(tool-calling across the adapters, which differs meaningfully between
+Anthropic, OpenAI, and Gemini).
+
+**Decision:** Park as a set, don't commit to the whole arc yet. If we want a
+cheap proof that Part II has legs, **Race** or **Spread** ships fastest and
+demos hardest — build one, watch whether Part I readers actually come back for
+it, and let that decide whether the four modules get written.
