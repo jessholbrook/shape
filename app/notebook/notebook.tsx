@@ -13,11 +13,12 @@ import {
   type Draft,
 } from "@/lib/drafts";
 import { downloadBlob, slugify } from "@/lib/download";
-import { PROVIDERS } from "@/lib/providers";
+import { PROVIDERS, type ProviderId } from "@/lib/providers";
 import { TONE_DIMENSIONS } from "@/lib/tone";
 import { evaluateMatch } from "@/lib/refusal";
 import { aggregateScore, SCORE_MAX } from "@/lib/evals";
 import { buildReport } from "@/lib/spread";
+import { buildVerdict, formatFactor, formatMs, totalMs } from "@/lib/race";
 import { ImportPanel } from "@/components/notebook/import-panel";
 import { KindPill } from "@/components/kind-pill";
 
@@ -101,6 +102,7 @@ export function Notebook() {
     (d) => d.kind === "choreographer",
   );
   const spreadDrafts = drafts.filter((d) => d.kind === "spread");
+  const raceDrafts = drafts.filter((d) => d.kind === "race");
   const noDrafts = drafts.length === 0;
 
   return (
@@ -220,6 +222,20 @@ export function Notebook() {
           {spreadDrafts.length > 0 && (
             <Section title="Stability reports" count={spreadDrafts.length}>
               {spreadDrafts.map((d) => (
+                <DraftRow
+                  key={d.id}
+                  draft={d}
+                  onDuplicate={() => handleDuplicate(d)}
+                  onExport={() => handleExport(d)}
+                  onDelete={() => handleDelete(d)}
+                />
+              ))}
+            </Section>
+          )}
+
+          {raceDrafts.length > 0 && (
+            <Section title="Speed trials" count={raceDrafts.length}>
+              {raceDrafts.map((d) => (
                 <DraftRow
                   key={d.id}
                   draft={d}
@@ -472,6 +488,43 @@ function DraftSummary({ draft }: { draft: Draft }) {
         <span className="text-ink-muted">
           {completed}/{draft.turns.length} turns run
         </span>
+      </p>
+    );
+  }
+
+  if (draft.kind === "race") {
+    const nameOf = (c: { provider: ProviderId; model: string }) =>
+      PROVIDERS[c.provider].models.find((m) => m.id === c.model)?.name ??
+      c.model;
+    const verdict = buildVerdict(draft.laneA, draft.laneB);
+    const winner =
+      verdict.speed?.winner === "a"
+        ? nameOf(draft.configA)
+        : verdict.speed?.winner === "b"
+        ? nameOf(draft.configB)
+        : null;
+    return (
+      <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
+        {nameOf(draft.configA)} vs {nameOf(draft.configB)}
+        {winner && verdict.speed ? (
+          <>
+            {" · "}
+            <span className="text-ink">
+              {winner} {formatFactor(verdict.speed.factor)} faster
+            </span>
+          </>
+        ) : (
+          <>
+            {" · "}
+            <span className="text-ink-quiet">
+              {verdict.complete
+                ? `${formatMs(totalMs(draft.laneA))} vs ${formatMs(
+                    totalMs(draft.laneB),
+                  )}`
+                : "not run"}
+            </span>
+          </>
+        )}
       </p>
     );
   }

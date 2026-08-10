@@ -96,10 +96,14 @@ entering base URL + key + model.
 together with dynamic model fetching. Cerebras (the bounded, speed-focused
 slice) shipped now.
 
-## Part II — advanced curriculum (modules 09–12 + three demos)
+## Part II — advanced curriculum (modules 08–11 + three demos)
 
 **From:** design conversation, 2026-08-10 — "what would next-level lessons and
 demos look like, for folks who understand what we already have on the site?"
+
+**Numbering note:** this arc was first sketched as modules 09–12, assuming Part
+I ran through a Module 08 capstone. That capstone went away with the Build /
+Studio section (#75), so live Part I ends at 07 and Part II starts at **08**.
 
 **Where the current ceiling is:** modules 01–08 all sit inside one frame —
 *the model is a surface you style*. Write a system prompt, read an output,
@@ -113,7 +117,7 @@ that *acts*, *in time*, on *context you supplied without realizing it*. Every
 module below should open by breaking something the reader already believes —
 these are for people who finished Part I, so none of them should re-teach.
 
-### Module 09 — Distributions, not outputs
+### Module 08 — Distributions, not outputs — **BUILT**
 
 *You already know how to write a prompt and read the output. You've been
 designing against n=1 the whole time.*
@@ -123,13 +127,12 @@ spec ten times and watch which clauses hold and which are coin flips. Design
 for the 10th-percentile response, not the one that got screenshotted for the
 deck. Temperature stops being a mystery slider and becomes a spread control.
 
-- **Playground: Spread** — same prompt run N times, outputs clustered and
-  diffed against each other. Diff Mode is A/B across prompts; this is A/A
-  across samples.
+- **Playground: Spread** — shipped, see `SPEC.md` §14. Article shipped at
+  `/learn/distributions-not-outputs`.
 - **Artifact: Stability Report** — which lines of your Behavior Spec survive
   resampling.
 
-### Module 10 — Context is the interface
+### Module 09 — Context is the interface
 
 *You already know the system prompt is a design surface. It's maybe 10% of
 what the model reads.*
@@ -147,7 +150,7 @@ is just context you didn't author.
 - **Artifact: Context Map** — what's in the window, who authored it, how much
   to trust it.
 
-### Module 11 — Designing agency
+### Module 10 — Designing agency
 
 *You already know how to shape what it says. Now it does things.*
 
@@ -163,7 +166,7 @@ capabilities.
   (terrifying).
 - **Artifact: Agency Policy** — the ask/act boundary, written down.
 
-### Module 12 — Judging at scale
+### Module 11 — Judging at scale
 
 *You already built a rubric in Module 06. Now automate it, then discover your
 judge is biased.*
@@ -178,9 +181,9 @@ and the one that transfers hardest back to non-AI work.
 
 ### Three demos (light, shareable, not full modules)
 
-- **Race** — same prompt, two providers, side by side, live, with a cost
-  counter running. Speed-vs-quality stops being abstract the moment you watch
-  it. This is the payoff for the Cerebras work.
+- **Race** — **BUILT**, see `SPEC.md` §15. Same prompt, two models, live, with
+  time-to-first-token, throughput and cost. No paired article yet — it's a
+  demo, not a module.
 - **Portability** — same Behavior Spec across three models. Is it a spec, or a
   model-specific incantation? Much of what people write is the latter and
   they've never checked.

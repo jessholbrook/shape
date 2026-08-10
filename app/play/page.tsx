@@ -99,6 +99,20 @@ const PLAYGROUNDS: Playground[] = [
       "Run one config many times. Outputs are a distribution, not a value — find out which clauses of your spec actually hold.",
     artifact: "Stability Report",
     status: "ready",
+    concept: {
+      href: "/learn/distributions-not-outputs",
+      label: "Distributions, not outputs",
+    },
+  },
+  {
+    num: "08",
+    href: "/play/race",
+    title: "Race",
+    italic: "lab",
+    blurb:
+      "One prompt, two models, at once. Watch what the better answer actually costs — in seconds and in dollars.",
+    artifact: "Speed Trial",
+    status: "ready",
   },
 ];
 
