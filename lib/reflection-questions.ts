@@ -62,10 +62,10 @@ export const REFLECTION: {
   spread: {
     question:
       "Which clause of your spec didn't hold — and would you have caught it from a single run?",
-    // Points at Evaluation as the nearest existing frame for measuring
-    // behavior. Repoint at the Module 09 article ("Distributions, not
-    // outputs") once it lands.
-    concept: { href: "/learn/evaluation", label: "Evaluation" },
+    concept: {
+      href: "/learn/distributions-not-outputs",
+      label: "Distributions, not outputs",
+    },
   },
   race: {
     question:

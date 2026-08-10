@@ -130,6 +130,20 @@ export const MODULES: CurriculumModule[] = [
     status: "ready",
     readMinutes: 6,
   },
+  {
+    num: "08",
+    slug: "distributions-not-outputs",
+    title: "Distributions,",
+    italic: "not outputs",
+    kicker: "Concept",
+    blurb:
+      "One output is a sample, not a result. Design against the spread — and find out which clauses of your spec were luck.",
+    playground: { label: "Spread", href: "/play/spread" },
+    artifact: "Stability Report",
+    href: "/learn/distributions-not-outputs",
+    status: "ready",
+    readMinutes: 6,
+  },
 ];
 
 export function getModule(slug: string): CurriculumModule | undefined {

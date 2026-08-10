@@ -99,6 +99,10 @@ const PLAYGROUNDS: Playground[] = [
       "Run one config many times. Outputs are a distribution, not a value — find out which clauses of your spec actually hold.",
     artifact: "Stability Report",
     status: "ready",
+    concept: {
+      href: "/learn/distributions-not-outputs",
+      label: "Distributions, not outputs",
+    },
   },
   {
     num: "08",
