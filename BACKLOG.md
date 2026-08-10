@@ -184,9 +184,9 @@ and the one that transfers hardest back to non-AI work.
 - **Race** — **BUILT**, see `SPEC.md` §15. Same prompt, two models, live, with
   time-to-first-token, throughput and cost. No paired article yet — it's a
   demo, not a module.
-- **Portability** — same Behavior Spec across three models. Is it a spec, or a
-  model-specific incantation? Much of what people write is the latter and
-  they've never checked.
+- **Portability** — **BUILT**, see `SPEC.md` §16. One spec across 2-4 models,
+  with each clause classified portable / model-specific / unstable / not
+  landing. No paired article yet — it shares Module 08 with Spread.
 - **Reverse Tone Dial** — edit the output you want, model infers the dial
   positions. *Specification by demonstration*, and the natural Part II
   inversion of the whole curriculum: Part I writes a spec and reads an output;

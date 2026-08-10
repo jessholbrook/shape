@@ -19,6 +19,7 @@ import { evaluateMatch } from "@/lib/refusal";
 import { aggregateScore, SCORE_MAX } from "@/lib/evals";
 import { buildReport } from "@/lib/spread";
 import { buildVerdict, formatFactor, formatMs, totalMs } from "@/lib/race";
+import { buildPortabilityReport, modelLabel } from "@/lib/portability";
 import { ImportPanel } from "@/components/notebook/import-panel";
 import { KindPill } from "@/components/kind-pill";
 
@@ -103,6 +104,7 @@ export function Notebook() {
   );
   const spreadDrafts = drafts.filter((d) => d.kind === "spread");
   const raceDrafts = drafts.filter((d) => d.kind === "race");
+  const portabilityDrafts = drafts.filter((d) => d.kind === "portability");
   const noDrafts = drafts.length === 0;
 
   return (
@@ -236,6 +238,23 @@ export function Notebook() {
           {raceDrafts.length > 0 && (
             <Section title="Speed trials" count={raceDrafts.length}>
               {raceDrafts.map((d) => (
+                <DraftRow
+                  key={d.id}
+                  draft={d}
+                  onDuplicate={() => handleDuplicate(d)}
+                  onExport={() => handleExport(d)}
+                  onDelete={() => handleDelete(d)}
+                />
+              ))}
+            </Section>
+          )}
+
+          {portabilityDrafts.length > 0 && (
+            <Section
+              title="Portability reports"
+              count={portabilityDrafts.length}
+            >
+              {portabilityDrafts.map((d) => (
                 <DraftRow
                   key={d.id}
                   draft={d}
@@ -488,6 +507,26 @@ function DraftSummary({ draft }: { draft: Draft }) {
         <span className="text-ink-muted">
           {completed}/{draft.turns.length} turns run
         </span>
+      </p>
+    );
+  }
+
+  if (draft.kind === "portability") {
+    const report = buildPortabilityReport(draft.assertions, draft.lanes);
+    return (
+      <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
+        {draft.refs.map((r) => modelLabel(r)).join(" · ")}
+        {report.total > 0 ? (
+          <>
+            {" — "}
+            <span className="text-ink">
+              {report.portable}/{report.total}
+            </span>{" "}
+            portable
+          </>
+        ) : (
+          <span className="text-ink-quiet"> — no clauses</span>
+        )}
       </p>
     );
   }

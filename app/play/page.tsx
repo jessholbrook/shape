@@ -114,6 +114,20 @@ const PLAYGROUNDS: Playground[] = [
     artifact: "Speed Trial",
     status: "ready",
   },
+  {
+    num: "09",
+    href: "/play/portability",
+    title: "Portability",
+    italic: "lab",
+    blurb:
+      "One spec, several models. Find out which clauses are real rules and which are incantations tuned to a single vendor.",
+    artifact: "Portability Report",
+    status: "ready",
+    concept: {
+      href: "/learn/distributions-not-outputs",
+      label: "Distributions, not outputs",
+    },
+  },
 ];
 
 export default function PlayPage() {

@@ -20,6 +20,7 @@ export const REFLECTION: {
   choreographer: ReflectionQuestion;
   spread: ReflectionQuestion;
   race: ReflectionQuestion;
+  portability: ReflectionQuestion;
 } = {
   diffIndependent: {
     question:
@@ -71,5 +72,13 @@ export const REFLECTION: {
     question:
       "How much better was the slower one, really — and is that worth what it cost?",
     concept: { href: "/learn/evaluation", label: "Evaluation" },
+  },
+  portability: {
+    question:
+      "Which clause turned out to be a habit of one model rather than a rule — and how would you rewrite it?",
+    concept: {
+      href: "/learn/distributions-not-outputs",
+      label: "Distributions, not outputs",
+    },
   },
 };

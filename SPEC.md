@@ -130,6 +130,7 @@ Every meaningful action in Shape produces an **artifact**. Artifacts are first-c
 | **Conversation Choreographer** | Multi-turn flow design | Behavior Spec |
 | **Spread** *(§14)* | Outputs are a distribution, not a value | Stability Report |
 | **Race** *(§15)* | What quality costs in time and money | Speed Trial |
+| **Portability** *(§16)* | Whether a spec survives a change of model | Portability Report |
 
 ## 8. Curriculum sketch — "Behavior Designer 101 → 301"
 
@@ -533,4 +534,57 @@ When the two speed measures disagree — one lane wins total time while the othe
 - **More than two lanes.** Two is the comparison a person can actually hold in their head.
 - **Repeated runs for a stable median.** One race is a sample of one — the honest version of that lesson is Spread, and pointing Race users there is better than half-solving it here.
 - **Quality scoring.** Deliberately human: the point is that the tradeoff is a judgment call, not a metric.
+
+---
+
+## 16. Portability — v0.1 spec (built)
+
+*Third build from the Part II arc. Pairs with Module 08, alongside Spread.*
+
+### Purpose
+
+Run one spec across several models and ask whether it's a **specification** or an **incantation**.
+
+Spread pivots one model against many samples. Portability pivots many models against one spec — and reuses Spread's assertions on purpose, so a designer learns the idea of a checkable clause once and then sees it turned in a different direction.
+
+### The classification is the payload
+
+Each clause lands in one of four buckets, and the taxonomy is the lesson:
+
+| Verdict | Meaning |
+|---|---|
+| **Portable** | Held on every run on every model. A real rule. |
+| **Model-specific** | Holds on some models, not others. You've tuned to a vendor; switching breaks this silently. |
+| **Unstable** | Roughly as unreliable everywhere. Not a portability problem — a Spread problem. |
+| **Not landing** | Never held anywhere. Not a model problem; the instruction isn't doing anything. |
+
+The third bucket is the one that makes this honest. Without it, a clause that's simply flaky would get misfiled as "model-specific" and the reader would go rewrite it for the wrong reason.
+
+### Why three runs per model, not one
+
+One run per model is the cheap version, and it directly contradicts what Module 08 just taught: at a single sample, a clause that's a coin flip *within* one model is indistinguishable from one that's genuinely model-specific.
+
+So the default is **three runs per model**, and the classification uses the gap between the best and worst model's hit rate — a spread of ≥ 0.5 reads as model-specific, anything tighter as unstable. Three isn't statistics; it's just enough to tell those two apart.
+
+One run remains selectable for cheapness, and when it's used the report says plainly that the "unstable" verdict is unreachable and the labels shouldn't be trusted.
+
+### Shared spec, not per-model configs
+
+Deliberately **not** a ConfigPanel per model. The system prompt, user message, and temperature are shared across the roster, because a spec that has to be reworded per vendor isn't the thing being measured.
+
+### Cost and contention
+
+The matrix is models × runs, so cost is quadratic in a way the other playgrounds aren't — 4 models × 3 runs is 12 calls. The run bar states the call count and estimate before firing.
+
+Any WebLLM model in the roster forces the whole matrix to concurrency 1, since the engine holds a single GPU context; more than one in-browser model also warns that they evict each other on switch.
+
+### Artifact — Portability Report
+
+`DraftKind: "portability"`. Carries the roster, the shared spec, the assertions, runs-per-model, and every lane's runs. Wired through the notebook section and summary, PDF export, kind labels, editor href, and import validation.
+
+### Out of scope for v0.1
+
+- **Per-model prompt overrides.** That's the opposite of the lesson.
+- **Auto-rewriting a failing clause.** Tempting and wrong: knowing *what* to rewrite is the skill being taught.
+- **More than four models.** The matrix stops being readable, and the finding rarely changes.
 

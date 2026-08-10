@@ -15,6 +15,11 @@ import {
 import { aggregateScore, caseScore, SCORE_MAX } from "@/lib/evals";
 import { assertionLabel, buildReport, rankRuns } from "@/lib/spread";
 import {
+  PORTABILITY_LABEL,
+  buildPortabilityReport,
+  modelLabel as portabilityModelLabel,
+} from "@/lib/portability";
+import {
   buildVerdict,
   formatCost,
   formatFactor,
@@ -30,6 +35,7 @@ import type {
   EvalsDraft,
   PersonaDraft,
   RefusalDraft,
+  PortabilityDraft,
   RaceDraft,
   SpreadDraft,
   ToneDraft,
@@ -125,6 +131,9 @@ function modelLabel(provider: keyof typeof PROVIDERS, model: string): string {
 /** Header meta line. Diff drafts carry per-side configs instead of a single
  *  top-level model, so they get an A/B summary. */
 function draftMeta(draft: Draft): string {
+  if (draft.kind === "portability") {
+    return draft.refs.map((r) => portabilityModelLabel(r)).join(" · ");
+  }
   if (draft.kind === "diff" || draft.kind === "race") {
     const a = modelLabel(draft.configA.provider, draft.configA.model);
     const b = modelLabel(draft.configB.provider, draft.configB.model);
@@ -164,6 +173,8 @@ function KindBody({ draft }: { draft: Draft }) {
       return <SpreadBody draft={draft} />;
     case "race":
       return <RaceBody draft={draft} />;
+    case "portability":
+      return <PortabilityBody draft={draft} />;
   }
 }
 
@@ -506,6 +517,67 @@ function SpreadBody({ draft }: { draft: SpreadDraft }) {
           <MonoBlock>{run.text || run.error || "Not run."}</MonoBlock>
         </Section>
       ))}
+    </>
+  );
+}
+
+function PortabilityBody({ draft }: { draft: PortabilityDraft }) {
+  const report = buildPortabilityReport(draft.assertions, draft.lanes);
+  return (
+    <>
+      <Section label="The spec under test">
+        <MonoBlock>{draft.system}</MonoBlock>
+        <div className="mt-3">
+          <Exchange who="User message">{draft.userMessage}</Exchange>
+        </div>
+      </Section>
+      <Section
+        label={`Portability — ${report.portable}/${report.total} clauses portable across ${report.modelsScored} models`}
+      >
+        <ul className="flex flex-col gap-2">
+          {report.rows.map((row) => (
+            <li key={row.assertion.id}>
+              <p className="font-mono text-[12px] text-ink flex justify-between gap-4">
+                <span>{assertionLabel(row.assertion)}</span>
+                <span className="text-ink-muted">
+                  {PORTABILITY_LABEL[row.verdict]}
+                </span>
+              </p>
+              <p className="font-mono text-[11px] text-ink-quiet mt-0.5">
+                {row.cells
+                  .map((cell, i) => {
+                    const ref = draft.refs[i];
+                    const name = ref ? portabilityModelLabel(ref) : "—";
+                    return cell.total === 0
+                      ? `${name} —`
+                      : `${name} ${cell.hits}/${cell.total}`;
+                  })
+                  .join(" · ")}
+              </p>
+            </li>
+          ))}
+        </ul>
+        {report.total === 0 && (
+          <p className="font-sans text-[12px] text-ink-muted">
+            No clauses were defined for this run.
+          </p>
+        )}
+      </Section>
+      {draft.refs.map((ref) => {
+        const lane = draft.lanes.find((l) => l.refId === ref.id);
+        return (
+          <Section key={ref.id} label={portabilityModelLabel(ref)}>
+            {(lane?.runs ?? []).map((run, i) => (
+              <div key={i} className="mt-2 first:mt-0">
+                <MonoBlock>{run.text || run.error || "Not run."}</MonoBlock>
+              </div>
+            ))}
+            {(!lane || lane.runs.length === 0) && (
+              <MonoBlock>Not run.</MonoBlock>
+            )}
+          </Section>
+        );
+      })}
     </>
   );
 }
