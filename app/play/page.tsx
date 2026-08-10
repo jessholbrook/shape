@@ -90,6 +90,16 @@ const PLAYGROUNDS: Playground[] = [
     status: "ready",
     concept: { href: "/learn/multi-turn-flows", label: "Multi-turn flows" },
   },
+  {
+    num: "07",
+    href: "/play/spread",
+    title: "Spread",
+    italic: "lab",
+    blurb:
+      "Run one config many times. Outputs are a distribution, not a value — find out which clauses of your spec actually hold.",
+    artifact: "Stability Report",
+    status: "ready",
+  },
 ];
 
 export default function PlayPage() {

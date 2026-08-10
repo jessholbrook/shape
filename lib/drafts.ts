@@ -4,6 +4,7 @@ import type { PersonaValues } from "./persona";
 import type { Probe, ProbeResult } from "./refusal";
 import type { Criterion, EvalCase, CaseResult } from "./evals";
 import type { ChoreographedTurn } from "./choreographer";
+import type { Assertion, SpreadRun } from "./spread";
 
 const DRAFTS_KEY = "shape:drafts:log";
 const MAX_DRAFTS = 100;
@@ -14,7 +15,8 @@ export type DraftKind =
   | "persona"
   | "refusal"
   | "evals"
-  | "choreographer";
+  | "choreographer"
+  | "spread";
 
 export type DiffDraftConfig = {
   provider: ProviderId;
@@ -197,13 +199,33 @@ export type ChoreographerDraft = {
   updatedAt: number;
 };
 
+export type SpreadDraft = {
+  id: string;
+  kind: "spread";
+  title: string;
+  provider: ProviderId;
+  model: string;
+  temperature: number;
+  /** System prompt under test — the spec whose stability is being measured. */
+  systemPrompt: string;
+  userMessage: string;
+  runCount: number;
+  runs: SpreadRun[];
+  assertions: Assertion[];
+  /** The user's answer to the playground's reflection question, if they jotted one. */
+  reflection?: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
 export type Draft =
   | DiffDraft
   | ToneDraft
   | PersonaDraft
   | RefusalDraft
   | EvalsDraft
-  | ChoreographerDraft;
+  | ChoreographerDraft
+  | SpreadDraft;
 
 const KNOWN_KINDS: DraftKind[] = [
   "diff",
@@ -212,6 +234,7 @@ const KNOWN_KINDS: DraftKind[] = [
   "refusal",
   "evals",
   "choreographer",
+  "spread",
 ];
 
 function read(): Draft[] {
@@ -264,7 +287,8 @@ export type DraftInput =
   | (Omit<EvalsDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
   | (Omit<ChoreographerDraft, "id" | "createdAt" | "updatedAt"> & {
       id?: string;
-    });
+    })
+  | (Omit<SpreadDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
 
 /**
  * Save a draft. If `data.id` matches an existing draft, it's updated in place;
@@ -368,7 +392,8 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     kind !== "persona" &&
     kind !== "refusal" &&
     kind !== "evals" &&
-    kind !== "choreographer"
+    kind !== "choreographer" &&
+    kind !== "spread"
   ) {
     return { ok: false, reason: `Unknown draft kind: ${String(kind)}` };
   }
@@ -414,6 +439,13 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
         ok: false,
         reason: "Choreographer draft is missing turns or systemPrompt.",
       };
+    }
+  } else if (kind === "spread") {
+    if (!Array.isArray(d.runs) || !Array.isArray(d.assertions)) {
+      return { ok: false, reason: "Spread draft is missing runs or assertions." };
+    }
+    if (typeof d.systemPrompt !== "string") {
+      return { ok: false, reason: "Spread draft is missing systemPrompt." };
     }
   }
   return { ok: true };
@@ -488,6 +520,8 @@ export function draftEditorHref(draft: Draft): string {
       return `/play/evals?draft=${draft.id}`;
     case "choreographer":
       return `/play/choreographer?draft=${draft.id}`;
+    case "spread":
+      return `/play/spread?draft=${draft.id}`;
   }
 }
 

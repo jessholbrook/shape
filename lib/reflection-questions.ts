@@ -18,6 +18,7 @@ export const REFLECTION: {
   refusal: ReflectionQuestion;
   evals: ReflectionQuestion;
   choreographer: ReflectionQuestion;
+  spread: ReflectionQuestion;
 } = {
   diffIndependent: {
     question:
@@ -56,5 +57,13 @@ export const REFLECTION: {
     question:
       "Where in the flow did the model lose the thread, and what coherence rule would fix it?",
     concept: { href: "/learn/multi-turn-flows", label: "Multi-turn flows" },
+  },
+  spread: {
+    question:
+      "Which clause of your spec didn't hold — and would you have caught it from a single run?",
+    // Points at Evaluation as the nearest existing frame for measuring
+    // behavior. Repoint at the Module 09 article ("Distributions, not
+    // outputs") once it lands.
+    concept: { href: "/learn/evaluation", label: "Evaluation" },
   },
 };

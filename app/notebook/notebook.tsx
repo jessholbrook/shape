@@ -17,6 +17,7 @@ import { PROVIDERS } from "@/lib/providers";
 import { TONE_DIMENSIONS } from "@/lib/tone";
 import { evaluateMatch } from "@/lib/refusal";
 import { aggregateScore, SCORE_MAX } from "@/lib/evals";
+import { buildReport } from "@/lib/spread";
 import { ImportPanel } from "@/components/notebook/import-panel";
 import { KindPill } from "@/components/kind-pill";
 
@@ -99,6 +100,7 @@ export function Notebook() {
   const choreographerDrafts = drafts.filter(
     (d) => d.kind === "choreographer",
   );
+  const spreadDrafts = drafts.filter((d) => d.kind === "spread");
   const noDrafts = drafts.length === 0;
 
   return (
@@ -204,6 +206,20 @@ export function Notebook() {
           {choreographerDrafts.length > 0 && (
             <Section title="Conversations" count={choreographerDrafts.length}>
               {choreographerDrafts.map((d) => (
+                <DraftRow
+                  key={d.id}
+                  draft={d}
+                  onDuplicate={() => handleDuplicate(d)}
+                  onExport={() => handleExport(d)}
+                  onDelete={() => handleDelete(d)}
+                />
+              ))}
+            </Section>
+          )}
+
+          {spreadDrafts.length > 0 && (
+            <Section title="Stability reports" count={spreadDrafts.length}>
+              {spreadDrafts.map((d) => (
                 <DraftRow
                   key={d.id}
                   draft={d}
@@ -456,6 +472,34 @@ function DraftSummary({ draft }: { draft: Draft }) {
         <span className="text-ink-muted">
           {completed}/{draft.turns.length} turns run
         </span>
+      </p>
+    );
+  }
+
+  if (draft.kind === "spread") {
+    const modelName =
+      PROVIDERS[draft.provider].models.find((m) => m.id === draft.model)
+        ?.name ?? draft.model;
+    const report = buildReport(draft.assertions, draft.runs);
+    return (
+      <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
+        {modelName} · {report.runCount} runs
+        {report.total > 0 ? (
+          <>
+            {" · "}
+            <span className="text-ink-muted">
+              <span className="text-ink">
+                {report.held}/{report.total}
+              </span>{" "}
+              clauses held
+            </span>
+          </>
+        ) : (
+          <>
+            {" · "}
+            <span className="text-ink-quiet">no assertions</span>
+          </>
+        )}
       </p>
     );
   }

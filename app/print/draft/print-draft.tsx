@@ -13,6 +13,7 @@ import {
   evaluateMatch,
 } from "@/lib/refusal";
 import { aggregateScore, caseScore, SCORE_MAX } from "@/lib/evals";
+import { assertionLabel, buildReport, rankRuns } from "@/lib/spread";
 import type {
   ChoreographerDraft,
   DiffDraft,
@@ -20,6 +21,7 @@ import type {
   EvalsDraft,
   PersonaDraft,
   RefusalDraft,
+  SpreadDraft,
   ToneDraft,
 } from "@/lib/drafts";
 
@@ -148,6 +150,8 @@ function KindBody({ draft }: { draft: Draft }) {
       return <EvalsBody draft={draft} />;
     case "choreographer":
       return <ChoreographerBody draft={draft} />;
+    case "spread":
+      return <SpreadBody draft={draft} />;
   }
 }
 
@@ -439,6 +443,57 @@ function EvalsBody({ draft }: { draft: EvalsDraft }) {
           </Section>
         );
       })}
+    </>
+  );
+}
+
+function SpreadBody({ draft }: { draft: SpreadDraft }) {
+  const report = buildReport(draft.assertions, draft.runs);
+  // Typicality is derived rather than persisted, so the export ranks the runs
+  // itself — same ordering the playground shows.
+  const ranked = rankRuns(draft.runs);
+  return (
+    <>
+      <Section label="System prompt under test">
+        <MonoBlock>{draft.systemPrompt}</MonoBlock>
+      </Section>
+      <Section label="User message">
+        <Prose>{draft.userMessage}</Prose>
+      </Section>
+      <Section
+        label={`Stability — ${report.held}/${report.total} clauses held over ${report.runCount} runs`}
+      >
+        <ul className="flex flex-col gap-1.5">
+          {report.results.map((r) => (
+            <li
+              key={r.assertion.id}
+              className="font-mono text-[12px] text-ink flex justify-between gap-4"
+            >
+              <span>{assertionLabel(r.assertion)}</span>
+              <span className={r.held ? "text-ink-muted" : "text-ink"}>
+                {r.hits}/{r.total}
+              </span>
+            </li>
+          ))}
+        </ul>
+        {report.total === 0 && (
+          <p className="font-sans text-[12px] text-ink-muted">
+            No assertions were defined for this run.
+          </p>
+        )}
+      </Section>
+      {ranked.map((run, i) => (
+        <Section
+          key={run.id}
+          label={`Run ${i + 1}${run.isMedoid ? " — median" : ""}${
+            run.distance != null && !run.isMedoid
+              ? ` — ${Math.round(run.distance * 100)}% off`
+              : ""
+          }`}
+        >
+          <MonoBlock>{run.text || run.error || "Not run."}</MonoBlock>
+        </Section>
+      ))}
     </>
   );
 }
