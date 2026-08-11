@@ -142,6 +142,16 @@ const PLAYGROUNDS: Playground[] = [
       label: "Context is the interface",
     },
   },
+  {
+    num: "11",
+    href: "/play/tools",
+    title: "Tool",
+    italic: "bench",
+    blurb:
+      "Now it does things, not just says things. Write the tools and the policy, then find out where it draws the line between asking and acting.",
+    artifact: "Agency Policy",
+    status: "ready",
+  },
 ];
 
 export default function PlayPage() {

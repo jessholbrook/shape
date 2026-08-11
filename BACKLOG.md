@@ -152,7 +152,7 @@ is just context you didn't author.
 - **Artifact: Context Map** — what's in the window, who authored it, how much
   to trust it.
 
-### Module 10 — Designing agency
+### Module 10 — Designing agency — **PLAYGROUND BUILT**
 
 *You already know how to shape what it says. Now it does things.*
 
@@ -162,10 +162,9 @@ punchline designers rarely see coming: **a tool description is a prompt** —
 you shape behavior by writing the docs the model reads about its own
 capabilities.
 
-- **Playground: Tool Bench** — write tool schemas and descriptions for a
-  stubbed toolset (`search`, `send_email`, `delete_file` — no real side
-  effects), run scenarios, watch it over-ask (annoying) or over-act
-  (terrifying).
+- **Playground: Tool Bench** — shipped, see `SPEC.md` §18. Prompted tools with
+  risk levels, per-scenario expectations, and seven outcomes ordered by who
+  pays. **Article still to write.**
 - **Artifact: Agency Policy** — the ask/act boundary, written down.
 
 ### Module 11 — Judging at scale
@@ -215,3 +214,29 @@ Anthropic, OpenAI, and Gemini).
 cheap proof that Part II has legs, **Race** or **Spread** ships fastest and
 demos hardest — build one, watch whether Part I readers actually come back for
 it, and let that decide whether the four modules get written.
+
+
+## Native tool-calling across providers
+
+**From:** building Tool Bench (Module 10), 2026-08-11.
+
+**What shipped instead:** Tool Bench describes tools in the prompt and parses a
+one-line decision out of the reply. That was chosen deliberately — it makes
+"a tool description is a prompt" visible and editable, and it works on every
+provider including the in-browser models that keep Shape usable without a key.
+
+**The parked piece:** real function calling through each provider's API.
+Anthropic `tool_use` content blocks, OpenAI's `tool_calls` deltas (arguments
+arrive fragmented across chunks), Gemini `functionDeclarations`, Cerebras via
+the OpenAI-compatible path. Needs a new `ChatEvent` variant, a `tools` field
+on `ChatCall`, and a multi-turn loop that feeds stubbed tool results back so
+the model can continue.
+
+**Why it's parked:** it's several days of adapter work, it can't run on WebLLM
+at the sizes we ship, and it would *hide* the lesson rather than sharpen it —
+the descriptions move from the prompt into an API parameter the designer can't
+see. Worth doing once the playground's design has proven itself, and worth
+bundling with the other provider work parked above.
+
+**Would also unlock:** multi-turn repair, which Tool Bench v0.1 leaves out —
+what the model does when an action fails or returns something unexpected.

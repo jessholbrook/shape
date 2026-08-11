@@ -22,6 +22,7 @@ export const REFLECTION: {
   race: ReflectionQuestion;
   portability: ReflectionQuestion;
   context: ReflectionQuestion;
+  agency: ReflectionQuestion;
 } = {
   diffIndependent: {
     question:
@@ -85,6 +86,14 @@ export const REFLECTION: {
   context: {
     question:
       "Which set produced the most convincing wrong answer — and what would have caught it in production?",
+    concept: {
+      href: "/learn/context-is-the-interface",
+      label: "Context is the interface",
+    },
+  },
+  agency: {
+    question:
+      "Where did it act when you wanted it to ask — and would you fix that in the policy, or in the tool description?",
     concept: {
       href: "/learn/context-is-the-interface",
       label: "Context is the interface",
