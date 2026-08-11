@@ -151,6 +151,7 @@ const PLAYGROUNDS: Playground[] = [
       "Now it does things, not just says things. Write the tools and the policy, then find out where it draws the line between asking and acting.",
     artifact: "Agency Policy",
     status: "ready",
+    concept: { href: "/learn/designing-agency", label: "Designing agency" },
   },
 ];
 

@@ -79,7 +79,8 @@ export default function DistributionsPage() {
           expect.
         </P>
         <P>
-          A rule that fails <em>every</em> time is not your problem. You
+          A rule that fails <em>every</em>{" "}
+          time is not your problem. You
           notice it on the first run and you fix it. The dangerous clause
           is the one that fails one run in ten — it passes your spot check,
           it passes the demo, it passes review, and then it ships and fails
@@ -106,7 +107,8 @@ export default function DistributionsPage() {
         </P>
         <UL>
           <LI>
-            <strong>Structure mostly holds.</strong> Ask for three bullets
+            <strong>Structure mostly holds.</strong>{" "}
+            Ask for three bullets
             and you tend to get three bullets. Format instructions are
             among the most reliable things you can write.
           </LI>
@@ -122,7 +124,8 @@ export default function DistributionsPage() {
             want X, and then it doesn&apos;t.
           </LI>
           <LI>
-            <strong>Tone wobbles quietly.</strong> Not enough to fail a
+            <strong>Tone wobbles quietly.</strong>{" "}
+            Not enough to fail a
             check, enough that a careful reader notices the fourth one
             sounds like a different writer.
           </LI>

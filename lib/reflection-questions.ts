@@ -94,9 +94,6 @@ export const REFLECTION: {
   agency: {
     question:
       "Where did it act when you wanted it to ask — and would you fix that in the policy, or in the tool description?",
-    concept: {
-      href: "/learn/context-is-the-interface",
-      label: "Context is the interface",
-    },
+    concept: { href: "/learn/designing-agency", label: "Designing agency" },
   },
 };
