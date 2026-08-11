@@ -20,6 +20,7 @@ import { aggregateScore, SCORE_MAX } from "@/lib/evals";
 import { buildReport } from "@/lib/spread";
 import { buildVerdict, formatFactor, formatMs, totalMs } from "@/lib/race";
 import { buildPortabilityReport, modelLabel } from "@/lib/portability";
+import { buildContextReport } from "@/lib/context-lab";
 import { ImportPanel } from "@/components/notebook/import-panel";
 import { KindPill } from "@/components/kind-pill";
 
@@ -105,6 +106,7 @@ export function Notebook() {
   const spreadDrafts = drafts.filter((d) => d.kind === "spread");
   const raceDrafts = drafts.filter((d) => d.kind === "race");
   const portabilityDrafts = drafts.filter((d) => d.kind === "portability");
+  const contextDrafts = drafts.filter((d) => d.kind === "context");
   const noDrafts = drafts.length === 0;
 
   return (
@@ -255,6 +257,20 @@ export function Notebook() {
               count={portabilityDrafts.length}
             >
               {portabilityDrafts.map((d) => (
+                <DraftRow
+                  key={d.id}
+                  draft={d}
+                  onDuplicate={() => handleDuplicate(d)}
+                  onExport={() => handleExport(d)}
+                  onDelete={() => handleDelete(d)}
+                />
+              ))}
+            </Section>
+          )}
+
+          {contextDrafts.length > 0 && (
+            <Section title="Context maps" count={contextDrafts.length}>
+              {contextDrafts.map((d) => (
                 <DraftRow
                   key={d.id}
                   draft={d}
@@ -507,6 +523,30 @@ function DraftSummary({ draft }: { draft: Draft }) {
         <span className="text-ink-muted">
           {completed}/{draft.turns.length} turns run
         </span>
+      </p>
+    );
+  }
+
+  if (draft.kind === "context") {
+    const modelName =
+      PROVIDERS[draft.provider].models.find((m) => m.id === draft.model)
+        ?.name ?? draft.model;
+    const report = buildContextReport(draft.sets, draft.sources, draft.results);
+    return (
+      <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
+        {modelName} · {draft.sets.length} context sets
+        {report.scored > 0 ? (
+          <>
+            {" · "}
+            <span
+              className={report.compromised > 0 ? "text-ink" : "text-ink-muted"}
+            >
+              {report.compromised}/{report.scored} answered from a bad source
+            </span>
+          </>
+        ) : (
+          <span className="text-ink-quiet"> · not run</span>
+        )}
       </p>
     );
   }

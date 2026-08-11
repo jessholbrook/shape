@@ -21,6 +21,7 @@ export const REFLECTION: {
   spread: ReflectionQuestion;
   race: ReflectionQuestion;
   portability: ReflectionQuestion;
+  context: ReflectionQuestion;
 } = {
   diffIndependent: {
     question:
@@ -76,6 +77,14 @@ export const REFLECTION: {
   portability: {
     question:
       "Which clause turned out to be a habit of one model rather than a rule — and how would you rewrite it?",
+    concept: {
+      href: "/learn/distributions-not-outputs",
+      label: "Distributions, not outputs",
+    },
+  },
+  context: {
+    question:
+      "Which set produced the most convincing wrong answer — and what would have caught it in production?",
     concept: {
       href: "/learn/distributions-not-outputs",
       label: "Distributions, not outputs",

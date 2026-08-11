@@ -15,6 +15,7 @@ export const ARTIFACT_KIND_LABEL: Record<DraftKind, string> = {
   spread: "Stability Report",
   race: "Speed Trial",
   portability: "Portability Report",
+  context: "Context Map",
 };
 
 /**
@@ -31,4 +32,5 @@ export const DRAFT_KIND_SHORT_LABEL: Record<DraftKind, string> = {
   spread: "Spread",
   race: "Race",
   portability: "Portability",
+  context: "Context",
 };

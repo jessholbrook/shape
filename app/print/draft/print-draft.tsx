@@ -20,6 +20,12 @@ import {
   modelLabel as portabilityModelLabel,
 } from "@/lib/portability";
 import {
+  ATTRIBUTION_LABEL,
+  SOURCE_KIND_LABEL,
+  buildContextReport,
+  composeUserTurn,
+} from "@/lib/context-lab";
+import {
   buildVerdict,
   formatCost,
   formatFactor,
@@ -35,6 +41,7 @@ import type {
   EvalsDraft,
   PersonaDraft,
   RefusalDraft,
+  ContextDraft,
   PortabilityDraft,
   RaceDraft,
   SpreadDraft,
@@ -175,6 +182,8 @@ function KindBody({ draft }: { draft: Draft }) {
       return <RaceBody draft={draft} />;
     case "portability":
       return <PortabilityBody draft={draft} />;
+    case "context":
+      return <ContextBody draft={draft} />;
   }
 }
 
@@ -515,6 +524,71 @@ function SpreadBody({ draft }: { draft: SpreadDraft }) {
           }`}
         >
           <MonoBlock>{run.text || run.error || "Not run."}</MonoBlock>
+        </Section>
+      ))}
+    </>
+  );
+}
+
+function ContextBody({ draft }: { draft: ContextDraft }) {
+  const report = buildContextReport(draft.sets, draft.sources, draft.results);
+  return (
+    <>
+      <Section label="System prompt">
+        <MonoBlock>{draft.system}</MonoBlock>
+      </Section>
+      <Section label="The question">
+        <Prose>{draft.question}</Prose>
+      </Section>
+      <Section label="Sources">
+        <ul className="flex flex-col gap-2">
+          {draft.sources.map((s) => (
+            <li key={s.id}>
+              <p className="font-mono text-[12px] text-ink">
+                {s.label}{" "}
+                <span className="text-ink-muted">
+                  ({SOURCE_KIND_LABEL[s.kind]})
+                </span>
+              </p>
+              {s.tell.trim() && (
+                <p className="font-mono text-[11px] text-ink-quiet mt-0.5">
+                  tell: &ldquo;{s.tell}&rdquo;
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      </Section>
+      <Section
+        label={`Attribution — ${report.compromised}/${report.scored} answers came from a source you wouldn't stand behind`}
+      >
+        <ul className="flex flex-col gap-1.5">
+          {report.rows.map((row) => (
+            <li
+              key={row.set.id}
+              className="font-mono text-[12px] text-ink flex justify-between gap-4"
+            >
+              <span>{row.set.label}</span>
+              <span className="text-ink-muted">
+                {ATTRIBUTION_LABEL[row.verdict]}
+                {row.runsScored > 1 && row.verdict !== "unsourced"
+                  ? ` (${row.runsMatched}/${row.runsScored})`
+                  : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </Section>
+      {report.rows.map((row) => (
+        <Section key={row.set.id} label={`${row.set.label} — what the model read`}>
+          <MonoBlock>{composeUserTurn(row.sources, draft.question)}</MonoBlock>
+          {row.runs.map((run, i) => (
+            <div key={i} className="mt-3">
+              <Exchange who={row.runs.length > 1 ? `Answer ${i + 1}` : "Answer"}>
+                {run.text || run.error || "Not run."}
+              </Exchange>
+            </div>
+          ))}
         </Section>
       ))}
     </>
