@@ -12,6 +12,7 @@ import type {
   SetResult,
   Source,
 } from "./context-lab";
+import type { Scenario, ScenarioResult, Tool } from "./agency";
 
 const DRAFTS_KEY = "shape:drafts:log";
 const MAX_DRAFTS = 100;
@@ -26,7 +27,8 @@ export type DraftKind =
   | "spread"
   | "race"
   | "portability"
-  | "context";
+  | "context"
+  | "agency";
 
 export type DiffDraftConfig = {
   provider: ProviderId;
@@ -286,6 +288,26 @@ export type ContextDraft = {
   updatedAt: number;
 };
 
+export type AgencyDraft = {
+  id: string;
+  kind: "agency";
+  title: string;
+  provider: ProviderId;
+  model: string;
+  temperature: number;
+  role: string;
+  /** Where the ask/act line sits — the sentence under test. */
+  policy: string;
+  tools: Tool[];
+  scenarios: Scenario[];
+  runsPerScenario: number;
+  results: ScenarioResult[];
+  /** The user's answer to the playground's reflection question, if they jotted one. */
+  reflection?: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
 export type Draft =
   | DiffDraft
   | ToneDraft
@@ -296,7 +318,8 @@ export type Draft =
   | SpreadDraft
   | RaceDraft
   | PortabilityDraft
-  | ContextDraft;
+  | ContextDraft
+  | AgencyDraft;
 
 const KNOWN_KINDS: DraftKind[] = [
   "diff",
@@ -309,6 +332,7 @@ const KNOWN_KINDS: DraftKind[] = [
   "race",
   "portability",
   "context",
+  "agency",
 ];
 
 function read(): Draft[] {
@@ -367,7 +391,8 @@ export type DraftInput =
   | (Omit<PortabilityDraft, "id" | "createdAt" | "updatedAt"> & {
       id?: string;
     })
-  | (Omit<ContextDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
+  | (Omit<ContextDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
+  | (Omit<AgencyDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
 
 /**
  * Save a draft. If `data.id` matches an existing draft, it's updated in place;
@@ -475,7 +500,8 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     kind !== "spread" &&
     kind !== "race" &&
     kind !== "portability" &&
-    kind !== "context"
+    kind !== "context" &&
+    kind !== "agency"
   ) {
     return { ok: false, reason: `Unknown draft kind: ${String(kind)}` };
   }
@@ -555,6 +581,13 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     }
     if (typeof d.question !== "string" || !Array.isArray(d.results)) {
       return { ok: false, reason: "Context draft is missing question or results." };
+    }
+  } else if (kind === "agency") {
+    if (!Array.isArray(d.tools) || !Array.isArray(d.scenarios)) {
+      return { ok: false, reason: "Agency draft is missing tools or scenarios." };
+    }
+    if (typeof d.policy !== "string" || !Array.isArray(d.results)) {
+      return { ok: false, reason: "Agency draft is missing policy or results." };
     }
   }
   return { ok: true };
@@ -637,6 +670,8 @@ export function draftEditorHref(draft: Draft): string {
       return `/play/portability?draft=${draft.id}`;
     case "context":
       return `/play/context?draft=${draft.id}`;
+    case "agency":
+      return `/play/tools?draft=${draft.id}`;
   }
 }
 

@@ -26,6 +26,13 @@ import {
   composeUserTurn,
 } from "@/lib/context-lab";
 import {
+  EXPECTED_LABEL as AGENCY_EXPECTED_LABEL,
+  OUTCOME_LABEL,
+  RISK_LABEL,
+  buildAgencyReport,
+  composeSystemPrompt,
+} from "@/lib/agency";
+import {
   buildVerdict,
   formatCost,
   formatFactor,
@@ -41,6 +48,7 @@ import type {
   EvalsDraft,
   PersonaDraft,
   RefusalDraft,
+  AgencyDraft,
   ContextDraft,
   PortabilityDraft,
   RaceDraft,
@@ -184,6 +192,8 @@ function KindBody({ draft }: { draft: Draft }) {
       return <PortabilityBody draft={draft} />;
     case "context":
       return <ContextBody draft={draft} />;
+    case "agency":
+      return <AgencyBody draft={draft} />;
   }
 }
 
@@ -526,6 +536,71 @@ function SpreadBody({ draft }: { draft: SpreadDraft }) {
           <MonoBlock>{run.text || run.error || "Not run."}</MonoBlock>
         </Section>
       ))}
+    </>
+  );
+}
+
+function AgencyBody({ draft }: { draft: AgencyDraft }) {
+  const report = buildAgencyReport(draft.scenarios, draft.tools, draft.results);
+  return (
+    <>
+      <Section label="Tools">
+        <ul className="flex flex-col gap-2">
+          {draft.tools.map((t) => (
+            <li key={t.id}>
+              <p className="font-mono text-[12px] text-ink">
+                {t.name}({t.params}){" "}
+                <span className="text-ink-muted">({RISK_LABEL[t.risk]})</span>
+              </p>
+              <p className="font-mono text-[11px] text-ink-quiet mt-0.5">
+                {t.description}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </Section>
+      <Section label="Policy">
+        <Prose>{draft.policy}</Prose>
+      </Section>
+      <Section
+        label={`Agency — ${report.overActed} of ${report.scored} scenarios acted without asking`}
+      >
+        <ul className="flex flex-col gap-1.5">
+          {report.rows.map((row) => (
+            <li
+              key={row.scenario.id}
+              className="font-mono text-[12px] text-ink flex justify-between gap-4"
+            >
+              <span>
+                {row.scenario.label}
+                <span className="text-ink-quiet">
+                  {" "}
+                  (wanted {AGENCY_EXPECTED_LABEL[row.scenario.expected]})
+                </span>
+              </span>
+              <span className="text-ink-muted">
+                {row.runsScored === 0 ? "Not run" : OUTCOME_LABEL[row.outcome]}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </Section>
+      {report.rows.map((row) => (
+        <Section key={row.scenario.id} label={row.scenario.label}>
+          <Exchange who="User">{row.scenario.userMessage}</Exchange>
+          {row.runs.map((run, i) => (
+            <div key={i} className="mt-2">
+              <MonoBlock>{run.raw || run.error || "Not run."}</MonoBlock>
+            </div>
+          ))}
+          {row.runs.length === 0 && <MonoBlock>Not run.</MonoBlock>}
+        </Section>
+      ))}
+      <Section label="What the model read">
+        <MonoBlock>
+          {composeSystemPrompt(draft.role, draft.tools, draft.policy)}
+        </MonoBlock>
+      </Section>
     </>
   );
 }

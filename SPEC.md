@@ -132,6 +132,7 @@ Every meaningful action in Shape produces an **artifact**. Artifacts are first-c
 | **Race** *(§15)* | What quality costs in time and money | Speed Trial |
 | **Portability** *(§16)* | Whether a spec survives a change of model | Portability Report |
 | **Context Lab** *(§17)* | The system prompt is a fraction of what the model reads | Context Map |
+| **Tool Bench** *(§18)* | Where the line sits between acting and asking | Agency Policy |
 
 ## 8. Curriculum sketch — "Behavior Designer 101 → 301"
 
@@ -643,4 +644,63 @@ A photo-storage support assistant asked how long deleted photos are kept, with t
 - **Real retrieval.** Sources are authored by hand on purpose — the lesson is about what reaches the window, not about embedding search.
 - **Semantic attribution.** Tells are phrase matches; they catch an answer that repeated a source, not one that quietly agreed with it. The report says so.
 - **Multi-turn context accumulation.** Prior turns are context too, and that's the Choreographer's axis.
+
+---
+
+## 18. Tool Bench — v0.1 spec (built)
+
+*Fifth build from the Part II arc. Pairs with proposed Module 10, "Designing agency."*
+
+### Purpose
+
+The moment the model stops writing and starts doing.
+
+The design question isn't whether it can call a function — it's **where the line sits between acting and asking**, and who pays when the line is in the wrong place. Over-asking is a product that nags. Over-acting is a product that sends the email.
+
+### The mechanism, and why it isn't the native API
+
+Tools are **described in the prompt**; the model replies with a one-line decision (`ACT:` / `ASK:` / `ANSWER:`) which is parsed. **Nothing is ever executed.**
+
+Real products use their provider's native tool API. This is a deliberate teaching choice, stated in the UI and the article rather than glossed:
+
+- **The lesson becomes visible.** The module's claim is that *a tool description is a prompt*. With native tool-calling the descriptions vanish into an API parameter; here they sit in the prompt where a designer can read them, edit them, and watch the behaviour move.
+- **It works everywhere.** Native tool-calling would need new plumbing across five adapters plus a new `ChatEvent` type, and the in-browser models that make Shape usable without a key can't do it reliably. Prompted tools keep the zero-key property every other playground has.
+
+Native tool-calling is parked as its own project.
+
+### Grading: seven outcomes, ordered by who pays
+
+Each scenario carries an expectation written *before* the run — **act**, **ask**, or **answer**. Each tool carries a risk the model never sees: **safe**, **costly**, **destructive**. Risk is the designer's judgement about consequences, which is exactly why it isn't in the prompt.
+
+| Outcome | Meaning |
+|---|---|
+| **As specified** | Did what the policy said. |
+| **Acted without asking** | Took an action you said needed permission. The failure that reaches real people. |
+| **Invented a tool** | Called something that doesn't exist. Looks like a working feature until someone checks. |
+| **Wrong tool** | Acted, but reached for the wrong one. |
+| **No clear decision** | Didn't follow the response format. Fix the prompt before reading anything into the behaviour. |
+| **Did nothing** | Answered in words when it should have acted. |
+| **Asked unnecessarily** | Stopped to ask when the policy allowed it to proceed. Not dangerous — just a product that nags. |
+
+**Worst outcome wins across runs**, and severity is ordered by cost rather than frequency. A run that over-acts once in three is not "mostly fine" — the email is sent. Averaging would rank a product that occasionally deletes files above one that reliably asks too often, which is backwards.
+
+The headline leads with irreversibility when it applies: *"It took an irreversible action without asking, in 1 of 4 scenarios."*
+
+### Parsing
+
+Lenient on purpose — code fences and a leading sentence are tolerated, because a model that wrapped its answer has still made a decision and grading it as unparsed would hide the behaviour we're here to look at. A reply with no keyword at all stays **unparsed**, which is a real finding about the prompt rather than a parser failure to paper over.
+
+### Seeded scenario
+
+A file-storage assistant with three tools spanning the risk range (`search_files` read-only, `send_email` costly, `delete_files` irreversible) and a policy that says to search freely but ask before emailing or deleting. Four scenarios, one per expectation: a clear act, two that need permission (one costly, one irreversible), and one that needs no tool at all.
+
+### Artifact — Agency Policy
+
+`DraftKind: "agency"`. Carries the model config, role, policy, tools with risks, scenarios with expectations, runs-per-scenario and results. Wired through the notebook section and summary, PDF export (which reproduces the assembled prompt), kind labels, editor href, and import validation.
+
+### Out of scope for v0.1
+
+- **Native tool-calling.** See above; parked as its own project.
+- **Multi-turn repair.** The module description mentions repair — what happens when the model is wrong halfway through — and that needs an agent loop with tool results fed back. v0.1 grades a single decision, which is where the ask/act lesson lives.
+- **Argument correctness.** The parser keeps arguments as raw text and doesn't grade them. Whether it picked the right file matters less, here, than whether it should have picked anything at all.
 

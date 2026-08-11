@@ -144,6 +144,20 @@ export const MODULES: CurriculumModule[] = [
     status: "ready",
     readMinutes: 6,
   },
+  {
+    num: "09",
+    slug: "context-is-the-interface",
+    title: "Context is the",
+    italic: "interface",
+    kicker: "Concept",
+    blurb:
+      "Your system prompt is a fraction of what the model reads. The rest arrives at runtime, from systems nobody designed.",
+    playground: { label: "Context Lab", href: "/play/context" },
+    artifact: "Context Map",
+    href: "/learn/context-is-the-interface",
+    status: "ready",
+    readMinutes: 7,
+  },
 ];
 
 export function getModule(slug: string): CurriculumModule | undefined {
