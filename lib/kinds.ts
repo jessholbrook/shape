@@ -14,6 +14,7 @@ export const ARTIFACT_KIND_LABEL: Record<DraftKind, string> = {
   choreographer: "Conversation",
   spread: "Stability Report",
   race: "Speed Trial",
+  portability: "Portability Report",
 };
 
 /**
@@ -29,4 +30,5 @@ export const DRAFT_KIND_SHORT_LABEL: Record<DraftKind, string> = {
   choreographer: "Flow",
   spread: "Spread",
   race: "Race",
+  portability: "Portability",
 };

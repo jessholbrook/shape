@@ -6,6 +6,7 @@ import type { Criterion, EvalCase, CaseResult } from "./evals";
 import type { ChoreographedTurn } from "./choreographer";
 import type { Assertion, SpreadRun } from "./spread";
 import type { LaneId, RaceResult } from "./race";
+import type { LaneResult, ModelRef } from "./portability";
 
 const DRAFTS_KEY = "shape:drafts:log";
 const MAX_DRAFTS = 100;
@@ -18,7 +19,8 @@ export type DraftKind =
   | "evals"
   | "choreographer"
   | "spread"
-  | "race";
+  | "race"
+  | "portability";
 
 export type DiffDraftConfig = {
   provider: ProviderId;
@@ -239,6 +241,25 @@ export type RaceDraft = {
   updatedAt: number;
 };
 
+export type PortabilityDraft = {
+  id: string;
+  kind: "portability";
+  title: string;
+  /** The roster the spec was tested against. */
+  refs: ModelRef[];
+  /** One spec shared by every model — that's the point of the exercise. */
+  system: string;
+  userMessage: string;
+  temperature: number;
+  assertions: Assertion[];
+  runsPerModel: number;
+  lanes: LaneResult[];
+  /** The user's answer to the playground's reflection question, if they jotted one. */
+  reflection?: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
 export type Draft =
   | DiffDraft
   | ToneDraft
@@ -247,7 +268,8 @@ export type Draft =
   | EvalsDraft
   | ChoreographerDraft
   | SpreadDraft
-  | RaceDraft;
+  | RaceDraft
+  | PortabilityDraft;
 
 const KNOWN_KINDS: DraftKind[] = [
   "diff",
@@ -258,6 +280,7 @@ const KNOWN_KINDS: DraftKind[] = [
   "choreographer",
   "spread",
   "race",
+  "portability",
 ];
 
 function read(): Draft[] {
@@ -312,7 +335,10 @@ export type DraftInput =
       id?: string;
     })
   | (Omit<SpreadDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
-  | (Omit<RaceDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
+  | (Omit<RaceDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
+  | (Omit<PortabilityDraft, "id" | "createdAt" | "updatedAt"> & {
+      id?: string;
+    });
 
 /**
  * Save a draft. If `data.id` matches an existing draft, it's updated in place;
@@ -418,7 +444,8 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     kind !== "evals" &&
     kind !== "choreographer" &&
     kind !== "spread" &&
-    kind !== "race"
+    kind !== "race" &&
+    kind !== "portability"
   ) {
     return { ok: false, reason: `Unknown draft kind: ${String(kind)}` };
   }
@@ -478,6 +505,19 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     }
     if (!isObject(d.laneA) || !isObject(d.laneB)) {
       return { ok: false, reason: "Race draft is missing lane results." };
+    }
+  } else if (kind === "portability") {
+    if (!Array.isArray(d.refs) || !Array.isArray(d.lanes)) {
+      return {
+        ok: false,
+        reason: "Portability draft is missing refs or lanes.",
+      };
+    }
+    if (!Array.isArray(d.assertions) || typeof d.system !== "string") {
+      return {
+        ok: false,
+        reason: "Portability draft is missing assertions or system prompt.",
+      };
     }
   }
   return { ok: true };
@@ -556,6 +596,8 @@ export function draftEditorHref(draft: Draft): string {
       return `/play/spread?draft=${draft.id}`;
     case "race":
       return `/play/race?draft=${draft.id}`;
+    case "portability":
+      return `/play/portability?draft=${draft.id}`;
   }
 }
 
