@@ -132,7 +132,7 @@ deck. Temperature stops being a mystery slider and becomes a spread control.
 - **Artifact: Stability Report** — which lines of your Behavior Spec survive
   resampling.
 
-### Module 09 — Context is the interface
+### Module 09 — Context is the interface — **PLAYGROUND BUILT**
 
 *You already know the system prompt is a design surface. It's maybe 10% of
 what the model reads.*
@@ -145,8 +145,9 @@ repeats the stale doc in a perfect brand voice — a design failure wearing a
 successful output's clothes. Prompt injection belongs here too: untrusted text
 is just context you didn't author.
 
-- **Playground: Context Lab** — paste sources, toggle them on and off, watch
-  grounding, conflict, and staleness behavior change.
+- **Playground: Context Lab** — shipped, see `SPEC.md` §17. Sources with trust
+  tags and "tells", context sets, and a grounded / stale / injected /
+  unsourced verdict per set. **Article still to write.**
 - **Artifact: Context Map** — what's in the window, who authored it, how much
   to trust it.
 

@@ -128,6 +128,16 @@ const PLAYGROUNDS: Playground[] = [
       label: "Distributions, not outputs",
     },
   },
+  {
+    num: "10",
+    href: "/play/context",
+    title: "Context",
+    italic: "lab",
+    blurb:
+      "One question, several context sets. Your system prompt is a fraction of what the model reads — see the rest, and where the answer came from.",
+    artifact: "Context Map",
+    status: "ready",
+  },
 ];
 
 export default function PlayPage() {

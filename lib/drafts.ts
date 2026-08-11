@@ -7,6 +7,11 @@ import type { ChoreographedTurn } from "./choreographer";
 import type { Assertion, SpreadRun } from "./spread";
 import type { LaneId, RaceResult } from "./race";
 import type { LaneResult, ModelRef } from "./portability";
+import type {
+  ContextSet,
+  SetResult,
+  Source,
+} from "./context-lab";
 
 const DRAFTS_KEY = "shape:drafts:log";
 const MAX_DRAFTS = 100;
@@ -20,7 +25,8 @@ export type DraftKind =
   | "choreographer"
   | "spread"
   | "race"
-  | "portability";
+  | "portability"
+  | "context";
 
 export type DiffDraftConfig = {
   provider: ProviderId;
@@ -260,6 +266,26 @@ export type PortabilityDraft = {
   updatedAt: number;
 };
 
+export type ContextDraft = {
+  id: string;
+  kind: "context";
+  title: string;
+  provider: ProviderId;
+  model: string;
+  temperature: number;
+  system: string;
+  /** One question, asked against every set. */
+  question: string;
+  sources: Source[];
+  sets: ContextSet[];
+  runsPerSet: number;
+  results: SetResult[];
+  /** The user's answer to the playground's reflection question, if they jotted one. */
+  reflection?: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
 export type Draft =
   | DiffDraft
   | ToneDraft
@@ -269,7 +295,8 @@ export type Draft =
   | ChoreographerDraft
   | SpreadDraft
   | RaceDraft
-  | PortabilityDraft;
+  | PortabilityDraft
+  | ContextDraft;
 
 const KNOWN_KINDS: DraftKind[] = [
   "diff",
@@ -281,6 +308,7 @@ const KNOWN_KINDS: DraftKind[] = [
   "spread",
   "race",
   "portability",
+  "context",
 ];
 
 function read(): Draft[] {
@@ -338,7 +366,8 @@ export type DraftInput =
   | (Omit<RaceDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
   | (Omit<PortabilityDraft, "id" | "createdAt" | "updatedAt"> & {
       id?: string;
-    });
+    })
+  | (Omit<ContextDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
 
 /**
  * Save a draft. If `data.id` matches an existing draft, it's updated in place;
@@ -445,7 +474,8 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     kind !== "choreographer" &&
     kind !== "spread" &&
     kind !== "race" &&
-    kind !== "portability"
+    kind !== "portability" &&
+    kind !== "context"
   ) {
     return { ok: false, reason: `Unknown draft kind: ${String(kind)}` };
   }
@@ -518,6 +548,13 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
         ok: false,
         reason: "Portability draft is missing assertions or system prompt.",
       };
+    }
+  } else if (kind === "context") {
+    if (!Array.isArray(d.sources) || !Array.isArray(d.sets)) {
+      return { ok: false, reason: "Context draft is missing sources or sets." };
+    }
+    if (typeof d.question !== "string" || !Array.isArray(d.results)) {
+      return { ok: false, reason: "Context draft is missing question or results." };
     }
   }
   return { ok: true };
@@ -598,6 +635,8 @@ export function draftEditorHref(draft: Draft): string {
       return `/play/race?draft=${draft.id}`;
     case "portability":
       return `/play/portability?draft=${draft.id}`;
+    case "context":
+      return `/play/context?draft=${draft.id}`;
   }
 }
 
