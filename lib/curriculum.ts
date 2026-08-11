@@ -158,6 +158,20 @@ export const MODULES: CurriculumModule[] = [
     status: "ready",
     readMinutes: 7,
   },
+  {
+    num: "10",
+    slug: "designing-agency",
+    title: "Designing",
+    italic: "agency",
+    kicker: "Concept",
+    blurb:
+      "Now it does things, not just says them. Where the line sits between acting and asking — and why a policy sentence isn't enough.",
+    playground: { label: "Tool Bench", href: "/play/tools" },
+    artifact: "Agency Policy",
+    href: "/learn/designing-agency",
+    status: "ready",
+    readMinutes: 7,
+  },
 ];
 
 export function getModule(slug: string): CurriculumModule | undefined {

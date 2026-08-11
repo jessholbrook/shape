@@ -56,12 +56,14 @@ export default function VoiceAndTonePage() {
             in Directness or Energy, not Warmth.
           </LI>
           <LI>
-            <strong>Stacking too many.</strong> Three dials off neutral is
+            <strong>Stacking too many.</strong>{" "}
+            Three dials off neutral is
             already a strong tone. All five and the output starts to read
             as a character, not a voice.
           </LI>
           <LI>
-            <strong>Forgetting the brief.</strong> Tone shapes a task;
+            <strong>Forgetting the brief.</strong>{" "}
+            Tone shapes a task;
             it doesn&apos;t replace one. If the dials are doing too much
             work, you&apos;re probably under-specifying the role.
           </LI>
@@ -159,7 +161,8 @@ Directness: Direct
             voice underneath your tone choices.
           </LI>
           <LI>
-            Move <em>one dial</em> two stops at a time. Smaller changes
+            Move <em>one dial</em>{" "}
+            two stops at a time. Smaller changes
             don&apos;t move the output noticeably enough to learn from.
           </LI>
           <LI>

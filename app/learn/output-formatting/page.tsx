@@ -58,13 +58,15 @@ export default function OutputFormattingPage() {
             sentence in the system prompt.
           </LI>
           <LI>
-            <strong>Specify length, not just shape.</strong> &ldquo;Short
+            <strong>Specify length, not just shape.</strong>{" "}
+            &ldquo;Short
             paragraph&rdquo; is more useful than &ldquo;short.&rdquo;
             &ldquo;Three sentences&rdquo; is more useful than &ldquo;short
             paragraph.&rdquo;
           </LI>
           <LI>
-            <strong>Match the format to the channel.</strong> A toast
+            <strong>Match the format to the channel.</strong>{" "}
+            A toast
             notification, a long-form email, and a chat reply have
             different shapes. The system prompt should know which one
             it&apos;s producing.
@@ -166,12 +168,14 @@ export default function OutputFormattingPage() {
 
         <H2>Try it in your own work</H2>
         <P>
-          The Tone Dial has a <strong>Structure</strong> dial for exactly
+          The Tone Dial has a <strong>Structure</strong>{" "}
+          dial for exactly
           this: sweep it from flowing prose to headed sections while the
           other dials stay put, and watch how much of what you were
           calling &ldquo;voice&rdquo; was actually formatting. For a
           side-by-side version, Diff Mode&apos;s{" "}
-          <em>Prose vs Bullets</em> preset runs the same message through
+          <em>Prose vs Bullets</em>{" "}
+          preset runs the same message through
           both shapes at once.
         </P>
 
@@ -183,7 +187,8 @@ export default function OutputFormattingPage() {
         <P>
           Then carry that habit into the rest of your work. The next time
           you&apos;re tuning a system prompt, the question to ask
-          isn&apos;t just <em>what</em> the model should say — it&apos;s
+          isn&apos;t just <em>what</em>{" "}
+          the model should say — it&apos;s
           what shape that answer should take.
         </P>
 

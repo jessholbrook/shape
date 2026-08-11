@@ -58,12 +58,14 @@ export default function EvaluationPage() {
             quality you mean.
           </LI>
           <LI>
-            <strong>Overlap.</strong> If two criteria almost always
+            <strong>Overlap.</strong>{" "}
+            If two criteria almost always
             move together, you&apos;ve written one criterion twice.
             Merge them.
           </LI>
           <LI>
-            <strong>Missing the boring middle.</strong> Most outputs
+            <strong>Missing the boring middle.</strong>{" "}
+            Most outputs
             aren&apos;t terrible or excellent — they&apos;re 3s. A 1-5
             scale captures the middle. Pass/fail doesn&apos;t.
           </LI>

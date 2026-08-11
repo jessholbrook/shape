@@ -58,7 +58,8 @@ export default function MultiTurnFlowsPage() {
             they happen.
           </LI>
           <LI>
-            <strong>Script the failure cases.</strong> The interesting
+            <strong>Script the failure cases.</strong>{" "}
+            The interesting
             turns aren&apos;t the easy ones. Write the follow-up that
             tests memory, the push-back that tests resolve, the
             contradiction that tests honesty.
@@ -96,17 +97,20 @@ export default function MultiTurnFlowsPage() {
         </P>
         <UL>
           <LI>
-            <strong>Tone drift.</strong> The model is warm and direct on
+            <strong>Tone drift.</strong>{" "}
+            The model is warm and direct on
             turn 1, then hedges on turn 3 because the context kept
             growing and softness leaked in.
           </LI>
           <LI>
-            <strong>Forgetting its own answer.</strong> Turn 4 contradicts
+            <strong>Forgetting its own answer.</strong>{" "}
+            Turn 4 contradicts
             turn 1, often without acknowledging the shift. The user
             notices; the model doesn&apos;t.
           </LI>
           <LI>
-            <strong>Backpedaling on push-back.</strong> The user pushes
+            <strong>Backpedaling on push-back.</strong>{" "}
+            The user pushes
             (&ldquo;wait, are you sure?&rdquo;) and the model collapses.
             Sometimes that&apos;s right. Most times it isn&apos;t.
           </LI>

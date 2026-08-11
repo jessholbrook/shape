@@ -45,23 +45,27 @@ export default function RefusalBoundariesPage() {
         </P>
         <UL>
           <LI>
-            <strong>Harm to a third party.</strong> Privacy violations,
+            <strong>Harm to a third party.</strong>{" "}
+            Privacy violations,
             deception, manipulation. Refuse cleanly; explain briefly;
             offer a legitimate redirect.
           </LI>
           <LI>
-            <strong>Vulnerability signals.</strong> &ldquo;I&apos;m
+            <strong>Vulnerability signals.</strong>{" "}
+            &ldquo;I&apos;m
             feeling really down.&rdquo; This isn&apos;t a refusal case at
             all — the wrong move is to back away. Lead with warmth, then
             redirect.
           </LI>
           <LI>
-            <strong>Scope and expertise.</strong> Medical, legal,
+            <strong>Scope and expertise.</strong>{" "}
+            Medical, legal,
             financial questions. Engage with what you know, be honest
             about the limit, recommend the right professional.
           </LI>
           <LI>
-            <strong>Contested values.</strong> Political opinions,
+            <strong>Contested values.</strong>{" "}
+            Political opinions,
             divisive social questions. Present multiple credible
             perspectives fairly; avoid a flat opinion.
           </LI>
@@ -103,7 +107,8 @@ export default function RefusalBoundariesPage() {
           asked for and a problem they didn&apos;t.
         </P>
         <P>
-          Most refusal failures aren&apos;t about <em>whether</em> the
+          Most refusal failures aren&apos;t about <em>whether</em>{" "}
+          the
           model said no. They&apos;re about whether the no came with
           warmth, a reason, and a real alternative.
         </P>

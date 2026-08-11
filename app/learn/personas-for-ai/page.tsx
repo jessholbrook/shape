@@ -53,19 +53,23 @@ export default function PersonasForAIPage() {
         </P>
         <UL>
           <LI>
-            <strong>A specific backstory.</strong> Not &ldquo;has lots of
+            <strong>A specific backstory.</strong>{" "}
+            Not &ldquo;has lots of
             experience.&rdquo; Ten years doing ethnographic research,
             then product. The specifics give the model something to
             reach for.
           </LI>
           <LI>
-            <strong>At least one belief.</strong> Something they&apos;d
+            <strong>At least one belief.</strong>{" "}
+            Something they&apos;d
             push back on. Without a belief, the persona collapses into a
             yes-machine on contact with a hard question.
           </LI>
           <LI>
-            <strong>A blind spot named out loud.</strong> What does this
-            persona <em>not</em> do? Saying so prevents the model from
+            <strong>A blind spot named out loud.</strong>{" "}
+            What does this
+            persona <em>not</em>{" "}
+            do? Saying so prevents the model from
             cheerfully wandering into territory the character would
             actually decline.
           </LI>
@@ -149,7 +153,8 @@ export default function PersonasForAIPage() {
           example responses, you&apos;re most of the way there — this
           isn&apos;t a different universe from what you&apos;re doing. The
           difference is what happens on the case your examples didn&apos;t
-          cover. Examples <em>enumerate</em> behavior you already thought
+          cover. Examples <em>enumerate</em>{" "}
+          behavior you already thought
           of. A backstory and a belief give the model something to{" "}
           <em>reason from</em>, so the hundredth situation — the one you
           never wrote a sample for — still comes out in character.
@@ -158,7 +163,8 @@ export default function PersonasForAIPage() {
         <P>
           It shows up most on the hard turns. A few-shot example can teach
           the model to sound warm. It rarely teaches the model to{" "}
-          <em>disagree</em> — to push back on a leading question, decline
+          <em>disagree</em>{" "}
+          — to push back on a leading question, decline
           something that cuts against what the character believes, or hold
           a position under pressure. That behavior falls out of a belief
           (&ldquo;most interviews fail in the first ninety seconds&rdquo;)
@@ -175,7 +181,8 @@ export default function PersonasForAIPage() {
           by telling the model to ask for clarification instead of
           assuming. That&apos;s a genuinely good instinct — but it solves a
           different problem than a named blind spot does.{" "}
-          <em>Ask when uncertain</em> covers cases where the model{" "}
+          <em>Ask when uncertain</em>{" "}
+          covers cases where the model{" "}
           <em>lacks information</em>. A constraint covers cases where the
           model <em>knows exactly what to do and shouldn&apos;t</em>.
         </P>
@@ -201,7 +208,8 @@ export default function PersonasForAIPage() {
         </P>
         <UL>
           <LI>
-            <strong>End-user confusion.</strong> A warm, opinionated
+            <strong>End-user confusion.</strong>{" "}
+            A warm, opinionated
             character is convincing. If you ship one without telling
             users it&apos;s a model, they will assume things that
             aren&apos;t true — that it remembers them, that it cares,
@@ -209,14 +217,16 @@ export default function PersonasForAIPage() {
             footnote; it&apos;s part of the persona&apos;s design.
           </LI>
           <LI>
-            <strong>Designer projection.</strong> You will start to
+            <strong>Designer projection.</strong>{" "}
+            You will start to
             believe in the character. It happens almost involuntarily,
             and it makes you over-trust outputs that sound like the
             persona and under-question the ones that don&apos;t. Treat
             the persona card as the artifact, not the entity.
           </LI>
           <LI>
-            <strong>Where the lever ends.</strong> Personas can shape
+            <strong>Where the lever ends.</strong>{" "}
+            Personas can shape
             tone, scope, and refusals. They can&apos;t make the model
             actually know your user, remember earlier sessions, or be
             held responsible for advice. When the design implies any of
@@ -261,7 +271,8 @@ Your voice is ____, ____, and ____.`}
         <UL>
           <LI>
             Start with the seeded Iris persona. Read what comes out of
-            the box, then change <em>one field</em> — beliefs, say — and
+            the box, then change <em>one field</em>{" "}
+            — beliefs, say — and
             re-ask the same question. Notice what shifts.
           </LI>
           <LI>

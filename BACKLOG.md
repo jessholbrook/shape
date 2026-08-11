@@ -152,7 +152,7 @@ is just context you didn't author.
 - **Artifact: Context Map** — what's in the window, who authored it, how much
   to trust it.
 
-### Module 10 — Designing agency — **PLAYGROUND BUILT**
+### Module 10 — Designing agency — **BUILT**
 
 *You already know how to shape what it says. Now it does things.*
 
@@ -164,7 +164,8 @@ capabilities.
 
 - **Playground: Tool Bench** — shipped, see `SPEC.md` §18. Prompted tools with
   risk levels, per-scenario expectations, and seven outcomes ordered by who
-  pays. **Article still to write.**
+  pays.
+- **Article** — shipped at `/learn/designing-agency`.
 - **Artifact: Agency Policy** — the ask/act boundary, written down.
 
 ### Module 11 — Judging at scale
