@@ -86,8 +86,8 @@ export const REFLECTION: {
     question:
       "Which set produced the most convincing wrong answer — and what would have caught it in production?",
     concept: {
-      href: "/learn/distributions-not-outputs",
-      label: "Distributions, not outputs",
+      href: "/learn/context-is-the-interface",
+      label: "Context is the interface",
     },
   },
 };

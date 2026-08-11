@@ -132,7 +132,7 @@ deck. Temperature stops being a mystery slider and becomes a spread control.
 - **Artifact: Stability Report** — which lines of your Behavior Spec survive
   resampling.
 
-### Module 09 — Context is the interface — **PLAYGROUND BUILT**
+### Module 09 — Context is the interface — **BUILT**
 
 *You already know the system prompt is a design surface. It's maybe 10% of
 what the model reads.*
@@ -147,7 +147,8 @@ is just context you didn't author.
 
 - **Playground: Context Lab** — shipped, see `SPEC.md` §17. Sources with trust
   tags and "tells", context sets, and a grounded / stale / injected /
-  unsourced verdict per set. **Article still to write.**
+  unsourced verdict per set.
+- **Article** — shipped at `/learn/context-is-the-interface`.
 - **Artifact: Context Map** — what's in the window, who authored it, how much
   to trust it.
 

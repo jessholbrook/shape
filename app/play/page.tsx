@@ -137,6 +137,10 @@ const PLAYGROUNDS: Playground[] = [
       "One question, several context sets. Your system prompt is a fraction of what the model reads — see the rest, and where the answer came from.",
     artifact: "Context Map",
     status: "ready",
+    concept: {
+      href: "/learn/context-is-the-interface",
+      label: "Context is the interface",
+    },
   },
 ];
 
