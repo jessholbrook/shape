@@ -17,6 +17,7 @@ export const ARTIFACT_KIND_LABEL: Record<DraftKind, string> = {
   portability: "Portability Report",
   context: "Context Map",
   agency: "Agency Policy",
+  judge: "Calibrated Judge",
 };
 
 /**
@@ -35,4 +36,5 @@ export const DRAFT_KIND_SHORT_LABEL: Record<DraftKind, string> = {
   portability: "Portability",
   context: "Context",
   agency: "Agency",
+  judge: "Judge",
 };

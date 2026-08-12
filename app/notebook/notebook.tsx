@@ -22,6 +22,7 @@ import { buildVerdict, formatFactor, formatMs, totalMs } from "@/lib/race";
 import { buildPortabilityReport, modelLabel } from "@/lib/portability";
 import { buildContextReport } from "@/lib/context-lab";
 import { buildAgencyReport } from "@/lib/agency";
+import { buildJudgeReport } from "@/lib/judge";
 import { ImportPanel } from "@/components/notebook/import-panel";
 import { KindPill } from "@/components/kind-pill";
 
@@ -109,6 +110,7 @@ export function Notebook() {
   const portabilityDrafts = drafts.filter((d) => d.kind === "portability");
   const contextDrafts = drafts.filter((d) => d.kind === "context");
   const agencyDrafts = drafts.filter((d) => d.kind === "agency");
+  const judgeDrafts = drafts.filter((d) => d.kind === "judge");
   const noDrafts = drafts.length === 0;
 
   return (
@@ -287,6 +289,20 @@ export function Notebook() {
           {agencyDrafts.length > 0 && (
             <Section title="Agency policies" count={agencyDrafts.length}>
               {agencyDrafts.map((d) => (
+                <DraftRow
+                  key={d.id}
+                  draft={d}
+                  onDuplicate={() => handleDuplicate(d)}
+                  onExport={() => handleExport(d)}
+                  onDelete={() => handleDelete(d)}
+                />
+              ))}
+            </Section>
+          )}
+
+          {judgeDrafts.length > 0 && (
+            <Section title="Calibrated judges" count={judgeDrafts.length}>
+              {judgeDrafts.map((d) => (
                 <DraftRow
                   key={d.id}
                   draft={d}
@@ -539,6 +555,30 @@ function DraftSummary({ draft }: { draft: Draft }) {
         <span className="text-ink-muted">
           {completed}/{draft.turns.length} turns run
         </span>
+      </p>
+    );
+  }
+
+  if (draft.kind === "judge") {
+    const modelName =
+      PROVIDERS[draft.provider].models.find((m) => m.id === draft.model)
+        ?.name ?? draft.model;
+    const report = buildJudgeReport(draft.pairs, draft.results);
+    return (
+      <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
+        {modelName} · {draft.pairs.length} pairs
+        {report.scored > 0 ? (
+          <>
+            {" · "}
+            <span className={report.flipped > 0 ? "text-ink" : "text-ink-muted"}>
+              {report.flipped > 0
+                ? `flipped on ${report.flipped}/${report.scored}`
+                : `held on all ${report.scored}`}
+            </span>
+          </>
+        ) : (
+          <span className="text-ink-quiet"> · not run</span>
+        )}
       </p>
     );
   }

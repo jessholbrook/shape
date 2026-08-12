@@ -153,6 +153,16 @@ const PLAYGROUNDS: Playground[] = [
     status: "ready",
     concept: { href: "/learn/designing-agency", label: "Designing agency" },
   },
+  {
+    num: "12",
+    href: "/play/judge",
+    title: "Judge",
+    italic: "lab",
+    blurb:
+      "Hand the scoring to a model, then check it. Every comparison runs twice with the answers swapped — a judge reading position gives itself away.",
+    artifact: "Calibrated Judge",
+    status: "ready",
+  },
 ];
 
 export default function PlayPage() {
