@@ -182,11 +182,6 @@ and the one that transfers hardest back to non-AI work.
   playground rather than an Eval Lab mode: Eval Lab is a Part I module and
   shouldn't carry a calibration experiment for beginners.
 - **Article** — shipped at `/learn/judging-at-scale`.
-
-**The Part II arc is complete.** Six playgrounds and four articles shipped;
-`SPEC.md` §14–§19 documents each one. What remains parked from the arc is
-listed in its own sections below (native tool-calling, length-bias padding,
-self-preference testing).
 - **Artifact: Calibrated Judge** — a judge prompt *plus* its known biases.
 
 ### Three demos (light, shareable, not full modules)
@@ -197,13 +192,9 @@ self-preference testing).
 - **Portability** — **BUILT**, see `SPEC.md` §16. One spec across 2-4 models,
   with each clause classified portable / model-specific / unstable / not
   landing. No paired article yet — it shares Module 08 with Spread.
-- **Reverse Tone Dial** — edit the output you want, model infers the dial
-  positions. *Specification by demonstration*, and the natural Part II
-  inversion of the whole curriculum: Part I writes a spec and reads an output;
-  Part II writes an output and infers the spec. **Note the recurring theme** —
-  this is the same move as the parked "Eval Lab — Design a rubric" inversion
-  above. Inversion has now surfaced independently three times in feedback,
-  which makes it the strongest single signal we have.
+- **Reverse Tone Dial** — **NOT BUILT.** Promoted to its own section below,
+  since it's the only piece of the arc that came from user feedback rather
+  than from our own sketch.
 
 ### Explicitly out of scope
 
@@ -211,7 +202,11 @@ Fine-tuning, RAG-as-a-technology, context-window trivia, agent frameworks. All
 of it pulls the site toward "AI engineering tutorial" and away from what makes
 it good. The designer's frame stays intact through every module above.
 
-### Build cost, roughly
+### Build cost, as estimated up front *(historical)*
+
+*Kept for the record — all six shipped. The estimate held except for Tool
+Bench, which avoided the adapter work entirely by describing tools in the
+prompt instead. See `SPEC.md` §18.*
 
 Race, Portability, and Spread are close to free — same provider layer, just
 loop or fan out the existing call. Context Lab is a text-source panel plus
@@ -219,10 +214,18 @@ prompt assembly. Tool Bench is the only one needing real new plumbing
 (tool-calling across the adapters, which differs meaningfully between
 Anthropic, OpenAI, and Gemini).
 
-**Decision:** Park as a set, don't commit to the whole arc yet. If we want a
-cheap proof that Part II has legs, **Race** or **Spread** ships fastest and
-demos hardest — build one, watch whether Part I readers actually come back for
-it, and let that decide whether the four modules get written.
+**Original decision *(historical)*:** park as a set, prove it with Race or
+Spread first.
+
+**What actually happened:** the whole arc shipped between 2026-08-10 and
+2026-08-12 — six playgrounds and four articles, `SPEC.md` §14–§19. Spread went
+first as the cheap proof, and the rest followed.
+
+**Still outstanding for the arc:** none of the six playgrounds has been run
+against a live model. Everything downstream of the call is covered by unit
+tests and seeded-state UI checks; the call itself isn't. Each seed is tuned to
+misbehave in a specific way, so a uniformly clean first run means the seed
+needs sharpening rather than that all is well.
 
 
 ## Native tool-calling across providers
@@ -249,3 +252,88 @@ bundling with the other provider work parked above.
 
 **Would also unlock:** multi-turn repair, which Tool Bench v0.1 leaves out —
 what the model does when an action fails or returns something unexpected.
+
+## Reverse Tone Dial — edit the output, infer the dials
+
+**From:** beta feedback (Linear #118), `/play/tone`, 2026-07 — reiterated in the
+Part II design conversation, 2026-08-10. **Still not built.**
+
+**The idea:** run the Tone Dial backwards. Instead of moving dials and reading
+the output, the user edits the output into what they actually wanted and the
+model infers the dial positions — and the composed prompt — that would produce
+it.
+
+**Why it keeps coming back:** it's *specification by demonstration*, and it's
+the inversion of the entire curriculum. Part I writes a spec and reads an
+output; this writes an output and infers the spec. It is the same move as the
+parked "Eval Lab — Design a rubric" mode at the top of this file, which is why
+**inversion has now surfaced independently three times in feedback**.
+
+**Why it matters more than the rest of this file:** everything else parked here
+came from us. This came from users, repeatedly. If the next thing built should
+be driven by what beta testers actually asked for rather than by our own arc,
+this is the one.
+
+**Shape if we build it:** a mode toggle on `/play/tone` mirroring the
+Independent/Conversation toggle in Diff Mode. Needs a way to present inferred
+dial positions as a *proposal* the user accepts or adjusts — an inference
+presented as fact would teach exactly the overconfidence Module 08 warns
+about.
+
+## Judge Lab — the other two bias passes
+
+**From:** building Judge Lab (Module 11), 2026-08-12. See `SPEC.md` §19.
+
+Judge Lab ships the **position** check: every pair judged in both orders. Two
+other biases are named in the Module 11 article but not yet testable in the
+playground.
+
+**Length-bias padding.** Rerun a pair with the shorter answer padded with
+filler and see whether the verdict flips. The seeded pairs already lean on
+this — the shorter answer is the better one in all three — but the current
+build catches length bias only indirectly, by whether the judge picks the
+long one. An explicit pass would be a third call per pair.
+
+**Self-preference.** Whether a model rates its own output higher than another
+model's. Needs two models generating and one judging, which the provider layer
+already supports — it's a bigger UI change than a third run, not a bigger
+technical one.
+
+**Decision:** park both. The order swap is the check that separates a verdict
+from a coin flip; the other two refine an instrument that already works.
+Revisit once someone has run the position check on real data and wants more.
+
+## Known bugs — small, live, unowned
+
+**From:** flagged repeatedly while building Part II, never recorded until now.
+
+**Hydration warning on every playground in browsers without WebGPU.** The
+WebLLM support banner renders on the client but not the server, so React logs
+a hydration mismatch and regenerates the tree. Nothing visibly breaks and it
+predates Part II — reproducible on `/play/diff` as easily as on the new
+pages. A real console error on a real machine, though, and the fix is small:
+render the banner only after hydration, the way `MissingKeyBanner` already
+gates on `hydrated`.
+
+**Two lint errors.** `components/local-model-storage.tsx:38` and
+`components/unsaved-toast.tsx:21` both trip
+`react-hooks/set-state-in-effect`. Pre-existing, untouched all through Part
+II, and `npx eslint .` is not clean because of them.
+
+## Maintenance note — the JSX whitespace hazard
+
+**From:** hit four separate times while writing Part II, 2026-08-11/12.
+
+A closing inline tag followed by a space and then text that **wraps to another
+line** silently loses the space: `<strong>Overlap.</strong> If two…` renders as
+`Overlap.If two…`. The source looks correct, so **a grep cannot find this** —
+only the rendered output differs.
+
+It shipped fourteen times into live Part I articles before anyone noticed.
+Every inline-tag boundary in `app/learn/*/page.tsx` is now an explicit
+`{" "}` (see #136), which is the convention to keep.
+
+**If it recurs:** the detector is to fetch each rendered article, extract the
+text, and check that `<last word inside the tag> <first word after it>` appears
+*with* its space. That catches it; reading the JSX does not.
+
