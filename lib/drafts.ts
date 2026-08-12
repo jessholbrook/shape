@@ -13,6 +13,7 @@ import type {
   Source,
 } from "./context-lab";
 import type { Scenario, ScenarioResult, Tool } from "./agency";
+import type { Pair, PairResult } from "./judge";
 
 const DRAFTS_KEY = "shape:drafts:log";
 const MAX_DRAFTS = 100;
@@ -28,7 +29,8 @@ export type DraftKind =
   | "race"
   | "portability"
   | "context"
-  | "agency";
+  | "agency"
+  | "judge";
 
 export type DiffDraftConfig = {
   provider: ProviderId;
@@ -308,6 +310,23 @@ export type AgencyDraft = {
   updatedAt: number;
 };
 
+export type JudgeDraft = {
+  id: string;
+  kind: "judge";
+  title: string;
+  provider: ProviderId;
+  model: string;
+  temperature: number;
+  /** What the judge is told to care about. */
+  criteria: string;
+  pairs: Pair[];
+  results: PairResult[];
+  /** The user's answer to the playground's reflection question, if they jotted one. */
+  reflection?: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
 export type Draft =
   | DiffDraft
   | ToneDraft
@@ -319,7 +338,8 @@ export type Draft =
   | RaceDraft
   | PortabilityDraft
   | ContextDraft
-  | AgencyDraft;
+  | AgencyDraft
+  | JudgeDraft;
 
 const KNOWN_KINDS: DraftKind[] = [
   "diff",
@@ -333,6 +353,7 @@ const KNOWN_KINDS: DraftKind[] = [
   "portability",
   "context",
   "agency",
+  "judge",
 ];
 
 function read(): Draft[] {
@@ -392,7 +413,8 @@ export type DraftInput =
       id?: string;
     })
   | (Omit<ContextDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
-  | (Omit<AgencyDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
+  | (Omit<AgencyDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
+  | (Omit<JudgeDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
 
 /**
  * Save a draft. If `data.id` matches an existing draft, it's updated in place;
@@ -501,7 +523,8 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     kind !== "race" &&
     kind !== "portability" &&
     kind !== "context" &&
-    kind !== "agency"
+    kind !== "agency" &&
+    kind !== "judge"
   ) {
     return { ok: false, reason: `Unknown draft kind: ${String(kind)}` };
   }
@@ -589,6 +612,13 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     if (typeof d.policy !== "string" || !Array.isArray(d.results)) {
       return { ok: false, reason: "Agency draft is missing policy or results." };
     }
+  } else if (kind === "judge") {
+    if (!Array.isArray(d.pairs) || !Array.isArray(d.results)) {
+      return { ok: false, reason: "Judge draft is missing pairs or results." };
+    }
+    if (typeof d.criteria !== "string") {
+      return { ok: false, reason: "Judge draft is missing criteria." };
+    }
   }
   return { ok: true };
 }
@@ -672,6 +702,8 @@ export function draftEditorHref(draft: Draft): string {
       return `/play/context?draft=${draft.id}`;
     case "agency":
       return `/play/tools?draft=${draft.id}`;
+    case "judge":
+      return `/play/judge?draft=${draft.id}`;
   }
 }
 

@@ -33,6 +33,11 @@ import {
   composeSystemPrompt,
 } from "@/lib/agency";
 import {
+  VERDICT_LABEL as JUDGE_VERDICT_LABEL,
+  buildJudgeReport,
+  composeJudgeSystem,
+} from "@/lib/judge";
+import {
   buildVerdict,
   formatCost,
   formatFactor,
@@ -50,6 +55,7 @@ import type {
   RefusalDraft,
   AgencyDraft,
   ContextDraft,
+  JudgeDraft,
   PortabilityDraft,
   RaceDraft,
   SpreadDraft,
@@ -194,6 +200,8 @@ function KindBody({ draft }: { draft: Draft }) {
       return <ContextBody draft={draft} />;
     case "agency":
       return <AgencyBody draft={draft} />;
+    case "judge":
+      return <JudgeBody draft={draft} />;
   }
 }
 
@@ -536,6 +544,70 @@ function SpreadBody({ draft }: { draft: SpreadDraft }) {
           <MonoBlock>{run.text || run.error || "Not run."}</MonoBlock>
         </Section>
       ))}
+    </>
+  );
+}
+
+function JudgeBody({ draft }: { draft: JudgeDraft }) {
+  const report = buildJudgeReport(draft.pairs, draft.results);
+  return (
+    <>
+      <Section label="What the judge was told to care about">
+        <MonoBlock>{draft.criteria}</MonoBlock>
+      </Section>
+      <Section
+        label={`Calibration — flipped on ${report.flipped} of ${report.scored} pairs when swapped`}
+      >
+        <ul className="flex flex-col gap-1.5">
+          {report.rows.map((row) => (
+            <li
+              key={row.pair.id}
+              className="font-mono text-[12px] text-ink flex justify-between gap-4"
+            >
+              <span>
+                {row.pair.label}
+                {row.pair.humanPick && (
+                  <span className="text-ink-quiet">
+                    {" "}
+                    (you: {row.pair.humanPick.toUpperCase()})
+                  </span>
+                )}
+              </span>
+              <span className="text-ink-muted">
+                {JUDGE_VERDICT_LABEL[row.verdict]}
+              </span>
+            </li>
+          ))}
+        </ul>
+        {report.comparable > 0 && (
+          <p className="font-sans text-[13px] text-ink mt-3">
+            Where it held steady, it agreed with you on {report.agrees} of{" "}
+            {report.comparable}.
+          </p>
+        )}
+      </Section>
+      {report.rows.map((row) => (
+        <Section key={row.pair.id} label={row.pair.label}>
+          <Exchange who="Request">{row.pair.prompt}</Exchange>
+          <div className="mt-2">
+            <Exchange who="Answer A">{row.pair.a}</Exchange>
+          </div>
+          <div className="mt-2">
+            <Exchange who="Answer B">{row.pair.b}</Exchange>
+          </div>
+          {row.runs.map((run) => (
+            <div key={run.order} className="mt-3">
+              <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet mb-1">
+                {run.order === "ab" ? "As written" : "Swapped"}
+              </p>
+              <MonoBlock>{run.raw || run.error || "Not run."}</MonoBlock>
+            </div>
+          ))}
+        </Section>
+      ))}
+      <Section label="What the judge read">
+        <MonoBlock>{composeJudgeSystem(draft.criteria)}</MonoBlock>
+      </Section>
     </>
   );
 }

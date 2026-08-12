@@ -168,7 +168,7 @@ capabilities.
 - **Article** — shipped at `/learn/designing-agency`.
 - **Artifact: Agency Policy** — the ask/act boundary, written down.
 
-### Module 11 — Judging at scale
+### Module 11 — Judging at scale — **PLAYGROUND BUILT**
 
 *You already built a rubric in Module 06. Now automate it, then discover your
 judge is biased.*
@@ -178,7 +178,10 @@ two answers, pad one with filler, watch the scores move. Teaching designers to
 distrust the automation they just built is the most advanced idea on this list
 and the one that transfers hardest back to non-AI work.
 
-- Extends the existing Eval Workshop rather than adding a new playground.
+- **Playground: Judge Lab** — shipped, see `SPEC.md` §19. Built as its own
+  playground rather than an Eval Lab mode: Eval Lab is a Part I module and
+  shouldn't carry a calibration experiment for beginners. **Article still to
+  write.**
 - **Artifact: Calibrated Judge** — a judge prompt *plus* its known biases.
 
 ### Three demos (light, shareable, not full modules)

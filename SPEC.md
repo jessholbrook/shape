@@ -133,6 +133,7 @@ Every meaningful action in Shape produces an **artifact**. Artifacts are first-c
 | **Portability** *(§16)* | Whether a spec survives a change of model | Portability Report |
 | **Context Lab** *(§17)* | The system prompt is a fraction of what the model reads | Context Map |
 | **Tool Bench** *(§18)* | Where the line sits between acting and asking | Agency Policy |
+| **Judge Lab** *(§19)* | Automating the scoring, then checking the automation | Calibrated Judge |
 
 ## 8. Curriculum sketch — "Behavior Designer 101 → 301"
 
@@ -703,4 +704,71 @@ A file-storage assistant with three tools spanning the risk range (`search_files
 - **Native tool-calling.** See above; parked as its own project.
 - **Multi-turn repair.** The module description mentions repair — what happens when the model is wrong halfway through — and that needs an agent loop with tool results fed back. v0.1 grades a single decision, which is where the ask/act lesson lives.
 - **Argument correctness.** The parser keeps arguments as raw text and doesn't grade them. Whether it picked the right file matters less, here, than whether it should have picked anything at all.
+
+---
+
+## 19. Judge Lab — v0.1 spec (built)
+
+*Sixth and last build from the Part II arc. Pairs with proposed Module 11, "Judging at scale."*
+
+### Purpose
+
+Hand the scoring to a model, then find out whether you can trust it.
+
+Eval Lab (Module 06) taught rubric-based scoring by hand. This automates it — and immediately runs the check that tells you whether the automation measured anything.
+
+### A separate playground, not an Eval Lab mode
+
+The backlog assumed this would extend Eval Lab. It doesn't, on purpose.
+
+Eval Lab is a **Part I** module for people meeting rubrics for the first time. Bolting an LLM judge plus a calibration experiment onto its 375-line client would complicate the wrong audience's page, and the calibration mechanic needs its own report. Judge Lab links back to Eval Lab conceptually — the criteria field is described as "your rubric, turned into an instruction" — without making the beginner's page carry it.
+
+### The mechanic: every pair judged twice
+
+Each comparison runs in both presentation orders. A judge reading **quality** picks the same *answer* both times. A judge reading **position** picks the same *slot* both times — which is a different answer.
+
+That single swap separates a verdict from a coin flip, and nothing else in the playground matters as much.
+
+The two orders are built to be indistinguishable to the model: candidates are numbered rather than lettered, and the assembled turns are the same length in both directions.
+
+### Consistency leads, agreement follows
+
+This ordering is the argument. **Agreement is the number people quote and the one that means least on its own** — a judge can match your picks most of the time while reading position, in which case the matches were luck.
+
+So the headline states the flip rate first (*"Your judge changed its answer on 2 of 3 pairs when we swapped the order"*), and the agreement line is explicitly scoped to the pairs that held steady, with a note that the rest agreed or disagreed *by accident*.
+
+When flips share a direction — the judge named the first answer both times, repeatedly — the report says so. A consistent lean is a different finding from noise.
+
+### Six verdicts
+
+| Verdict | Meaning |
+|---|---|
+| **Held, and agrees** | Same answer both orders, and the one you picked. What a usable judge looks like. |
+| **Held, but disagrees** | Stable disagreement. Worth reading — often a sign the criteria are vague rather than that the judge is wrong. |
+| **Flipped when swapped** | Read position, not quality. Carries no information. |
+| **Called it a tie** | Sometimes honest, sometimes avoidance. |
+| **No clear verdict** | Didn't produce the format. |
+| **Not run both ways** | Can't be checked yet. |
+
+### Ground truth is set before the run
+
+The human pick lives on the pair editor, not the report, for the same reason a rubric gets written before the scoring: a judgement made after seeing the machine's answer isn't ground truth, it's agreement. Pairs with no pick are still calibrated for consistency — they just can't contribute an agreement number.
+
+### Seeded scenario
+
+Three UX-copy comparisons where **the shorter answer is the better one every time**. That's deliberate: length bias is the most common failure in an automated judge, and a seed where the good answer was also the longest would hide it.
+
+### Parsing
+
+The last `WINNER:` mention wins, because judges commonly reason through both candidates before concluding and an earlier mention is part of the argument rather than the verdict. Code fences and word forms ("ONE"/"TWO") are tolerated; a reply with no `WINNER` line at all is **unparsed**, which is a finding about the judge prompt.
+
+### Artifact — Calibrated Judge
+
+`DraftKind: "judge"`. Carries the model config, criteria, pairs with human picks, and both runs per pair. Wired through the notebook section and summary, PDF export (which reproduces both rationales and the judge prompt), kind labels, editor href, and import validation.
+
+### Out of scope for v0.1
+
+- **Length-bias padding as a separate experiment.** The seed already leans on it; an explicit "pad the shorter answer and rerun" pass would be a third call per pair. Worth adding once the order swap has proven itself.
+- **Self-preference.** Whether a model rates its own output higher needs two models generating and one judging — buildable on the provider layer, and a bigger change than this.
+- **Numeric scoring.** Pairwise comparison is the sharper instrument for calibration; a 1–5 scale hides position effects inside the averages.
 
