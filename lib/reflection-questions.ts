@@ -100,6 +100,6 @@ export const REFLECTION: {
   judge: {
     question:
       "Would you let this judge score a release — and what would you have to fix in the criteria first?",
-    concept: { href: "/learn/evaluation", label: "Evaluation" },
+    concept: { href: "/learn/judging-at-scale", label: "Judging at scale" },
   },
 };
