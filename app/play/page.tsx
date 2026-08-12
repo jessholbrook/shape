@@ -162,6 +162,7 @@ const PLAYGROUNDS: Playground[] = [
       "Hand the scoring to a model, then check it. Every comparison runs twice with the answers swapped — a judge reading position gives itself away.",
     artifact: "Calibrated Judge",
     status: "ready",
+    concept: { href: "/learn/judging-at-scale", label: "Judging at scale" },
   },
 ];
 

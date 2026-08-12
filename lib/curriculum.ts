@@ -172,6 +172,20 @@ export const MODULES: CurriculumModule[] = [
     status: "ready",
     readMinutes: 7,
   },
+  {
+    num: "11",
+    slug: "judging-at-scale",
+    title: "Judging",
+    italic: "at scale",
+    kicker: "Concept",
+    blurb:
+      "Hand the scoring to a model and you inherit its biases. Counterbalance it the way you'd counterbalance a study.",
+    playground: { label: "Judge Lab", href: "/play/judge" },
+    artifact: "Calibrated Judge",
+    href: "/learn/judging-at-scale",
+    status: "ready",
+    readMinutes: 7,
+  },
 ];
 
 export function getModule(slug: string): CurriculumModule | undefined {
