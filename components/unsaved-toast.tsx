@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import {
-  consumeUnsavedLeaveToast,
+  dismissUnsavedLeaveToast,
+  isUnsavedLeaveToastShowing,
   subscribeUnsavedLeaveToast,
 } from "@/lib/hooks/use-unsaved-work";
 
@@ -15,16 +16,15 @@ const DISMISS_MS = 7000;
  * reads the module-level flag that survives the client-side route change.
  */
 export function UnsavedToast() {
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    if (consumeUnsavedLeaveToast()) setShow(true);
-    return subscribeUnsavedLeaveToast(() => setShow(true));
-  }, []);
+  const show = useSyncExternalStore(
+    subscribeUnsavedLeaveToast,
+    isUnsavedLeaveToastShowing,
+    () => false,
+  );
 
   useEffect(() => {
     if (!show) return;
-    const t = setTimeout(() => setShow(false), DISMISS_MS);
+    const t = setTimeout(dismissUnsavedLeaveToast, DISMISS_MS);
     return () => clearTimeout(t);
   }, [show]);
 
@@ -45,7 +45,7 @@ export function UnsavedToast() {
         </p>
         <button
           type="button"
-          onClick={() => setShow(false)}
+          onClick={dismissUnsavedLeaveToast}
           aria-label="Dismiss"
           className="shrink-0 -mr-1 -mt-0.5 w-6 h-6 inline-flex items-center justify-center text-canvas/60 hover:text-canvas rounded-full leading-none text-[16px]"
         >
