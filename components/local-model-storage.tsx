@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useHydrated } from "@/lib/hooks/use-local-store";
 import { resetEngineSingleton } from "@/lib/webllm-engine";
 import {
   clearLocalModelStorage,
@@ -26,7 +27,7 @@ type ClearState =
  */
 export function LocalModelStorage() {
   const [usage, setUsage] = useState<number | null>(null);
-  const [hydrated, setHydrated] = useState(false);
+  const hydrated = useHydrated();
   const [state, setState] = useState<ClearState>({ kind: "idle" });
 
   const refresh = useCallback(async () => {
@@ -35,9 +36,15 @@ export function LocalModelStorage() {
   }, []);
 
   useEffect(() => {
-    setHydrated(true);
-    refresh();
-  }, [refresh]);
+    let ignore = false;
+    (async () => {
+      const bytes = await getOriginStorageUsage();
+      if (!ignore) setUsage(bytes);
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   async function handleClear() {
     setState({ kind: "clearing" });

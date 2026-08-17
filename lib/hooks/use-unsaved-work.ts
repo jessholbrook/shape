@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 /**
  * Tracks whether the current playground has generated output the user hasn't
@@ -24,27 +24,41 @@ export function clearUnsavedWork(): void {
 }
 
 // --- Leave toast -----------------------------------------------------------
-// Set when the user navigates away from a playground that had unsaved output;
-// consumed by the <UnsavedToast> on the page they land on. Module-level so it
-// survives the Shell unmount/remount that happens during client navigation.
+// Bumped when the user navigates away from a playground that had unsaved
+// output; the <UnsavedToast> on the page they land on syncs to this version
+// via useSyncExternalStore (see useUnsavedLeaveToastVersion below) and shows
+// itself whenever it changes. Module-level so it survives the Shell
+// unmount/remount that happens during client navigation.
 
-let pendingToast = false;
+let toastVersion = 0;
 const toastListeners = new Set<() => void>();
 
 export function flagUnsavedLeaveToast(): void {
-  pendingToast = true;
+  toastVersion++;
   for (const l of toastListeners) l();
 }
 
-export function consumeUnsavedLeaveToast(): boolean {
-  const had = pendingToast;
-  pendingToast = false;
-  return had;
+function getToastVersion(): number {
+  return toastVersion;
 }
 
-export function subscribeUnsavedLeaveToast(fn: () => void): () => void {
+function subscribeUnsavedLeaveToast(fn: () => void): () => void {
   toastListeners.add(fn);
   return () => toastListeners.delete(fn);
+}
+
+/**
+ * Syncs to the leave-toast version. Starts at 0 on both server and client —
+ * a flag can only land after the app is interactive — and changes whenever
+ * flagUnsavedLeaveToast fires, including one that landed before this hook's
+ * first render (module state persists across the client-side route change).
+ */
+export function useUnsavedLeaveToastVersion(): number {
+  return useSyncExternalStore(
+    subscribeUnsavedLeaveToast,
+    getToastVersion,
+    () => 0,
+  );
 }
 
 /**
