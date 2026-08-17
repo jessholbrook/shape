@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  consumeUnsavedLeaveToast,
-  subscribeUnsavedLeaveToast,
-} from "@/lib/hooks/use-unsaved-work";
+import { useUnsavedLeaveToastVersion } from "@/lib/hooks/use-unsaved-work";
 
 const DISMISS_MS = 7000;
 
@@ -15,12 +12,19 @@ const DISMISS_MS = 7000;
  * reads the module-level flag that survives the client-side route change.
  */
 export function UnsavedToast() {
+  const toastVersion = useUnsavedLeaveToastVersion();
+  const [seenVersion, setSeenVersion] = useState(toastVersion);
   const [show, setShow] = useState(false);
 
-  useEffect(() => {
-    if (consumeUnsavedLeaveToast()) setShow(true);
-    return subscribeUnsavedLeaveToast(() => setShow(true));
-  }, []);
+  // Derived during render, not an effect: whenever the synced version moves
+  // past what we've seen, show the toast. Mirrors React's documented
+  // "adjusting state when a prop changes" recipe — the follow-up render this
+  // triggers immediately makes seenVersion === toastVersion again, so it
+  // settles in one extra pass rather than looping.
+  if (toastVersion !== seenVersion) {
+    setSeenVersion(toastVersion);
+    setShow(true);
+  }
 
   useEffect(() => {
     if (!show) return;
