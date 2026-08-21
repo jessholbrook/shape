@@ -1,5 +1,5 @@
 import { Shell } from "@/components/shell";
-import { getModule, nextModule } from "@/lib/curriculum";
+import { getModule, moduleMetadata, nextModule } from "@/lib/curriculum";
 import {
   ArticleHeader,
   ExampleBlock,
@@ -17,11 +17,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "multi-turn-flows";
 
-export const metadata = {
-  title: "Multi-turn flows",
-  description:
-    "Conversations have shape. Choreograph turns the way you'd choreograph an onboarding.",
-};
+export const metadata = moduleMetadata(SLUG);
 
 export default function MultiTurnFlowsPage() {
   const mod = getModule(SLUG)!;

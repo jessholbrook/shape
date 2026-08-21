@@ -1,5 +1,5 @@
 import { Shell } from "@/components/shell";
-import { getModule, nextModule } from "@/lib/curriculum";
+import { getModule, moduleMetadata, nextModule } from "@/lib/curriculum";
 import {
   ArticleHeader,
   ExampleBlock,
@@ -17,11 +17,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "evaluation";
 
-export const metadata = {
-  title: "Evaluation",
-  description:
-    "A rubric turns \"good\" from a feeling into a spec. Define what good looks like, then score against it.",
-};
+export const metadata = moduleMetadata(SLUG);
 
 export default function EvaluationPage() {
   const mod = getModule(SLUG)!;

@@ -1,5 +1,5 @@
 import { Shell } from "@/components/shell";
-import { getModule, nextModule } from "@/lib/curriculum";
+import { getModule, moduleMetadata, nextModule } from "@/lib/curriculum";
 import {
   ArticleHeader,
   ExampleBlock,
@@ -17,11 +17,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "context-is-the-interface";
 
-export const metadata = {
-  title: "Context is the interface",
-  description:
-    "Your system prompt is a fraction of what the model reads. The rest arrives at runtime, from systems nobody designed.",
-};
+export const metadata = moduleMetadata(SLUG);
 
 export default function ContextPage() {
   const mod = getModule(SLUG)!;

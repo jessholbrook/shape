@@ -1,5 +1,5 @@
 import { Shell } from "@/components/shell";
-import { getModule, nextModule } from "@/lib/curriculum";
+import { getModule, moduleMetadata, nextModule } from "@/lib/curriculum";
 import {
   ArticleHeader,
   ExampleBlock,
@@ -17,11 +17,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "judging-at-scale";
 
-export const metadata = {
-  title: "Judging at scale",
-  description:
-    "Hand the scoring to a model and you inherit its biases. Counterbalance it the way you'd counterbalance a study.",
-};
+export const metadata = moduleMetadata(SLUG);
 
 export default function JudgingPage() {
   const mod = getModule(SLUG)!;

@@ -1,11 +1,13 @@
 import type { MetadataRoute } from "next";
 import { MODULES } from "@/lib/curriculum";
+import { PLAYGROUNDS } from "@/lib/playgrounds";
 
 /**
- * Public routes for crawlers. Playground and learn routes are enumerated from
- * the curriculum so this stays in sync as lessons land. The notebook, settings,
- * print, and API routes are intentionally excluded — they're per-browser or
- * non-content.
+ * Public routes for crawlers. Learn routes come from the curriculum and play
+ * routes from the playground registry, so this stays in sync as lessons and
+ * playgrounds land — a hand-kept copy of the play list had already fallen six
+ * routes behind. The notebook, settings, print, and API routes are
+ * intentionally excluded — they're per-browser or non-content.
  */
 function origin(): string {
   if (process.env.NEXT_PUBLIC_SITE_URL) {
@@ -33,18 +35,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
-  const playRoutes = [
-    "/play/diff",
-    "/play/tone",
-    "/play/persona",
-    "/play/refusal",
-    "/play/evals",
-    "/play/choreographer",
-  ].map((path) => ({
-    url: `${base}${path}`,
-    changeFrequency: "monthly" as const,
-    priority: 0.7,
-  }));
+  const playRoutes = PLAYGROUNDS.filter((p) => p.status === "ready").map(
+    (p) => ({
+      url: `${base}${p.href}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    }),
+  );
 
   return [...staticRoutes, ...learnRoutes, ...playRoutes];
 }

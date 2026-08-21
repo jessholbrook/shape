@@ -1,5 +1,5 @@
 import { Shell } from "@/components/shell";
-import { getModule, nextModule } from "@/lib/curriculum";
+import { getModule, moduleMetadata, nextModule } from "@/lib/curriculum";
 import {
   ArticleHeader,
   ExampleBlock,
@@ -18,11 +18,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "personas-for-ai";
 
-export const metadata = {
-  title: "Personas for AI",
-  description:
-    "Character design isn't decoration. Backstory, beliefs, and blind spots shape every response.",
-};
+export const metadata = moduleMetadata(SLUG);
 
 export default function PersonasForAIPage() {
   const mod = getModule(SLUG)!;

@@ -1,0 +1,31 @@
+# Dependency updates. Grouped so a week's patches arrive as one reviewable PR
+# rather than a dozen — the CI gate (lint, build, typecheck, tests) is what
+# decides whether any of them are safe to take.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    groups:
+      # Next and its eslint config are pinned to the same exact version and
+      # have to move together; a lone bump to either fails the build.
+      next:
+        patterns: ["next", "eslint-config-next", "@next/*"]
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+      dev-dependencies:
+        dependency-type: development
+        exclude-patterns: ["eslint-config-next", "@types/react", "@types/react-dom"]
+    ignore:
+      # WebLLM ships breaking changes in minors and pins model-artifact URLs;
+      # take it deliberately, after checking the model list still resolves.
+      - dependency-name: "@mlc-ai/web-llm"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
