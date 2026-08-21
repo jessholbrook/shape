@@ -1,5 +1,6 @@
-# Build/lint gate for PRs. The triage workflow next to this one is advisory and
-# touches issues only; this is the check that decides whether a PR is mergeable.
+# Build/lint/test gate for PRs. The triage workflow next to this one is
+# advisory and touches issues only; this is the check that decides whether a PR
+# is mergeable.
 name: CI
 
 on:
@@ -23,6 +24,11 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Unit and content-consistency tests. Ahead of the build because they
+      # need no build output and fail in seconds when content data has drifted.
+      - name: Test
+        run: npm test
+
       # Must run before the typecheck: `next build` generates the route types
       # under .next/types that tsc validates against.
       - name: Build
@@ -30,3 +36,33 @@ jobs:
 
       - name: Typecheck
         run: npx tsc --noEmit
+
+  # Separate job: it needs a browser download, and a build that compiles but
+  # does not run should be distinguishable at a glance from one that fails lint.
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Builds and starts the app itself (see playwright.config.ts).
+      - name: Smoke test every route
+        run: npm run test:smoke
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

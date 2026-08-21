@@ -131,7 +131,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Nav */}
-        <div className="px-8 mt-4">
+        <nav aria-label="Main" className="px-8 mt-4">
           <ul className="space-y-1">
             {navItems.map((item) => (
               <NavRow
@@ -141,7 +141,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               />
             ))}
           </ul>
-        </div>
+        </nav>
 
         {/* Bottom: cost meter + keys */}
         <div className="mt-auto px-6 pb-6 space-y-3">
@@ -215,7 +215,7 @@ function MobileMenu({
           </button>
         </div>
 
-        <nav className="px-6 py-4">
+        <nav aria-label="Main" className="px-6 py-4">
           <ul className="flex flex-col gap-1">
             {navItems.map((item) => (
               <NavRow

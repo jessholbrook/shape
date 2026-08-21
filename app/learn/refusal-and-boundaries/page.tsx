@@ -1,5 +1,5 @@
 import { Shell } from "@/components/shell";
-import { getModule, nextModule } from "@/lib/curriculum";
+import { getModule, moduleMetadata, nextModule } from "@/lib/curriculum";
 import {
   ArticleHeader,
   ExampleBlock,
@@ -17,11 +17,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "refusal-and-boundaries";
 
-export const metadata = {
-  title: "Refusal & boundaries",
-  description:
-    "Where the model says no is a design surface. Over- and under-refusal both fail users.",
-};
+export const metadata = moduleMetadata(SLUG);
 
 export default function RefusalBoundariesPage() {
   const mod = getModule(SLUG)!;

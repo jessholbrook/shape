@@ -1,5 +1,5 @@
 import { Shell } from "@/components/shell";
-import { getModule, nextModule } from "@/lib/curriculum";
+import { getModule, moduleMetadata, nextModule } from "@/lib/curriculum";
 import {
   ArticleHeader,
   ExampleBlock,
@@ -17,11 +17,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "designing-agency";
 
-export const metadata = {
-  title: "Designing agency",
-  description:
-    "Now it does things, not just says them. Where the line sits between acting and asking — and why a policy sentence isn't enough.",
-};
+export const metadata = moduleMetadata(SLUG);
 
 export default function AgencyPage() {
   const mod = getModule(SLUG)!;

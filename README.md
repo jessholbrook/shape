@@ -83,7 +83,7 @@ Drafts persist to `localStorage` — close the tab, come back, your work is stil
 
 ## Curriculum
 
-Twelve micro-lessons. Each pairs a short reading with a playground. Recommended path, never gated.
+Eleven micro-lessons. Each pairs a short reading with a playground. Recommended path, never gated.
 
 | # | Lesson | Pairs with |
 |---|---|---|
@@ -91,9 +91,13 @@ Twelve micro-lessons. Each pairs a short reading with a playground. Recommended 
 | 02 | Voice & tone | Tone Dial |
 | 03 | Personas for AI | Persona Lab |
 | 04 | Refusal & boundaries | Refusal Lab |
-| 05 | Output formatting | — |
+| 05 | Output formatting | Tone Dial — Structure dial |
 | 06 | Evaluation | Eval Lab |
 | 07 | Multi-turn flows | Conversation Choreographer |
+| 08 | Distributions, not outputs | Spread |
+| 09 | Context is the interface | Context Lab |
+| 10 | Designing agency | Tool Bench |
+| 11 | Judging at scale | Judge Lab |
 
 ## Running locally
 

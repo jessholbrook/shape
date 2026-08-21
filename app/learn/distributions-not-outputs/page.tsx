@@ -1,5 +1,5 @@
 import { Shell } from "@/components/shell";
-import { getModule, nextModule } from "@/lib/curriculum";
+import { getModule, moduleMetadata, nextModule } from "@/lib/curriculum";
 import {
   ArticleHeader,
   ExampleBlock,
@@ -17,11 +17,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "distributions-not-outputs";
 
-export const metadata = {
-  title: "Distributions, not outputs",
-  description:
-    "One output is a sample, not a result. Design against the spread — and find out which clauses of your spec were luck.",
-};
+export const metadata = moduleMetadata(SLUG);
 
 export default function DistributionsPage() {
   const mod = getModule(SLUG)!;

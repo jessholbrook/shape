@@ -9,6 +9,12 @@ export type CurriculumModule = {
   blurb: string;
   playground?: { label: string; href: string };
   artifact: string;
+  /**
+   * SEO description for the module's page. Defaults to `blurb` — set it only
+   * where card copy and a standalone search-result line genuinely want
+   * different sentences.
+   */
+  description?: string;
   /** Internal target — /learn/<slug> for ready modules, "#" otherwise. */
   href: string;
   status: ModuleStatus;
@@ -50,7 +56,7 @@ export const MODULES: CurriculumModule[] = [
     italic: "& tone",
     kicker: "Concept",
     blurb:
-      "Style is composable. Move warmth, verbosity, directness as independent dials.",
+      "Style is composable. Move warmth, verbosity, energy, directness as independent dials.",
     playground: { label: "Tone Dial", href: "/play/tone" },
     artifact: "Behavior Spec",
     href: "/learn/voice-and-tone",
@@ -92,7 +98,7 @@ export const MODULES: CurriculumModule[] = [
     italic: "formatting",
     kicker: "Concept",
     blurb:
-      "Lists, headings, JSON, paragraphs. Format is part of voice; pick one on purpose.",
+      "Lists, headings, JSON, paragraphs. Formatting is part of voice; pick one on purpose.",
     // Note: /play/tone's primary module is voice-and-tone (02); the reverse
     // lookup in getModuleByPlaygroundHref returns the first match, so this
     // entry doesn't change the Tone Dial's concept link.
@@ -110,6 +116,8 @@ export const MODULES: CurriculumModule[] = [
     kicker: "Concept",
     blurb:
       "Rubrics + sample sets. Score behavior the same way you score a usability study.",
+    description:
+      "A rubric turns “good” from a feeling into a spec. Define what good looks like, then score against it.",
     playground: { label: "Eval Lab", href: "/play/evals" },
     artifact: "Eval Rubric + Scorecard",
     href: "/learn/evaluation",
@@ -137,7 +145,7 @@ export const MODULES: CurriculumModule[] = [
     italic: "not outputs",
     kicker: "Concept",
     blurb:
-      "One output is a sample, not a result. Design against the spread — and find out which clauses of your spec were luck.",
+      "One output is a sample, not a result. Design against the spread — and find out which clauses of your spec actually hold.",
     playground: { label: "Spread", href: "/play/spread" },
     artifact: "Stability Report",
     href: "/learn/distributions-not-outputs",
@@ -206,4 +214,29 @@ export function getModuleByPlaygroundHref(
   href: string,
 ): CurriculumModule | undefined {
   return MODULES.find((m) => m.playground?.href === href);
+}
+
+/** Display title — the card splits it for italics; everywhere else wants it whole. */
+export function moduleTitle(mod: CurriculumModule): string {
+  return [mod.title, mod.italic].filter(Boolean).join(" ").trim();
+}
+
+/**
+ * Page metadata for a lesson, derived from its curriculum entry.
+ *
+ * Every lesson page used to declare its own `title` and `description` by hand,
+ * which meant each copy edit had to be made in two files. It reliably wasn't:
+ * three of eleven had drifted from their curriculum entry by the time this was
+ * written. Deriving them removes the failure mode rather than policing it.
+ */
+export function moduleMetadata(slug: string): {
+  title: string;
+  description: string;
+} {
+  const mod = getModule(slug);
+  if (!mod) throw new Error(`No curriculum module for slug "${slug}"`);
+  return {
+    title: moduleTitle(mod),
+    description: mod.description ?? mod.blurb,
+  };
 }

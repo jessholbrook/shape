@@ -1,5 +1,5 @@
 import { Shell } from "@/components/shell";
-import { getModule, nextModule } from "@/lib/curriculum";
+import { getModule, moduleMetadata, nextModule } from "@/lib/curriculum";
 import {
   ArticleHeader,
   ExampleBlock,
@@ -16,11 +16,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "prompts-as-design";
 
-export const metadata = {
-  title: "Prompts as design",
-  description:
-    "A prompt is a design variable. Treat it like a brand-voice swatch, not a magic spell.",
-};
+export const metadata = moduleMetadata(SLUG);
 
 export default function PromptsAsDesignPage() {
   const mod = getModule(SLUG)!;

@@ -1,5 +1,5 @@
 import { Shell } from "@/components/shell";
-import { getModule, nextModule } from "@/lib/curriculum";
+import { getModule, moduleMetadata, nextModule } from "@/lib/curriculum";
 import {
   ArticleHeader,
   ExampleBlock,
@@ -17,11 +17,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "output-formatting";
 
-export const metadata = {
-  title: "Output formatting",
-  description:
-    "Lists, headings, JSON, paragraphs. Formatting is part of voice; pick one on purpose.",
-};
+export const metadata = moduleMetadata(SLUG);
 
 export default function OutputFormattingPage() {
   const mod = getModule(SLUG)!;

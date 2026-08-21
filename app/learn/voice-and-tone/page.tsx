@@ -1,5 +1,5 @@
 import { Shell } from "@/components/shell";
-import { getModule, nextModule } from "@/lib/curriculum";
+import { getModule, moduleMetadata, nextModule } from "@/lib/curriculum";
 import {
   ArticleHeader,
   ExampleBlock,
@@ -17,11 +17,7 @@ import { MarkAsRead } from "@/components/learn/mark-as-read";
 
 const SLUG = "voice-and-tone";
 
-export const metadata = {
-  title: "Voice & tone",
-  description:
-    "Style is composable. Move warmth, verbosity, energy, directness as independent dials.",
-};
+export const metadata = moduleMetadata(SLUG);
 
 export default function VoiceAndTonePage() {
   const mod = getModule(SLUG)!;
