@@ -38,7 +38,7 @@ export default function VoiceAndTonePage() {
           can move them.
         </Lede>
 
-        <H2>Why this is the foundation</H2>
+        <H2>Why this is foundational</H2>
         <P>
           Once you can name the dials, tone stops being a matter of taste
           and starts being a specification. You can hand someone a tone
@@ -69,7 +69,7 @@ export default function VoiceAndTonePage() {
           </LI>
         </UL>
 
-        <H2>The familiar move</H2>
+        <H2>What you already know</H2>
         <P>
           The best brand-voice guides separate voice from tone. Voice is
           who the brand is — it doesn&apos;t change between an empty state
@@ -146,14 +146,6 @@ Directness: Direct
           way of seeing.
         </P>
 
-        <TryItCTA
-          href={mod.playground?.href ?? "/play/tone"}
-          buttonLabel="Open Tone Dial"
-        >
-          Open Tone Dial and{" "}
-          <span className="italic">move one dimension</span>.
-        </TryItCTA>
-
         <H2>What to take into the playground</H2>
         <UL>
           <LI>
@@ -170,6 +162,14 @@ Directness: Direct
             position is the spec — that&apos;s what you can hand off.
           </LI>
         </UL>
+
+        <TryItCTA
+          href={mod.playground?.href ?? "/play/tone"}
+          buttonLabel="Open Tone Dial"
+        >
+          Open Tone Dial and{" "}
+          <span className="italic">move one dimension</span>.
+        </TryItCTA>
 
         <NextModuleFooter next={next} />
         <MarkAsRead slug={SLUG} />

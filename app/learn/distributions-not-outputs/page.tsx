@@ -37,7 +37,7 @@ export default function DistributionsPage() {
           sample of it, once, and decided that was the thing.
         </Lede>
 
-        <H2>The familiar move</H2>
+        <H2>What you already know</H2>
         <P>
           You would never ship a flow after watching one participant. One
           session is an anecdote. You run five, or eight, and you look for
@@ -200,14 +200,6 @@ No exclamation marks.`}
           flip from a rule, which is all you need it to do.
         </P>
 
-        <TryItCTA
-          href={mod.playground?.href ?? "/play/spread"}
-          buttonLabel="Open Spread"
-        >
-          Run one prompt ten times and{" "}
-          <span className="italic">watch a clause fail</span>.
-        </TryItCTA>
-
         <H2>What to take into the playground</H2>
         <UL>
           <LI>
@@ -235,6 +227,14 @@ No exclamation marks.`}
             up.
           </LI>
         </UL>
+
+        <TryItCTA
+          href={mod.playground?.href ?? "/play/spread"}
+          buttonLabel="Open Spread"
+        >
+          Run one prompt ten times and{" "}
+          <span className="italic">watch a clause fail</span>.
+        </TryItCTA>
 
         <NextModuleFooter next={next} />
         <MarkAsRead slug={SLUG} />

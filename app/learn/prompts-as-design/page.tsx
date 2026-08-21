@@ -38,7 +38,7 @@ export default function PromptsAsDesignPage() {
           with different inputs.
         </Lede>
 
-        <H2>Why this is the foundation</H2>
+        <H2>Why this is foundational</H2>
         <P>
           Behavior design is mostly small loops. Write a version, watch the
           model behave, notice the gap between what you wanted and what you
@@ -51,7 +51,7 @@ export default function PromptsAsDesignPage() {
           your head and start seeing them.
         </P>
 
-        <H2>The familiar move</H2>
+        <H2>What you already know</H2>
         <P>
           When you write a tooltip, you don&apos;t hand the engineer a
           paragraph and hope. You write a brand-voice document, decide on a
@@ -99,14 +99,6 @@ export default function PromptsAsDesignPage() {
           one felt right.
         </P>
 
-        <TryItCTA
-          href={mod.playground?.href ?? "/play/diff"}
-          buttonLabel="Open Diff Mode"
-        >
-          Open Diff Mode and{" "}
-          <span className="italic">change one variable</span>.
-        </TryItCTA>
-
         <H2>What to take into the playground</H2>
         <UL>
           <LI>
@@ -122,6 +114,14 @@ export default function PromptsAsDesignPage() {
             it&apos;s the trail of decisions you made.
           </LI>
         </UL>
+
+        <TryItCTA
+          href={mod.playground?.href ?? "/play/diff"}
+          buttonLabel="Open Diff Mode"
+        >
+          Open Diff Mode and{" "}
+          <span className="italic">change one variable</span>.
+        </TryItCTA>
 
         <NextModuleFooter next={next} />
         <MarkAsRead slug={SLUG} />

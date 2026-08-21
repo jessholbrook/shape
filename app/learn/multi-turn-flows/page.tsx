@@ -39,7 +39,7 @@ export default function MultiTurnFlowsPage() {
           surface.
         </Lede>
 
-        <H2>Why this is the foundation</H2>
+        <H2>Why this is foundational</H2>
         <P>
           Almost no production AI is single-shot. The thing your users
           actually experience is a flow — a chat session, a multi-step
@@ -71,7 +71,7 @@ export default function MultiTurnFlowsPage() {
           </LI>
         </UL>
 
-        <H2>The familiar move</H2>
+        <H2>What you already know</H2>
         <P>
           You&apos;ve choreographed flows before. Onboarding sequences,
           support escalation paths, error-recovery loops. The job
@@ -162,14 +162,6 @@ When the user follows up, reference what you said earlier rather than repeating 
           them, the conversation holds together.
         </P>
 
-        <TryItCTA
-          href={mod.playground?.href ?? "/play/choreographer"}
-          buttonLabel="Open Choreographer"
-        >
-          Open the Conversation Choreographer and{" "}
-          <span className="italic">script a flow that breaks</span>.
-        </TryItCTA>
-
         <H2>What to take into the playground</H2>
         <UL>
           <LI>
@@ -187,6 +179,14 @@ When the user follows up, reference what you said earlier rather than repeating 
             coherent one.
           </LI>
         </UL>
+
+        <TryItCTA
+          href={mod.playground?.href ?? "/play/choreographer"}
+          buttonLabel="Open Choreographer"
+        >
+          Open the Conversation Choreographer and{" "}
+          <span className="italic">script a flow that breaks</span>.
+        </TryItCTA>
 
         <NextModuleFooter next={next} />
         <MarkAsRead slug={SLUG} />

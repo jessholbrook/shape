@@ -38,7 +38,7 @@ export default function JudgingPage() {
           is not.
         </Lede>
 
-        <H2>The familiar move</H2>
+        <H2>What you already know</H2>
         <P>
           You have counterbalanced a study. Two prototypes, and you did not
           show them to every participant in the same order — half saw A first,
@@ -215,14 +215,6 @@ Answer 2 — "No projects yet."`}
           </LI>
         </UL>
 
-        <TryItCTA
-          href={mod.playground?.href ?? "/play/judge"}
-          buttonLabel="Open Judge Lab"
-        >
-          Swap two answers and{" "}
-          <span className="italic">see whether the verdict survives</span>.
-        </TryItCTA>
-
         <H2>What to take into the playground</H2>
         <UL>
           <LI>
@@ -251,6 +243,14 @@ Answer 2 — "No projects yet."`}
             else trust a number this judge produces.
           </LI>
         </UL>
+
+        <TryItCTA
+          href={mod.playground?.href ?? "/play/judge"}
+          buttonLabel="Open Judge Lab"
+        >
+          Swap two answers and{" "}
+          <span className="italic">see whether the verdict survives</span>.
+        </TryItCTA>
 
         <NextModuleFooter next={next} />
         <MarkAsRead slug={SLUG} />

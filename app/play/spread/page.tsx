@@ -21,8 +21,8 @@ export default function SpreadPage() {
         </h1>
         <p className="font-sans text-[14px] text-ink-muted max-w-md mt-5">
           One config, run many times. Diff Mode compares two prompts; this
-          compares a prompt against itself — and tells you which clauses of
-          your spec were luck.
+          compares a prompt against itself — and shows you which clauses of
+          your spec actually hold.
         </p>
 
         <ConceptLink playgroundHref="/play/spread" />

@@ -4,7 +4,7 @@ Live at **[shape-models.com](https://shape-models.com)**.
 
 **Shape model behavior.** A playground for people in UX — designers, researchers, writers, prototypers — to learn how to shape AI model behaviors. Learn by doing. Create artifacts you can use later.
 
-Free in your browser — no key needed to start. Bring your own Anthropic or OpenAI key when you want bigger models.
+Free in your browser — no key needed to start. Bring your own Anthropic, OpenAI, Google, or Cerebras key when you want bigger models.
 
 ![Shape — home page](docs/screenshots/home.png)
 
@@ -83,7 +83,7 @@ Drafts persist to `localStorage` — close the tab, come back, your work is stil
 
 ## Curriculum
 
-Seven micro-lessons. Each pairs a short reading with a playground. Recommended path, never gated.
+Twelve micro-lessons. Each pairs a short reading with a playground. Recommended path, never gated.
 
 | # | Lesson | Pairs with |
 |---|---|---|

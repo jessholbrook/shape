@@ -38,7 +38,7 @@ export default function RefusalBoundariesPage() {
           and what it offers instead.
         </Lede>
 
-        <H2>Why this is the foundation</H2>
+        <H2>Why this is foundational</H2>
         <P>
           Every refusal you&apos;ll design has the same anatomy. There are
           really only four shapes of hard request you have to handle:
@@ -77,7 +77,7 @@ export default function RefusalBoundariesPage() {
           copy.
         </P>
 
-        <H2>The familiar move</H2>
+        <H2>What you already know</H2>
         <P>
           You&apos;ve designed error states. You&apos;ve written 404 pages
           that didn&apos;t blame the user. You&apos;ve sat in a support
@@ -149,14 +149,6 @@ export default function RefusalBoundariesPage() {
           something you write, not something you toggle.
         </P>
 
-        <TryItCTA
-          href={mod.playground?.href ?? "/play/refusal"}
-          buttonLabel="Open Refusal Lab"
-        >
-          Run the Refusal Lab panel and{" "}
-          <span className="italic">find a mismatch</span>.
-        </TryItCTA>
-
         <H2>What to take into the playground</H2>
         <UL>
           <LI>
@@ -179,6 +171,14 @@ export default function RefusalBoundariesPage() {
             the artifact.
           </LI>
         </UL>
+
+        <TryItCTA
+          href={mod.playground?.href ?? "/play/refusal"}
+          buttonLabel="Open Refusal Lab"
+        >
+          Run the Refusal Lab panel and{" "}
+          <span className="italic">find a mismatch</span>.
+        </TryItCTA>
 
         <NextModuleFooter next={next} />
         <MarkAsRead slug={SLUG} />

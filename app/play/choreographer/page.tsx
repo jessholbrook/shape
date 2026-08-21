@@ -7,7 +7,7 @@ import { Choreographer } from "./choreographer-page";
 export const metadata = {
   title: "Conversation Choreographer",
   description:
-    "Multi-turn flow design. Script a conversation, run it end-to-end, watch how the model holds the thread.",
+    "Write the user's side of a conversation in advance and run it. Same script, different system prompt — see how the model holds the thread across turns.",
 };
 
 export default function ChoreographerPage() {
@@ -20,8 +20,10 @@ export default function ChoreographerPage() {
           Conversation <span className="italic">choreographer</span>
         </h1>
         <p className="font-sans text-[14px] text-ink-muted max-w-md mt-5">
-          A conversation has shape. Script the user&apos;s turns, run
-          the flow end-to-end, see how the model holds the thread.
+          Write the user&apos;s side of a conversation in advance, then
+          run it. Because the questions are fixed, you can change the
+          system prompt and re-run the same script — the only thing that
+          varies is how the model holds the thread across turns.
         </p>
 
         <ConceptLink playgroundHref="/play/choreographer" />

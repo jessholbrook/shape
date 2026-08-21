@@ -19,9 +19,9 @@ export default function StartPage() {
         </h1>
 
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-8 max-w-xl">
-          Free in this browser — no key needed. Bring an Anthropic or
-          OpenAI key when you want bigger models. Either way, everything
-          stays on your machine.
+          Free in this browser — no key needed. Bring an Anthropic,
+          OpenAI, Google, or Cerebras key when you want bigger models.
+          Either way, everything stays on your machine.
         </p>
 
         <div className="mt-16">
