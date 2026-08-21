@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useHydrated } from "@/lib/hooks/use-local-store";
 import { resetEngineSingleton } from "@/lib/webllm-engine";
 import {
   clearLocalModelStorage,
@@ -26,7 +27,7 @@ type ClearState =
  */
 export function LocalModelStorage() {
   const [usage, setUsage] = useState<number | null>(null);
-  const [hydrated, setHydrated] = useState(false);
+  const hydrated = useHydrated();
   const [state, setState] = useState<ClearState>({ kind: "idle" });
 
   const refresh = useCallback(async () => {
@@ -34,10 +35,18 @@ export function LocalModelStorage() {
     setUsage(bytes);
   }, []);
 
+  // Read the estimate in the promise callback rather than awaiting `refresh()`
+  // in the effect body, so the state update is plainly asynchronous. `cancelled`
+  // keeps a slow estimate from landing on an unmounted panel.
   useEffect(() => {
-    setHydrated(true);
-    refresh();
-  }, [refresh]);
+    let cancelled = false;
+    getOriginStorageUsage().then((bytes) => {
+      if (!cancelled) setUsage(bytes);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleClear() {
     setState({ kind: "clearing" });

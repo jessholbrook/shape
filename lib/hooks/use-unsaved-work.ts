@@ -28,18 +28,29 @@ export function clearUnsavedWork(): void {
 // consumed by the <UnsavedToast> on the page they land on. Module-level so it
 // survives the Shell unmount/remount that happens during client navigation.
 
-let pendingToast = false;
+// Counted rather than a boolean so dismissal survives the Shell remount: the
+// toast is showing while a flag is newer than the last dismissal, which stays
+// true across the unmount/remount and false once dismissed.
+let flaggedCount = 0;
+let dismissedCount = 0;
 const toastListeners = new Set<() => void>();
 
-export function flagUnsavedLeaveToast(): void {
-  pendingToast = true;
+function notifyToastListeners(): void {
   for (const l of toastListeners) l();
 }
 
-export function consumeUnsavedLeaveToast(): boolean {
-  const had = pendingToast;
-  pendingToast = false;
-  return had;
+export function flagUnsavedLeaveToast(): void {
+  flaggedCount++;
+  notifyToastListeners();
+}
+
+export function dismissUnsavedLeaveToast(): void {
+  dismissedCount = flaggedCount;
+  notifyToastListeners();
+}
+
+export function isUnsavedLeaveToastShowing(): boolean {
+  return flaggedCount > dismissedCount;
 }
 
 export function subscribeUnsavedLeaveToast(fn: () => void): () => void {
@@ -60,3 +71,4 @@ export function useUnsavedWork(isDirty: boolean) {
     return () => clearUnsavedWork();
   }, []);
 }
+

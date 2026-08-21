@@ -14,16 +14,15 @@ import {
 } from "@/lib/hooks/use-unsaved-work";
 
 type NavItem = {
-  num: string;
   label: string;
   href: string;
 };
 
 const navItems: NavItem[] = [
-  { num: "01", label: "Home", href: "/" },
-  { num: "02", label: "Learn", href: "/learn" },
-  { num: "03", label: "Play", href: "/play" },
-  { num: "04", label: "Notebook", href: "/notebook" },
+  { label: "Home", href: "/" },
+  { label: "Learn", href: "/learn" },
+  { label: "Play", href: "/play" },
+  { label: "Notebook", href: "/notebook" },
 ];
 
 function isActive(href: string, pathname: string): boolean {
@@ -136,7 +135,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <ul className="space-y-1">
             {navItems.map((item) => (
               <NavRow
-                key={item.num}
+                key={item.href}
                 item={item}
                 active={isActive(item.href, pathname)}
               />
@@ -220,7 +219,7 @@ function MobileMenu({
           <ul className="flex flex-col gap-1">
             {navItems.map((item) => (
               <NavRow
-                key={item.num}
+                key={item.href}
                 item={item}
                 active={isActive(item.href, pathname)}
                 onNavigate={onClose}
@@ -267,13 +266,6 @@ function NavRow({
             : "text-ink-muted hover:text-ink hover:bg-line/40"
         }`}
       >
-        <span
-          className={`font-mono text-[11px] tracking-[0.08em] ${
-            active ? "text-highlight" : "text-ink-quiet"
-          }`}
-        >
-          {item.num}
-        </span>
         <span
           className={`font-sans text-[14px] ${active ? "font-medium" : ""}`}
         >

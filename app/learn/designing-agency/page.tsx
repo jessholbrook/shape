@@ -38,7 +38,7 @@ export default function AgencyPage() {
           embarrassing and start being expensive.
         </Lede>
 
-        <H2>The familiar move</H2>
+        <H2>What you already know</H2>
         <P>
           You have argued about a confirmation dialog. Someone wanted
           &ldquo;Are you sure?&rdquo; on a delete, someone else pointed out
@@ -201,14 +201,6 @@ export default function AgencyPage() {
           the failures worth designing against don&apos;t look like failures.
         </P>
 
-        <TryItCTA
-          href={mod.playground?.href ?? "/play/tools"}
-          buttonLabel="Open Tool Bench"
-        >
-          Change one tool description and{" "}
-          <span className="italic">watch the line move</span>.
-        </TryItCTA>
-
         <H2>What to take into the playground</H2>
         <UL>
           <LI>
@@ -239,6 +231,14 @@ export default function AgencyPage() {
             what an engineer would need from you.
           </LI>
         </UL>
+
+        <TryItCTA
+          href={mod.playground?.href ?? "/play/tools"}
+          buttonLabel="Open Tool Bench"
+        >
+          Change one tool description and{" "}
+          <span className="italic">watch the line move</span>.
+        </TryItCTA>
 
         <NextModuleFooter next={next} />
         <MarkAsRead slug={SLUG} />

@@ -39,7 +39,7 @@ export default function PersonasForAIPage() {
           like someone, not something.
         </Lede>
 
-        <H2>Why this is the foundation</H2>
+        <H2>Why this is foundational</H2>
         <P>
           Voice and tone decide how the model speaks. Persona decides
           who&apos;s speaking. Once you have a strong persona, a lot of
@@ -75,7 +75,7 @@ export default function PersonasForAIPage() {
           </LI>
         </UL>
 
-        <H2>The familiar move</H2>
+        <H2>What you already know</H2>
         <P>
           You&apos;ve built user personas. Maya, 34, design lead at a mid-
           sized startup, frustrated with handoff churn, reads design
@@ -259,14 +259,6 @@ You won't ____ — instead you'll ____.
 Your voice is ____, ____, and ____.`}
         </Template>
 
-        <TryItCTA
-          href={mod.playground?.href ?? "/play/persona"}
-          buttonLabel="Open Persona Lab"
-        >
-          Open Persona Lab and{" "}
-          <span className="italic">build a character</span>.
-        </TryItCTA>
-
         <H2>What to take into the playground</H2>
         <UL>
           <LI>
@@ -285,6 +277,14 @@ Your voice is ____, ____, and ____.`}
             persona card is the artifact — a hand-off, not a tweak.
           </LI>
         </UL>
+
+        <TryItCTA
+          href={mod.playground?.href ?? "/play/persona"}
+          buttonLabel="Open Persona Lab"
+        >
+          Open Persona Lab and{" "}
+          <span className="italic">build a character</span>.
+        </TryItCTA>
 
         <NextModuleFooter next={next} />
         <MarkAsRead slug={SLUG} />

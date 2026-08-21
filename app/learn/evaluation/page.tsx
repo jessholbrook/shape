@@ -38,7 +38,7 @@ export default function EvaluationPage() {
           the rest of your team.
         </Lede>
 
-        <H2>Why this is the foundation</H2>
+        <H2>Why this is foundational</H2>
         <P>
           Once you have a rubric, every other design move gets cheaper.
           Comparing two prompts? Run both against the rubric and look at
@@ -71,7 +71,7 @@ export default function EvaluationPage() {
           </LI>
         </UL>
 
-        <H2>The familiar move</H2>
+        <H2>What you already know</H2>
         <P>
           You&apos;ve run a usability study. You wrote task scenarios,
           decided what success looked like before the sessions started,
@@ -141,14 +141,6 @@ Each scored 1-5.`}
           ends in a shrug. The second ends in a list of things to try.
         </P>
 
-        <TryItCTA
-          href={mod.playground?.href ?? "/play/evals"}
-          buttonLabel="Open Eval Lab"
-        >
-          Run the Eval Lab and{" "}
-          <span className="italic">move one criterion</span>.
-        </TryItCTA>
-
         <H2>What to take into the playground</H2>
         <UL>
           <LI>
@@ -170,6 +162,14 @@ Each scored 1-5.`}
             again.
           </LI>
         </UL>
+
+        <TryItCTA
+          href={mod.playground?.href ?? "/play/evals"}
+          buttonLabel="Open Eval Lab"
+        >
+          Run the Eval Lab and{" "}
+          <span className="italic">move one criterion</span>.
+        </TryItCTA>
 
         <NextModuleFooter next={next} />
         <MarkAsRead slug={SLUG} />

@@ -38,7 +38,7 @@ export default function ContextPage() {
           else decided what it says.
         </Lede>
 
-        <H2>The familiar move</H2>
+        <H2>What you already know</H2>
         <P>
           You have done a content audit. You know the hard problem in a content
           system isn&apos;t writing — it&apos;s that old pages never die. A
@@ -214,14 +214,6 @@ permanently removed after 30 days.`}
           </LI>
         </UL>
 
-        <TryItCTA
-          href={mod.playground?.href ?? "/play/context"}
-          buttonLabel="Open Context Lab"
-        >
-          Ask one question four ways and{" "}
-        <span className="italic">watch the answer change</span>.
-        </TryItCTA>
-
         <H2>What to take into the playground</H2>
         <UL>
           <LI>
@@ -244,6 +236,14 @@ permanently removed after 30 days.`}
             each a tell. Find out which one the model prefers.
           </LI>
         </UL>
+
+        <TryItCTA
+          href={mod.playground?.href ?? "/play/context"}
+          buttonLabel="Open Context Lab"
+        >
+          Ask one question four ways and{" "}
+        <span className="italic">watch the answer change</span>.
+        </TryItCTA>
 
         <NextModuleFooter next={next} />
         <MarkAsRead slug={SLUG} />

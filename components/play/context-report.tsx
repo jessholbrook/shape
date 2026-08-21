@@ -15,7 +15,8 @@ import {
 export function ContextReportPanel({ report }: { report: ContextReport }) {
   if (report.scored === 0) return null;
 
-  const clean = report.compromised === 0;
+  const clean =
+    report.compromised === 0 && report.unsourced === 0 && report.mixed === 0;
 
   return (
     <div className="bg-surface border border-line rounded-[16px] p-5 md:p-6 flex flex-col gap-5">
@@ -29,18 +30,35 @@ export function ContextReportPanel({ report }: { report: ContextReport }) {
       </div>
 
       <h2 className="font-display text-[26px] md:text-[32px] leading-[1.12] text-ink">
-        {clean ? (
-          <>
-            Every answer came from a source you{" "}
-            <span className="text-success">stand behind</span>.
-          </>
-        ) : (
+        {report.compromised > 0 ? (
           <>
             <span className="text-danger">
               {report.compromised} of {report.scored}
             </span>{" "}
             {report.compromised === 1 ? "answer" : "answers"}{" "}
             came from somewhere you wouldn&apos;t.
+          </>
+        ) : clean ? (
+          <>
+            Every answer came from a source you{" "}
+            <span className="text-success">stand behind</span>.
+          </>
+        ) : report.mixed > 0 ? (
+          <>
+            <span className="text-ink-muted">
+              {report.mixed} of {report.scored}
+            </span>{" "}
+            {report.mixed === 1 ? "answer" : "answers"} cited a good source
+            and a bad one — read {report.mixed === 1 ? "it" : "them"} before
+            calling {report.mixed === 1 ? "it" : "them"} grounded.
+          </>
+        ) : (
+          <>
+            No answer came from somewhere you wouldn&apos;t — but{" "}
+            <span className="text-ink-muted">
+              {report.unsourced} of {report.scored}
+            </span>{" "}
+            cited no source at all.
           </>
         )}
       </h2>
@@ -82,7 +100,9 @@ export function ContextReportPanel({ report }: { report: ContextReport }) {
         <p className="font-mono text-[10px] leading-[1.6] text-ink-quiet mt-1">
           Attribution is by phrase match, checked in your browser — it catches
           an answer that repeated a source, not one that quietly agreed with
-          it. Read the outputs below before trusting a &ldquo;grounded.&rdquo;
+          it, and it can&apos;t tell citing a bad source from rejecting one by
+          name. That case is what &ldquo;mixed&rdquo; is for. Read the outputs
+          below before trusting a &ldquo;grounded.&rdquo;
         </p>
       </div>
     </div>
@@ -93,6 +113,7 @@ function presentVerdicts(report: ContextReport): Attribution[] {
   const order: Attribution[] = [
     "injected",
     "stale",
+    "mixed",
     "grounded",
     "unsourced",
     "unknown",
@@ -109,6 +130,8 @@ function VerdictPill({ verdict }: { verdict: Attribution }) {
       ? "bg-highlight-soft text-highlight-ink"
       : verdict === "injected"
       ? "bg-danger/10 text-danger"
+      : verdict === "mixed"
+      ? "bg-line text-ink-muted"
       : "bg-line/60 text-ink-quiet";
   return (
     <span

@@ -1,0 +1,32 @@
+# Build/lint gate for PRs. The triage workflow next to this one is advisory and
+# touches issues only; this is the check that decides whether a PR is mergeable.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # Must run before the typecheck: `next build` generates the route types
+      # under .next/types that tsc validates against.
+      - name: Build
+        run: npm run build
+
+      - name: Typecheck
+        run: npx tsc --noEmit

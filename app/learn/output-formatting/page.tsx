@@ -20,7 +20,7 @@ const SLUG = "output-formatting";
 export const metadata = {
   title: "Output formatting",
   description:
-    "Lists, headings, JSON, paragraphs. Format is part of voice; pick one on purpose.",
+    "Lists, headings, JSON, paragraphs. Formatting is part of voice; pick one on purpose.",
 };
 
 export default function OutputFormattingPage() {
@@ -33,19 +33,19 @@ export default function OutputFormattingPage() {
         <ArticleHeader module={mod} />
 
         <Lede>
-          Format isn&apos;t neutral. A bulleted list and a paragraph carry
-          the same content but a different relationship with the reader.
-          Format is part of voice.
+          Formatting isn&apos;t neutral. A bulleted list and a paragraph
+          carry the same content but a different relationship with the
+          reader. Formatting is part of voice.
         </Lede>
 
-        <H2>Why this is the foundation</H2>
+        <H2>Why this is foundational</H2>
         <P>
-          Format composes with everything else you&apos;ve been designing.
-          A warm persona giving you a bulleted list still feels distant
-          because the format is doing the wrong work. A blunt persona
-          writing flowing prose feels less blunt because the format
-          softens it. Format and tone aren&apos;t separable — they reach
-          the reader together.
+          Formatting composes with everything else you&apos;ve been
+          designing. A warm persona giving you a bulleted list still
+          feels distant because the formatting is doing the wrong work. A
+          blunt persona writing flowing prose feels less blunt because
+          the formatting softens it. Formatting and tone aren&apos;t
+          separable — they reach the reader together.
         </P>
         <P>
           A few specific moves that pay off:
@@ -79,7 +79,7 @@ export default function OutputFormattingPage() {
           </LI>
         </UL>
 
-        <H2>The familiar move</H2>
+        <H2>What you already know</H2>
         <P>
           You make format choices constantly. Where to break a paragraph,
           when to use a list, when to drop in a heading, when to push a
@@ -106,8 +106,9 @@ export default function OutputFormattingPage() {
         <P>
           The fix isn&apos;t to scold the model in your system prompt.
           The fix is to specify the format on purpose: &ldquo;answer in
-          one short paragraph, no lists.&rdquo; Format becomes another
-          knob in the system prompt, sitting next to voice and persona.
+          one short paragraph, no lists.&rdquo; Formatting becomes
+          another knob in the system prompt, sitting next to voice and
+          persona.
           Once you treat it that way, the output starts behaving.
         </P>
 
@@ -161,8 +162,8 @@ export default function OutputFormattingPage() {
           />
         </ExampleBlock>
         <P>
-          Same persona, probably. Same five points. The format is doing
-          all of the work to move the output from &ldquo;reference
+          Same persona, probably. Same five points. The formatting is
+          doing all of the work to move the output from &ldquo;reference
           material&rdquo; to &ldquo;something someone said.&rdquo;
         </P>
 
@@ -178,6 +179,26 @@ export default function OutputFormattingPage() {
           preset runs the same message through
           both shapes at once.
         </P>
+
+        <H2>What to take into the playground</H2>
+        <UL>
+          <LI>
+            Move <em>only the Structure dial</em>{" "}
+            and leave the rest
+            where they are. Whatever changes is formatting, not voice —
+            that&apos;s the whole point of the sweep.
+          </LI>
+          <LI>
+            Ask for a shape and a size. &ldquo;No lists&rdquo; tells the
+            model what to stop doing; &ldquo;three sentences&rdquo; tells
+            it what to do instead. The second one holds.
+          </LI>
+          <LI>
+            When the shape is right, save the draft. The format
+            instruction is the spec — one line a developer can paste into
+            a system prompt.
+          </LI>
+        </UL>
 
         <TryItCTA href="/play/tone" buttonLabel="Open Tone Dial">
           Open the Tone Dial and{" "}
