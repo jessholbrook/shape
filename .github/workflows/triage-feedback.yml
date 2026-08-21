@@ -26,7 +26,7 @@ jobs:
       startsWith(github.event.issue.title, '[Bug]') ||
       startsWith(github.event.issue.title, '[Idea]')
     steps:
-      - uses: actions/checkout@v4 # so the agent can read BACKLOG.md
+      - uses: actions/checkout@v7 # so the agent can read BACKLOG.md
 
       - name: Triage the issue
         uses: anthropics/claude-code-action@v1 # verify version before enabling
