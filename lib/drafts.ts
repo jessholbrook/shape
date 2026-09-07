@@ -12,7 +12,7 @@ import type {
   SetResult,
   Source,
 } from "./context-lab";
-import type { RelayConfig, Scenario, ScenarioResult, Tool } from "./agency";
+import type { Mechanism, RelayConfig, Scenario, ScenarioResult, Tool } from "./agency";
 import type { Pair, PairResult } from "./judge";
 
 const DRAFTS_KEY = "shape:drafts:log";
@@ -320,6 +320,11 @@ export type AgencyDraft = {
    * split between them, the user attached to one. Absent for solo runs.
    */
   relay?: RelayConfig;
+  /**
+   * How the tools reached the model: described in the prompt (default) or
+   * through the provider's tool API, with stub results fed back.
+   */
+  mechanism?: Mechanism;
   /** The user's answer to the playground's reflection question, if they jotted one. */
   reflection?: string;
   createdAt: number;
@@ -636,6 +641,15 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     }
     if (typeof d.policy !== "string" || !Array.isArray(d.results)) {
       return { ok: false, reason: "Agency draft is missing policy or results." };
+    }
+    if (d.mechanism !== undefined && d.mechanism !== "prompted" && d.mechanism !== "native") {
+      return { ok: false, reason: "Agency draft has an unknown mechanism." };
+    }
+    {
+      const tools = d.tools as Partial<Tool>[];
+      if (tools.some((t) => t?.stubKind !== undefined && t.stubKind !== "success" && t.stubKind !== "failure")) {
+        return { ok: false, reason: "Agency draft has a tool stub of unknown kind." };
+      }
     }
     if (d.relay !== undefined) {
       const relay = d.relay as Partial<RelayConfig> | null;

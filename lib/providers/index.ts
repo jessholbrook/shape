@@ -8,7 +8,7 @@ import { customChat, pingCustom } from "./custom";
 import { webllmChat } from "./webllm";
 import type { ChatCall, ChatEvent } from "./types";
 
-export type { ChatCall, ChatEvent, ChatMessage, ChatUsage } from "./types";
+export type { ChatCall, ChatEvent, ChatMessage, ChatUsage, ToolCall, ToolSpec } from "./types";
 
 function dispatch(call: ChatCall): AsyncIterable<ChatEvent> {
   if (call.provider === "webllm") return webllmChat(call);

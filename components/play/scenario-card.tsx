@@ -5,12 +5,15 @@ import {
   OUTCOME_LABEL,
   RISK_LABEL,
   gradeDecision,
+  gradeRepair,
   toolUsed,
   type Expected,
   type Scenario,
   type ScenarioRow,
+  type ScenarioRun,
   type Tool,
 } from "@/lib/agency";
+import { RepairPill } from "./repair-report";
 import { ShareActions } from "./share-actions";
 import { StreamingPlaceholder } from "./streaming-placeholder";
 
@@ -161,17 +164,21 @@ export function SoloRuns({ row, tools }: { row: ScenarioRow; tools: Tool[] }) {
                     />
                   )}
                 </div>
-                <div className="font-mono text-[12px] leading-[1.55] text-ink whitespace-pre-wrap break-words min-h-[36px]">
-                  {run.error ? (
-                    <span className="text-danger">{run.error}</span>
-                  ) : run.raw ? (
-                    run.raw
-                  ) : run.status === "running" ? (
-                    <StreamingPlaceholder />
-                  ) : (
-                    <span className="text-ink-quiet italic">Waiting…</span>
-                  )}
-                </div>
+                {run.turns?.length ? (
+                  <NativeTurns run={run} />
+                ) : (
+                  <div className="font-mono text-[12px] leading-[1.55] text-ink whitespace-pre-wrap break-words min-h-[36px]">
+                    {run.error ? (
+                      <span className="text-danger">{run.error}</span>
+                    ) : run.raw ? (
+                      run.raw
+                    ) : run.status === "running" ? (
+                      <StreamingPlaceholder />
+                    ) : (
+                      <span className="text-ink-quiet italic">Waiting…</span>
+                    )}
+                  </div>
+                )}
                 {used && (
                   <span
                     className={`font-mono text-[9px] rounded-full px-2 py-0.5 border self-start ${
@@ -188,6 +195,73 @@ export function SoloRuns({ row, tools }: { row: ScenarioRow; tools: Tool[] }) {
               </div>
             );
       })}
+    </div>
+  );
+}
+
+/**
+ * The native mechanism's run: each assistant turn, the calls it made, and
+ * the stub result each call got back — then what the model did next. The
+ * repair verdict for the run sits at the end, where the reader has just
+ * seen the evidence for it.
+ */
+function NativeTurns({ run }: { run: ScenarioRun }) {
+  const turns = run.turns ?? [];
+  const repair = run.status === "done" ? gradeRepair(turns) : null;
+  return (
+    <div className="flex flex-col gap-2">
+      {turns.map((turn, i) =>
+        turn.kind === "assistant" ? (
+          <div key={i} className="flex flex-col gap-1">
+            <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-ink-quiet">
+              {i === 0 ? "Model" : "Model, after the result"}
+            </span>
+            {turn.text && (
+              <p className="font-mono text-[12px] leading-[1.55] text-ink whitespace-pre-wrap break-words">
+                {turn.text}
+              </p>
+            )}
+            {turn.calls.map((c) => (
+              <span
+                key={c.id}
+                className="font-mono text-[11px] text-ink self-start rounded-[6px] px-2 py-1 bg-canvas border border-line break-all"
+              >
+                → {c.name}({c.args})
+              </span>
+            ))}
+            {turn.status === "running" && !turn.text && turn.calls.length === 0 && (
+              <StreamingPlaceholder />
+            )}
+            {turn.error && (
+              <span className="font-mono text-[12px] text-danger">{turn.error}</span>
+            )}
+          </div>
+        ) : (
+          <div key={i} className="flex flex-col gap-0.5 ml-4">
+            <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-ink-quiet">
+              {turn.name} returned
+            </span>
+            <p
+              className={`font-mono text-[12px] leading-[1.55] whitespace-pre-wrap break-words ${
+                turn.failure ? "text-danger" : "text-ink-muted"
+              }`}
+            >
+              {turn.result}
+            </p>
+          </div>
+        ),
+      )}
+      {run.error && !turns.length && (
+        <span className="font-mono text-[12px] text-danger">{run.error}</span>
+      )}
+      {repair && repair.outcome !== "none" && (
+        <div className="flex items-center gap-2 pt-1">
+          <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-ink-quiet">
+            After the failure
+          </span>
+          <RepairPill outcome={repair.outcome} />
+        </div>
+      )}
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { useDefaultProvider } from "@/lib/hooks/use-default-provider";
 import { useUnsavedWork } from "@/lib/hooks/use-unsaved-work";
-import { runChat, type ChatMessage } from "@/lib/providers/index";
+import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
 import {
@@ -18,7 +18,7 @@ import {
   type PersonaSection,
   type PersonaValues,
 } from "@/lib/persona";
-import { suggestTitle, type PersonaDraft } from "@/lib/drafts";
+import { suggestTitle, type PersonaDraft, type PersonaTranscriptMessage } from "@/lib/drafts";
 import { slugify, downloadBlob } from "@/lib/download";
 import { REFLECTION } from "@/lib/reflection-questions";
 import { PersonaForm } from "@/components/play/persona-form";
@@ -61,7 +61,7 @@ export function PersonaWorkshop() {
   const [temperature, setTemperature] = useState(0.7);
   const [persona, setPersona] = useState<PersonaValues>(DEFAULT_PERSONA);
   const [userMessage, setUserMessage] = useState(DEFAULT_MESSAGE);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<PersonaTranscriptMessage[]>([]);
   const [reply, setReply] = useState<ReplyState>(EMPTY_REPLY);
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -126,7 +126,7 @@ export function PersonaWorkshop() {
     const question = userMessage.trim();
     if (!question) return;
 
-    const history: ChatMessage[] = [
+    const history: PersonaTranscriptMessage[] = [
       ...messages,
       { role: "user", content: question },
     ];
@@ -354,7 +354,7 @@ function ConversationCard({
   filenameStem,
   onClear,
 }: {
-  messages: ChatMessage[];
+  messages: PersonaTranscriptMessage[];
   reply: ReplyState;
   personaLabel: string;
   system: string;

@@ -4,6 +4,7 @@ import {
   RISK_BLURB,
   RISK_LABEL,
   type Agent,
+  type StubKind,
   type Tool,
   type ToolOwner,
   type ToolRisk,
@@ -27,6 +28,7 @@ export function ToolEditor({
   onRemove,
   canRemove,
   agents,
+  stubs,
 }: {
   tool: Tool;
   onChange: (next: Tool) => void;
@@ -34,6 +36,8 @@ export function ToolEditor({
   canRemove: boolean;
   /** Relay mode: who can call this tool. Absent in solo mode. */
   agents?: Agent[];
+  /** Native mechanism: show the stub result the model gets back. */
+  stubs?: boolean;
 }) {
   return (
     <div className="bg-canvas border border-line rounded-[12px] p-4 flex flex-col gap-3">
@@ -124,6 +128,45 @@ export function ToolEditor({
           className="w-full bg-surface border border-line rounded-[8px] px-3 py-2 font-mono text-[12px] leading-[1.5] text-ink placeholder:text-ink-quiet focus:border-ink focus:outline-none resize-y"
         />
       </label>
+
+      {stubs && (
+        <div className="flex flex-col gap-1.5">
+          <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet inline-flex items-center gap-1.5">
+            Stub result — what the model gets back
+            <InfoTip>
+              Nothing is executed. When the model calls this tool, this text
+              is what comes back, and the run continues. Mark it a failure
+              to see what the model does when an action doesn&apos;t work —
+              that is the lesson this mechanism exists for.
+            </InfoTip>
+          </span>
+          <div className="flex flex-wrap items-start gap-2">
+            <textarea
+              value={tool.stub ?? ""}
+              onChange={(e) => onChange({ ...tool, stub: e.target.value })}
+              rows={2}
+              placeholder="Done. — or — Error: permission denied."
+              aria-label="Stub result"
+              className="flex-1 min-w-[200px] bg-surface border border-line rounded-[8px] px-3 py-2 font-mono text-[12px] leading-[1.5] text-ink placeholder:text-ink-quiet focus:border-ink focus:outline-none resize-y"
+            />
+            <select
+              value={tool.stubKind ?? "success"}
+              onChange={(e) =>
+                onChange({ ...tool, stubKind: e.target.value as StubKind })
+              }
+              aria-label="Stub kind"
+              className={`bg-surface border rounded-[8px] px-2 py-1.5 font-mono text-[11px] focus:outline-none ${
+                (tool.stubKind ?? "success") === "failure"
+                  ? "border-danger/50 text-danger"
+                  : "border-success/50 text-success"
+              }`}
+            >
+              <option value="success">Success</option>
+              <option value="failure">Failure</option>
+            </select>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

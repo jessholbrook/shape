@@ -1,4 +1,5 @@
-import type { ChatCall, ChatEvent, ChatMessage } from "./types";
+import type { ChatCall, ChatEvent, ChatMessage, ToolSpec } from "./types";
+import { parseToolArgs } from "./types";
 import { readSse } from "./sse";
 
 /**
@@ -9,6 +10,10 @@ import { readSse } from "./sse";
  * it straight from the browser rather than through our proxy. Streaming uses
  * the `:streamGenerateContent?alt=sse` endpoint, which emits standard SSE
  * `data:` blocks our shared reader already understands.
+ *
+ * Tools are `functionDeclarations`; a call comes back as a `functionCall`
+ * part and its result goes back as a `functionResponse` part. Gemini has no
+ * call ids, so we mint one per call and match results by name.
  */
 const BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
@@ -20,12 +25,56 @@ function endpoint(
   return method === "streamGenerateContent" ? `${url}?alt=sse` : url;
 }
 
-/** Gemini uses "user" / "model"; map our "assistant" role to "model". */
-function toContents(messages: ChatMessage[]) {
-  return messages.map((m) => ({
-    role: m.role === "assistant" ? "model" : "user",
-    parts: [{ text: m.content }],
-  }));
+type Part =
+  | { text: string }
+  | { functionCall: { name: string; args: Record<string, unknown> } }
+  | { functionResponse: { name: string; response: Record<string, unknown> } };
+
+type Content = { role: "user" | "model"; parts: Part[] };
+
+/** Gemini uses "user" / "model"; tool results ride on a user turn as functionResponse parts. */
+export function toContents(messages: ChatMessage[]): Content[] {
+  const out: Content[] = [];
+  for (const m of messages) {
+    if (m.role === "tool") {
+      const part: Part = {
+        functionResponse: { name: m.name, response: { result: m.content } },
+      };
+      const last = out[out.length - 1];
+      if (last && last.role === "user" && "functionResponse" in last.parts[0]) {
+        last.parts.push(part);
+      } else {
+        out.push({ role: "user", parts: [part] });
+      }
+      continue;
+    }
+    if (m.role === "assistant" && m.toolCalls?.length) {
+      const parts: Part[] = [];
+      if (m.content) parts.push({ text: m.content });
+      for (const c of m.toolCalls) {
+        parts.push({ functionCall: { name: c.name, args: parseToolArgs(c.args) } });
+      }
+      out.push({ role: "model", parts });
+      continue;
+    }
+    out.push({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    });
+  }
+  return out;
+}
+
+function toGeminiTools(tools: ToolSpec[]) {
+  return [
+    {
+      functionDeclarations: tools.map((t) => ({
+        name: t.name,
+        description: t.description,
+        parameters: t.parameters,
+      })),
+    },
+  ];
 }
 
 export async function* geminiChat(call: ChatCall): AsyncIterable<ChatEvent> {
@@ -47,6 +96,7 @@ export async function* geminiChat(call: ChatCall): AsyncIterable<ChatEvent> {
         temperature: call.temperature,
         maxOutputTokens: call.maxTokens ?? 1024,
       },
+      ...(call.tools?.length ? { tools: toGeminiTools(call.tools) } : {}),
     }),
   });
 
@@ -55,10 +105,22 @@ export async function* geminiChat(call: ChatCall): AsyncIterable<ChatEvent> {
     throw new Error(`Google ${res.status}: ${errText}`);
   }
 
+  yield* parseGeminiStream(dataOf(readSse(res)));
+}
+
+async function* dataOf(events: AsyncIterable<{ data: string }>): AsyncIterable<string> {
+  for await (const { data } of events) yield data;
+}
+
+/** The stream, as events. Function calls arrive whole, as parts. */
+export async function* parseGeminiStream(
+  datas: AsyncIterable<string>,
+): AsyncIterable<ChatEvent> {
   let inputTokens = 0;
   let outputTokens = 0;
+  let calls = 0;
 
-  for await (const { data } of readSse(res)) {
+  for await (const data of datas) {
     let parsed: GeminiSseData;
     try {
       parsed = JSON.parse(data);
@@ -70,6 +132,17 @@ export async function* geminiChat(call: ChatCall): AsyncIterable<ChatEvent> {
       for (const p of parts) {
         if (typeof p.text === "string" && p.text.length > 0) {
           yield { type: "text", delta: p.text };
+        }
+        if (p.functionCall && typeof p.functionCall.name === "string") {
+          calls += 1;
+          yield {
+            type: "tool_call",
+            call: {
+              id: `${p.functionCall.name}#${calls}`,
+              name: p.functionCall.name,
+              args: JSON.stringify(p.functionCall.args ?? {}),
+            },
+          };
         }
       }
     }
@@ -116,7 +189,12 @@ async function safeReadError(res: Response): Promise<string> {
 
 type GeminiSseData = {
   candidates?: {
-    content?: { parts?: { text?: string }[] };
+    content?: {
+      parts?: {
+        text?: string;
+        functionCall?: { name?: string; args?: Record<string, unknown> };
+      }[];
+    };
   }[];
   usageMetadata?: {
     promptTokenCount?: number;
