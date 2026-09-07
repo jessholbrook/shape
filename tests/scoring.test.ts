@@ -37,6 +37,16 @@ import {
   type Pair,
 } from "../lib/judge";
 import {
+  DEFAULT_TONE,
+  DEFAULT_TARGET,
+  composeInferencePrompt,
+  composeInferenceUserTurn,
+  parseInferredTone,
+  proposalChanges,
+  readTargetSignals,
+  sameTone,
+} from "../lib/tone";
+import {
   DEFAULT_RELAY,
   SEED_AGENTS,
   SEED_SCENARIOS,
@@ -544,6 +554,64 @@ describe("relay grading", () => {
       { role: "assistant", content: "HANDOFF: b: go" },
       { role: "user", content: "Question from Mail & files agent…" },
     ]);
+  });
+});
+
+// --- Reverse Tone Dial ------------------------------------------------------
+
+describe("reverse tone dial inference", () => {
+  test("the inference prompt anchors every dial to its actual stop instructions", () => {
+    const p = composeInferencePrompt();
+    for (const id of ["warmth", "verbosity", "energy", "directness", "concreteness", "structure"]) {
+      assert.match(p, new RegExp(`"${id}": 0`));
+    }
+    assert.match(p, /-2 Clinical: Keep an impersonal, clinical register/);
+    assert.match(p, /2 Sectioned: Structure the reply with short headed sections/);
+    assert.match(p, /Reply with JSON only/);
+    const turn = composeInferenceUserTurn("A brief", "A message", DEFAULT_TARGET);
+    assert.match(turn, /^Brief:\nA brief\n\nUser message:\nA message\n\nTarget reply:\nWelcome in\./);
+  });
+
+  test("a fenced JSON proposal with prose around it parses, and values are clamped", () => {
+    const raw = 'Here is my read:\n```json\n{"warmth": 2, "verbosity": "-1", "energy": -7, "directness": 0.4, "structure": -2, "why": {"warmth": "It says welcome in.", "energy": ""}}\n```';
+    const r = parseInferredTone(raw);
+    assert.ok(r);
+    assert.deepEqual(r.values, {
+      warmth: 2, verbosity: -1, energy: -2, directness: 0, concreteness: 0, structure: -2,
+    });
+    assert.deepEqual(r.why, { warmth: "It says welcome in." });
+  });
+
+  test("a reply with no dial keys is no proposal, not a neutral one", () => {
+    assert.equal(parseInferredTone("I'd say it's fairly warm and short."), null);
+    assert.equal(parseInferredTone('{"mood": "calm"}'), null);
+    assert.equal(parseInferredTone("{not json"), null);
+  });
+
+  test("a proposal is a diff against the current dials, in dial order", () => {
+    const proposed = { ...DEFAULT_TONE, structure: -2 as const, warmth: 2 as const };
+    assert.deepEqual(proposalChanges(DEFAULT_TONE, proposed), [
+      { dim: "warmth", from: 0, to: 2 },
+      { dim: "structure", from: 0, to: -2 },
+    ]);
+    assert.equal(sameTone(DEFAULT_TONE, { ...DEFAULT_TONE }), true);
+    assert.equal(sameTone(DEFAULT_TONE, proposed), false);
+  });
+
+  test("the mechanical signals read off the seeded target", () => {
+    const signals = Object.fromEntries(readTargetSignals(DEFAULT_TARGET).map((s) => [s.dim, s.label]));
+    assert.match(signals.verbosity, /^\d+ words · 2 sentences$/);
+    assert.equal(signals.structure, "no lists or headings");
+    assert.equal(signals.energy, "no exclamation marks");
+    assert.equal(signals.directness, "no hedges");
+    assert.equal(signals.concreteness, "no numbers or examples");
+    assert.equal(readTargetSignals("   ").length, 0);
+    const listy = readTargetSignals("Do this!\n- one\n- two\nYou might like it, perhaps.");
+    const byDim = Object.fromEntries(listy.map((s) => [s.dim, s.label]));
+    assert.equal(byDim.structure, "2 list items");
+    assert.equal(byDim.energy, "1 exclamation mark");
+    assert.equal(byDim.directness, "2 hedges");
+    assert.equal(byDim.warmth, "addresses the reader 1×");
   });
 });
 

@@ -121,7 +121,7 @@ Every meaningful action in Shape produces an **artifact**. Artifacts are first-c
 | Playground | Teaches | Artifact produced |
 |---|---|---|
 | **Diff Mode** | Iteration; prompts as design variables | Diff Log |
-| **Tone Dial** | Style as a design token | Behavior Spec |
+| **Tone Dial** *(reverse mode: §21)* | Style as a design token; specification by demonstration | Behavior Spec |
 | **Persona Workshop** | Character design for AI | Persona Card |
 | **Refusal Lab** | Boundary design; over-/under-refusal | Refusal Scorecard |
 | **Eval Workshop** | Rubric-based evaluation | Eval Rubric + Scorecard |
@@ -924,3 +924,59 @@ Cost is the constraint: four agents over four rounds is sixteen sequential calls
 - **Mixed models per agent in relay.** The lesson is topology; one model removes a confound. Roundtable is where composition becomes the lever.
 - **Native tool-calling and multi-turn repair.** Still parked together; a relay over the native API would hide both the descriptions and the handoffs.
 - **Injected handoffs.** Context Lab's untrusted-source mechanic applied to a handoff — an instruction planted in a document that one agent relays to another as a request — is the third experiment and a good one, but it needs the §17 source panel inside Tool Bench. Note it for v0.2.
+
+---
+
+## 21. Reverse Tone Dial — v0.1 spec (built)
+
+*The first playground built from user feedback rather than from our own arc. Ships as a **Forward / Reverse** toggle on Tone Dial (§7). Issue #118; BACKLOG "Reverse Tone Dial".*
+
+### Purpose
+
+Run the dial backwards. Instead of moving dials and reading the output, the designer edits a reply into what they actually wanted and the model proposes the dials that would produce it.
+
+It is *specification by demonstration*, and it is the inversion of the whole curriculum: Part I writes a spec and reads an output; this writes an output and infers the spec. The same move surfaced three times independently in feedback — on Eval Lab (design the rubric from the outputs) and twice on Tone Dial — which made it the strongest single signal we had.
+
+### A mode, not a playground
+
+Reverse mode is a toggle on `/play/tone`, the Diff Mode Independent / Conversation precedent. The dials, the brief, the composed prompt, and the run row are all the same objects; what changes is the direction the designer works in. Forward: set dials → compose → run. Reverse: edit target → infer → apply → run → compare.
+
+The two directions form a loop on purpose. A forward output has an **Edit this output as a target** action that carries it into reverse mode; a reverse run puts its output next to the target. The reader goes round until the dials are the spec.
+
+### The mechanic: a proposal, not a setting
+
+The inference is one call. The model gets the six dials with **every stop's actual instruction** — not "warm" but the sentence the Warm stop adds to the prompt — plus the brief, the user message, and the target, and replies with JSON: one stop per dial and one short line per dial citing the target.
+
+What comes back is rendered as a **diff against the current dials**, with the model's reason on each line. Nothing moves until the designer applies it, and the apply button says how many dials it would move. An inference presented as fact would teach exactly the overconfidence Module 08 warns about; a proposal with reasons can be disagreed with one dial at a time.
+
+The inference runs at temperature 0.2 regardless of the generation dial. It is a reading, not a writing.
+
+### What a rule can read, and what the model has to judge
+
+Beside the target sits a row of chips computed locally with no model: word and sentence counts, list items and headings, exclamation marks, hedges, how often the reader is addressed, numbers and examples. Each chip names the dial it bears on.
+
+This is Spread's boundary (§14) applied to inference: mechanical facts are countable, tone is not. Verbosity and Structure the model could have counted; Warmth and Energy it had to judge. Putting the counts next to the proposal lets the reader see which of the model's lines are arithmetic and which are opinion.
+
+### The check
+
+Apply the proposal, run it forward, and the output appears beside the target with a word-level diff (the Diff Mode primitive) and a divergence percentage labelled as what it is: *a crude read*. Two replies can share no words and the same voice. The judgement is the reader's; the comparison just puts the two things in the same place.
+
+If the output has the target's tone, the dials are the spec. If not, the dial the model got wrong is the one to move by hand — which is the point of leaving the dials editable under the proposal.
+
+### Seeded target
+
+A welcome line for the default meditation-app brief that reads distinctly off neutral on several dials — warm, brief, composed, prose — so the first inference has something to find, and the local chips have something to show ("no exclamation marks", "no lists or headings").
+
+### Parsing
+
+Lenient: code fences and a leading sentence are tolerated, values are rounded and clamped to the five stops, and a missing dial reads as neutral. A reply with **no dial keys at all** is *No clear proposal* rather than a neutral one — a fabricated setting would be worse than none, and the raw reply is shown so the reader can see what the model did instead. Small in-browser models will miss the format sometimes; the card says so.
+
+### Artifact — Behavior Spec, extended
+
+`DraftKind: "tone"` is unchanged. `ToneDraft` gains `mode` and an optional `reverse` block — the target, the inferred dials with their reasons, and the raw reply — and the reflection question for the mode asks where the model's guess differed from the dial the designer would have set. Notebook summary, PDF export, and import validation understand the block; forward drafts are untouched.
+
+### Out of scope for v0.1
+
+- **Inferring the brief.** The target is read against the brief the designer wrote; inferring the brief itself is a different and larger inversion.
+- **Several targets at once.** One target, one proposal. A set of targets with one shared proposal is the Eval Lab rubric inversion's territory.
+- **Automatic agreement scoring.** The comparison shows a word-level diff and says it is crude. A judge scoring "does this match the target's tone" is Module 11's instrument and its biases; not here.

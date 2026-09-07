@@ -10,12 +10,17 @@ import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
 import {
+  DEFAULT_TARGET,
   DEFAULT_TONE,
   TONE_INITIAL,
+  composeInferencePrompt,
+  composeInferenceUserTurn,
   composeSystemPrompt,
   composeToneLines,
   normalizeToneValues,
+  parseInferredTone,
   type ToneLine,
+  type ToneMode,
   type ToneValues,
 } from "@/lib/tone";
 import { suggestTitle, type ToneDraft } from "@/lib/drafts";
@@ -31,6 +36,13 @@ import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { ReflectionCard } from "@/components/play/reflection-card";
 import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
 import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row";
+import {
+  EMPTY_INFERENCE,
+  ProposalCard,
+  TargetComparison,
+  TargetSignals,
+  type InferenceState,
+} from "@/components/play/tone-proposal";
 
 const EMPTY_OUTPUT: OutputState = {
   text: "",
@@ -58,6 +70,9 @@ export function ToneDial() {
   const [userMessage, setUserMessage] = useState(DEFAULT_MESSAGE);
   const [tone, setTone] = useState<ToneValues>(DEFAULT_TONE);
   const [output, setOutput] = useState<OutputState>(EMPTY_OUTPUT);
+  const [mode, setMode] = useState<ToneMode>("forward");
+  const [target, setTarget] = useState(DEFAULT_TARGET);
+  const [inference, setInference] = useState<InferenceState>(EMPTY_INFERENCE);
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [runCount, setRunCount] = useState(0);
@@ -77,6 +92,19 @@ export function ToneDial() {
     setUserMessage(draft.lastUserMessage);
     if (draft.lastOutput) {
       setOutput({ ...EMPTY_OUTPUT, text: draft.lastOutput, status: "done" });
+    }
+    setMode(draft.mode ?? "forward");
+    if (draft.reverse) {
+      setTarget(draft.reverse.target);
+      setInference(
+        draft.reverse.inferred
+          ? {
+              status: "done",
+              raw: draft.reverse.raw ?? "",
+              result: draft.reverse.inferred,
+            }
+          : EMPTY_INFERENCE,
+      );
     }
   }, []);
   const { draftId, title, setTitle, saveStatus, save } = useDraftEditing({
@@ -104,6 +132,14 @@ export function ToneDial() {
       tone,
       lastUserMessage: userMessage,
       lastOutput: output.text || undefined,
+      mode,
+      reverse: isReverse
+        ? {
+            target,
+            inferred: inference.result ?? undefined,
+            raw: inference.raw || undefined,
+          }
+        : undefined,
       reflection: reflectionNote.trim() || undefined,
     });
     setDirty(false);
@@ -118,6 +154,89 @@ export function ToneDial() {
 
   const ready = hydrated && (!providerNeedsKey(provider) || !!keys[provider]);
   const canRun = ready && userMessage.trim() && !running;
+  const isReverse = mode === "reverse";
+  const canInfer = ready && target.trim() && !running;
+  const modelName =
+    PROVIDERS[provider].models.find((m) => m.id === model)?.name ?? model;
+
+  /**
+   * Reverse mode's one call: read the target, propose dial positions. Runs
+   * at a low temperature regardless of the generation dial — it's a reading,
+   * not a writing.
+   */
+  async function infer() {
+    const apiKey = keys[provider];
+    if (providerNeedsKey(provider) && !apiKey) return;
+
+    setRunning(true);
+    setDirty(true);
+    setInference({ status: "running", raw: "", result: null });
+    let raw = "";
+    try {
+      const stream = runChat({
+        provider,
+        model,
+        system: composeInferencePrompt(),
+        messages: [
+          {
+            role: "user",
+            content: composeInferenceUserTurn(brief, userMessage, target),
+          },
+        ],
+        temperature: 0.2,
+        apiKey,
+      });
+      for await (const event of stream) {
+        if (event.type === "text") {
+          raw += event.delta;
+          setInference((prev) => ({ ...prev, raw }));
+        } else if (event.type === "done") {
+          const cost = calcCost(
+            provider,
+            model,
+            event.usage.inputTokens,
+            event.usage.outputTokens,
+          );
+          setInference({
+            status: "done",
+            raw,
+            result: parseInferredTone(raw),
+            inputTokens: event.usage.inputTokens,
+            outputTokens: event.usage.outputTokens,
+            costUsd: cost,
+          });
+          recordUsage({
+            provider,
+            model,
+            inputTokens: event.usage.inputTokens,
+            outputTokens: event.usage.outputTokens,
+          });
+        } else if (event.type === "error") {
+          setInference({ status: "error", raw, result: null, error: event.message });
+        }
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setInference({ status: "error", raw, result: null, error: message });
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  function switchMode(next: ToneMode) {
+    if (next === mode || running) return;
+    setMode(next);
+    setReflectionDismissed(false);
+  }
+
+  /** The loop the mode exists for: a forward output becomes the thing to edit. */
+  function adoptOutputAsTarget() {
+    if (!output.text) return;
+    setTarget(output.text);
+    setInference(EMPTY_INFERENCE);
+    setMode("reverse");
+    setDirty(true);
+  }
 
   async function run() {
     const apiKey = keys[provider];
@@ -205,6 +324,30 @@ export function ToneDial() {
       />
       <WebLLMUnsupportedBanner show={provider === "webllm"} />
 
+      <div className="bg-surface border border-line rounded-[16px] p-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex rounded-[10px] border border-line bg-canvas p-0.5">
+          <ModeButton
+            active={!isReverse}
+            disabled={running}
+            onClick={() => switchMode("forward")}
+          >
+            Forward
+          </ModeButton>
+          <ModeButton
+            active={isReverse}
+            disabled={running}
+            onClick={() => switchMode("reverse")}
+          >
+            Reverse
+          </ModeButton>
+        </div>
+        <p className="font-mono text-[11px] leading-[1.5] text-ink-quiet max-w-md">
+          {isReverse
+            ? "Edit a reply into what you wanted, and the model proposes the dials that would produce it. Apply the proposal, run it forward, and see whether it holds."
+            : "Set the dials, compose the prompt, run it. Specification first, output second."}
+        </p>
+      </div>
+
       <ProviderModelTempRow
         provider={provider}
         model={model}
@@ -229,15 +372,71 @@ export function ToneDial() {
               className="w-full bg-canvas border border-line rounded-[10px] px-3 py-2 font-mono text-[13px] leading-[1.5] text-ink placeholder:text-ink-quiet focus:border-ink focus:outline-none resize-y"
             />
             <p className="mt-2 font-mono text-[11px] text-ink-quiet">
-              The dials below add tone instructions to this brief.
+              {isReverse
+                ? "The model reads the target against this brief."
+                : "The dials below add tone instructions to this brief."}
             </p>
           </div>
 
-          <ToneDialControls values={tone} onChange={setTone} />
+          {isReverse ? (
+            <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-col gap-3">
+              <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet inline-flex items-center gap-1.5">
+                Target reply — edit it into what you wanted
+                <InfoTip>
+                  Specification by demonstration. Write or edit the reply you
+                  wish the model had given, in the voice you want, and let the
+                  model work out which dials get there. The last forward
+                  output is the natural starting point.
+                </InfoTip>
+              </label>
+              <textarea
+                value={target}
+                onChange={(e) => {
+                  setTarget(e.target.value);
+                  setDirty(true);
+                }}
+                rows={6}
+                placeholder="The reply you wanted, in the voice you wanted…"
+                aria-label="Target reply"
+                className="w-full bg-canvas border border-line rounded-[10px] px-3 py-2 font-sans text-[14px] leading-[1.55] text-ink placeholder:text-ink-quiet focus:border-ink focus:outline-none resize-y"
+              />
+              <TargetSignals target={target} />
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={infer}
+                  disabled={!canInfer}
+                  className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ink/90 transition-colors"
+                >
+                  {inference.status === "running"
+                    ? "Reading…"
+                    : "Infer the dials"}
+                  <span className="text-highlight">→</span>
+                </button>
+                <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+                  1 call · temp 0.2
+                </span>
+              </div>
+            </div>
+          ) : (
+            <ToneDialControls values={tone} onChange={setTone} />
+          )}
         </div>
 
-        {/* Right: composed prompt preview + output */}
+        {/* Right: composed prompt preview (+ proposal and dials in reverse) */}
         <div className="flex flex-col gap-4">
+          {isReverse && (
+            <ProposalCard
+              inference={inference}
+              current={tone}
+              modelName={modelName}
+              onApply={(values) => {
+                setTone(values);
+                setDirty(true);
+              }}
+            />
+          )}
+          {isReverse && <ToneDialControls values={tone} onChange={setTone} />}
           <ComposedPromptCard
             brief={brief}
             toneLines={toneLines}
@@ -266,7 +465,11 @@ export function ToneDial() {
             disabled={!canRun}
             className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ink/90 transition-colors"
           >
-            {running ? "Streaming…" : "Run with this tone"}
+            {running && output.status === "running"
+              ? "Streaming…"
+              : isReverse
+                ? "Run these dials"
+                : "Run with this tone"}
             <span className="text-highlight">→</span>
           </button>
           <button
@@ -277,19 +480,40 @@ export function ToneDial() {
           >
             Clear output
           </button>
+          {!isReverse && output.status === "done" && !!output.text && (
+            <button
+              type="button"
+              onClick={adoptOutputAsTarget}
+              disabled={running}
+              className="ml-auto font-mono text-[12px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink disabled:opacity-40"
+            >
+              Edit this output as a target →
+            </button>
+          )}
         </div>
       </div>
 
       <OutputPanel
-        label="Output"
+        label={isReverse ? "Output from these dials" : "Output"}
         config={config}
         output={output}
         filenameStem={`tone-${slugify(title || brief, "output")}`}
       />
 
-      {runCount >= 2 && !running && !reflectionDismissed && (
+      {isReverse &&
+        output.status === "done" &&
+        !!output.text &&
+        !!target.trim() && (
+          <TargetComparison target={target} output={output.text} />
+        )}
+
+      {(isReverse
+        ? inference.status === "done" && runCount >= 1
+        : runCount >= 2) &&
+        !running &&
+        !reflectionDismissed && (
         <ReflectionCard
-          reflection={REFLECTION.tone}
+          reflection={isReverse ? REFLECTION.toneReverse : REFLECTION.tone}
           answer={reflectionNote}
           onAnswerChange={(v) => {
             setReflectionNote(v);
@@ -371,3 +595,30 @@ function ComposedPromptCard({
   );
 }
 
+function ModeButton({
+  active,
+  disabled,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={active}
+      className={`font-mono text-[11px] uppercase tracking-[0.08em] rounded-[8px] px-3 py-1.5 transition-colors disabled:cursor-not-allowed ${
+        active
+          ? "bg-ink text-canvas"
+          : "text-ink-muted hover:text-ink disabled:opacity-50"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
