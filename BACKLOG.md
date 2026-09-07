@@ -25,14 +25,26 @@ measurable"; the inversion teaches "choosing the right criteria is the skill."
 rank these correctly?" check) — mirroring the Independent/Conversation toggle
 shipped for Diff Mode. Roughly a day.
 
-**Decision:** Park. Good idea but a meaningfully different mode, not a tweak;
-hold off on a single data point. Revisit if the theme recurs in feedback.
+**Decision (updated 2026-06-16 → 2026-07-08):** ~~Park; hold off on a single
+data point.~~ **Promoted to a real candidate for the next build cycle.** A
+second, independent tester (launch day, `/play/evals`) landed on the *same*
+inversion unprompted — "maybe rubric design is the experimental task, based on
+evaluating a set of model outputs, rather than seeing how a given rubric can be
+applied to varying outputs." That's the "revisit if the theme recurs" trigger
+firing: two independent testers, pre-launch and at launch, same idea. Still not
+a launch-week patch (it's a new mode, not a fix) — but it's earned a slot in the
+next round rather than staying parked. See also "Reverse Tone Dial" below: the
+same inversion, on a different playground, from a third tester.
 
-**Related meta-note from the same tester:** the playgrounds share components
-(provider/model/temp row, save bar, etc.), which they liked but wondered if
-consistency was constraining each playground's "native" design. Our read: the
-shared levers are real and the coherence is intentional for a teaching tool —
-no action, but worth holding as a north star when designing new surfaces.
+**Related meta-note — now also recurred (2 testers).** Both testers flagged the
+same thing about the shared components (provider/model/temp row, save bar, the
+mode-toggle pattern): they *like* the consistency for onboarding comfort, but
+wonder whether it constrains each playground's "native" design — e.g. what would
+Eval Lab be if it weren't shaped to match the others? Our read holds: the shared
+levers are real and the coherence is intentional for a teaching tool. But with
+two independent data points, treat it as a genuine north-star tension when
+designing the next surface — the rubric-inversion mode above is the natural
+place to test whether a more "native" playground shape earns its divergence.
 
 ## Provider models — fetch dynamically instead of hardcoding
 
@@ -198,13 +210,9 @@ is parked in its own section below, with a build brief at `SPEC.md` §20.
 - **Portability** — **BUILT**, see `SPEC.md` §16. One spec across 2-4 models,
   with each clause classified portable / model-specific / unstable / not
   landing. No paired article yet — it shares Module 08 with Spread.
-- **Reverse Tone Dial** — edit the output you want, model infers the dial
-  positions. *Specification by demonstration*, and the natural Part II
-  inversion of the whole curriculum: Part I writes a spec and reads an output;
-  Part II writes an output and infers the spec. **Note the recurring theme** —
-  this is the same move as the parked "Eval Lab — Design a rubric" inversion
-  above. Inversion has now surfaced independently three times in feedback,
-  which makes it the strongest single signal we have.
+- **Reverse Tone Dial** — **NOT BUILT.** Promoted to its own section below,
+  since it's the only piece of the arc that came from user feedback rather
+  than from our own sketch.
 
 ### Explicitly out of scope
 
@@ -212,7 +220,11 @@ Fine-tuning, RAG-as-a-technology, context-window trivia, agent frameworks. All
 of it pulls the site toward "AI engineering tutorial" and away from what makes
 it good. The designer's frame stays intact through every module above.
 
-### Build cost, roughly
+### Build cost, as estimated up front *(historical)*
+
+*Kept for the record — all six shipped. The estimate held except for Tool
+Bench, which avoided the adapter work entirely by describing tools in the
+prompt instead. See `SPEC.md` §18.*
 
 Race, Portability, and Spread are close to free — same provider layer, just
 loop or fan out the existing call. Context Lab is a text-source panel plus
@@ -220,10 +232,19 @@ prompt assembly. Tool Bench is the only one needing real new plumbing
 (tool-calling across the adapters, which differs meaningfully between
 Anthropic, OpenAI, and Gemini).
 
-**Decision:** Park as a set, don't commit to the whole arc yet. If we want a
-cheap proof that Part II has legs, **Race** or **Spread** ships fastest and
-demos hardest — build one, watch whether Part I readers actually come back for
-it, and let that decide whether the four modules get written.
+**Original decision *(historical)*:** park as a set, prove it with Race or
+Spread first.
+
+**What actually happened:** the whole arc shipped between 2026-08-10 and
+2026-08-12 — six playgrounds and four articles, `SPEC.md` §14–§19. Spread went
+first as the cheap proof, and the rest followed.
+
+**Still outstanding for the arc:** none of the six playgrounds — nor Tool
+Bench's relay mode (§20) — has been run against a live model by us. Everything
+downstream of the call is covered by unit tests and seeded-state UI checks; the
+call itself isn't. Each seed is tuned to misbehave in a specific way, so a
+uniformly clean first run means the seed needs sharpening rather than that all
+is well.
 
 
 ## Module 12 — Groups, not agents (Tool Bench relay mode + Roundtable)
@@ -351,6 +372,98 @@ Spread proved Part II had legs. The article and Roundtable stay parked: let
 whether the headline reproduces on real models, and whether readers come back
 for it, decide whether Module 12 and Roundtable get built.
 
+
+## Reverse Tone Dial — edit the output, infer the dials
+
+**From:** beta feedback (issue #118), `/play/tone`, 2026-07-16 — reiterated in
+the Part II design conversation, 2026-08-10. **Next build.**
+
+**The idea:** run the Tone Dial backwards. Instead of moving dials and reading
+the output, the user edits the output into what they actually wanted and the
+model infers the dial positions — and the composed prompt — that would produce
+it. "An element of recursive learning and improvement."
+
+**Why it keeps coming back:** it's *specification by demonstration*, and it's
+the inversion of the entire curriculum. Part I writes a spec and reads an
+output; this writes an output and infers the spec. It is the same move as the
+Eval Lab "design a rubric" mode at the top of this file, which is why
+**inversion has now surfaced independently three times in feedback**. When the
+inverse direction keeps surfacing across surfaces, it's pointing at a product
+direction ("reverse mode" as a general capability) rather than separate
+bolt-ons.
+
+**Why it matters more than the rest of this file:** everything else parked here
+came from us. This came from users, repeatedly. If the next thing built should
+be driven by what beta testers actually asked for rather than by our own arc,
+this is the one.
+
+**Shape if we build it:** a mode toggle on `/play/tone` mirroring the
+Independent/Conversation toggle in Diff Mode. The core is an inference loop —
+meta-prompt the model to emit structured dial values (matching `ToneValues`)
+that best match the user's edited target, then present them as a *proposal*
+the user accepts or adjusts. An inference presented as fact would teach
+exactly the overconfidence Module 08 warns about, so the proposal has to be
+checkable: run the inferred dials forward and put the result next to the
+target. Real caveats: small in-browser models are unreliable at structured
+inference, so this likely needs a BYOK model to feel good.
+
+## Judge Lab — the other two bias passes
+
+**From:** building Judge Lab (Module 11), 2026-08-12. See `SPEC.md` §19.
+
+Judge Lab ships the **position** check: every pair judged in both orders. Two
+other biases are named in the Module 11 article but not yet testable in the
+playground.
+
+**Length-bias padding.** Rerun a pair with the shorter answer padded with
+filler and see whether the verdict flips. The seeded pairs already lean on
+this — the shorter answer is the better one in all three — but the current
+build catches length bias only indirectly, by whether the judge picks the
+long one. An explicit pass would be a third call per pair.
+
+**Self-preference.** Whether a model rates its own output higher than another
+model's. Needs two models generating and one judging, which the provider layer
+already supports — it's a bigger UI change than a third run, not a bigger
+technical one.
+
+**Decision:** park both. The order swap is the check that separates a verdict
+from a coin flip; the other two refine an instrument that already works.
+Revisit once someone has run the position check on real data and wants more.
+
+## Known bugs — small, live, unowned
+
+**From:** flagged repeatedly while building Part II, never recorded until now.
+
+**Hydration warning on every playground in browsers without WebGPU.** The
+WebLLM support banner renders on the server but not the client (or vice
+versa, depending on the probe), so React logs a hydration mismatch and
+regenerates the tree. Nothing visibly breaks and it predates Part II —
+reproducible on `/play/diff` as easily as on the new pages, and seen again in
+the desktop app's browser pane on 2026-09-07. It does not reproduce in
+headless Chromium, which is why the CI smoke suite stays green. The fix is
+small: render the banner only after hydration, the way `MissingKeyBanner`
+already gates on `hydrated`.
+
+**Two lint errors** in `components/local-model-storage.tsx` and
+`components/unsaved-toast.tsx` (`react-hooks/set-state-in-effect`) — **fixed**
+by #140 on 2026-08-21; `npm run lint` is clean and CI now gates on it.
+
+## Maintenance note — the JSX whitespace hazard
+
+**From:** hit four separate times while writing Part II, 2026-08-11/12.
+
+A closing inline tag followed by a space and then text that **wraps to another
+line** silently loses the space: `<strong>Overlap.</strong> If two…` renders as
+`Overlap.If two…`. The source looks correct, so **a grep cannot find this** —
+only the rendered output differs.
+
+It shipped fourteen times into live Part I articles before anyone noticed.
+Every inline-tag boundary in `app/learn/*/page.tsx` is now an explicit
+`{" "}` (see #136), which is the convention to keep.
+
+**If it recurs:** the detector is to fetch each rendered article, extract the
+text, and check that `<last word inside the tag> <first word after it>` appears
+*with* its space. That catches it; reading the JSX does not.
 
 ## Native tool-calling across providers
 
