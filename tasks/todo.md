@@ -851,14 +851,23 @@ section was retired (#75), and `npm run lint` has been clean since #140.
    (`SPEC.md` §20). The same caveat applies to every Part II playground —
    none has been run live by us; see BACKLOG "Still outstanding for the arc".
 
-**Build queue, in order** (each on its own branch, stacked on #150 so the
-spec and backlog edits don't conflict; PRs retarget to `main` as the stack
-merges):
+**Build queue — built 2026-09-07,** each on its own branch stacked on #150
+so the spec and backlog edits don't conflict. Merge in order; GitHub
+retargets each PR to `main` as the one below it lands:
 
-5. **Reverse Tone Dial** — issue #118, the strongest signal in feedback.
-   BACKLOG "Reverse Tone Dial".
-6. **Module 12 article + Roundtable** — only after item 4 passes.
-7. **Dynamic model list + custom OpenAI-compatible endpoint (OpenRouter)** —
-   one project; BACKLOG "Provider models" and "Custom endpoints".
-8. **Native tool-calling + multi-turn repair** — BACKLOG "Native
-   tool-calling across providers".
+5. **#150** Tool Bench relay mode (`SPEC.md` §20).
+6. **#152** Tone Dial reverse mode (`SPEC.md` §21) — issue #118.
+7. **#153** Live model lists + custom OpenAI-compatible endpoint (§22).
+8. **#154** Native tool-calling + the repair loop (§23).
+
+**Still parked, and why:**
+
+- **Module 12 article + Roundtable** — gated on item 4: the relay seed's
+  headline has to reproduce on a live model first.
+- **Judge Lab's other two bias passes**, the Eval Lab rubric inversion, and
+  the JSX whitespace hazard — see `BACKLOG.md`.
+
+**Every Part II playground, plus all four builds above, has been verified
+only with scripted provider responses.** None has been run against a live
+model by us. The seeds are tuned to misbehave; a uniformly clean first live
+run means a seed needs sharpening, not that all is well.
