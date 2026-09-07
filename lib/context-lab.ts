@@ -1,4 +1,5 @@
-import { PROVIDERS, type ProviderId } from "./providers";
+import { type ProviderId } from "./providers";
+import { resolveModel } from "./live-models";
 
 /**
  * Context Lab asks one question against several different *context sets* and
@@ -286,7 +287,7 @@ export function estimateContextCost(
   question: string,
   runsPerSet: number,
 ): number {
-  const meta = PROVIDERS[provider].models.find((m) => m.id === model);
+  const meta = resolveModel(provider, model);
   if (!meta) return 0;
   const assumedOutput = 250;
   // Context length varies per set, which is itself part of the point — a

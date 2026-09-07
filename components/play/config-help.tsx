@@ -1,4 +1,5 @@
-import { getModel, type ProviderId } from "@/lib/providers";
+import { type ProviderId } from "@/lib/providers";
+import { resolveModel } from "@/lib/live-models";
 
 /**
  * Shared educational copy for the Provider / Model / Temperature controls,
@@ -63,7 +64,7 @@ export function ModelTip({
   provider: ProviderId;
   model: string;
 }) {
-  const selected = getModel(provider, model);
+  const selected = resolveModel(provider, model);
   if (provider === "webllm") {
     return (
       <>
@@ -93,6 +94,17 @@ export function ModelTip({
       <span className="block mt-2 text-canvas/75">
         Selected: <em>{selected?.name ?? model}</em>.
       </span>
+      {selected?.pricingUnknown && (
+        <span className="block mt-1.5 text-canvas/75">
+          The API lists this model but we have no rate card for it, so costs
+          show as &ldquo;—&rdquo;.
+        </span>
+      )}
+      {selected?.retired && (
+        <span className="block mt-1.5 text-canvas/75">
+          The API no longer lists this model. Runs may fail — pick another.
+        </span>
+      )}
     </>
   );
 }

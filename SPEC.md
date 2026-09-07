@@ -980,3 +980,66 @@ Lenient: code fences and a leading sentence are tolerated, values are rounded an
 - **Inferring the brief.** The target is read against the brief the designer wrote; inferring the brief itself is a different and larger inversion.
 - **Several targets at once.** One target, one proposal. A set of targets with one shared proposal is the Eval Lab rubric inversion's territory.
 - **Automatic agreement scoring.** The comparison shows a word-level diff and says it is crude. A judge scoring "does this match the target's tone" is Module 11's instrument and its biases; not here.
+
+---
+
+## 22. Live model lists + custom endpoint — v0.1 spec (built)
+
+*Plumbing, not a playground. Closes two parked backlog items at once — "Provider models — fetch dynamically" and "Custom OpenAI-compatible endpoints + aggregators" — because the second is untenable without the first.*
+
+### Purpose
+
+The static catalog in `lib/providers.ts` is right on the day it is written and drifts after that. Gemini retires IDs quarterly; Cerebras's catalog collapsed from a dozen models to two in one summer. Every drift is a silent 404 on a run until someone reports it. So the picker is populated from each provider's model-list endpoint at runtime, and the static entries supply what the list endpoints don't: names, tiers, and pricing.
+
+Once the list is live, an arbitrary OpenAI-compatible endpoint becomes possible — OpenRouter's whole value is breadth, and breadth can't be hardcoded.
+
+### The merge rule
+
+| The API says | The catalog says | The picker shows |
+|---|---|---|
+| Listed | Known | Our name, tier, and pricing (a quoted price, e.g. OpenRouter's, beats the hand-typed one) |
+| Listed | Unknown | The model, **pricing unknown** — costs render as "—", never a fabricated zero |
+| Not listed | Known | Dropped — the point of the feature |
+| Not listed | Current selection | Kept and flagged **not listed by the API any more**, so a saved draft doesn't silently change models |
+
+Until the API has answered — or if it can't be reached — the picker shows the built-in list and says so. A live list is never mistaken for a static one: the note under the picker names which it is.
+
+### Where the lists come from
+
+| Provider | Endpoint | Path |
+|---|---|---|
+| Anthropic | `GET /v1/models` | Direct from the browser, same header as chat |
+| Google Gemini | `GET /v1beta/models` | Direct; filtered to models that support `generateContent` |
+| OpenAI | `GET /v1/models` | Through the existing proxy (browser calls are blocked); filtered to chat-capable IDs — the account-wide list includes embeddings, TTS, transcription, image models |
+| Cerebras | `GET /v1/models` | Through the existing proxy (Node runtime, for the WAF) |
+| Custom endpoint | `GET {base}/models` | Direct — see below |
+| In-browser | — | Static; the list *is* the download list |
+
+The two proxies gain a `GET` handler with the same guards as chat: same-origin, per-IP rate limit (a smaller budget — one list per session per key is the normal case), key header required.
+
+Lists are cached per provider for an hour in `sessionStorage` and refreshed on demand from the picker or the Keys page. A failed refresh leaves the cache alone, so the picker keeps whatever it had.
+
+### The custom endpoint
+
+Any OpenAI-compatible base URL — `https://openrouter.ai/api/v1`, Groq, Together, a local LM Studio or Ollama. Base URL and key are entered on the Keys page; the connection test is the model list itself, which validates the URL and populates the picker in one call.
+
+**Called straight from the browser, never proxied.** An edge route that forwards to a user-supplied URL is an open relay, and the endpoints people actually use allow browser calls anyway. An endpoint that doesn't fails with a CORS error, and the message says so rather than "Failed to fetch". Plain `http://` is accepted only for localhost, where the key can't leak in transit. Local servers ignore the key; the form says to type anything.
+
+The custom provider has no static catalog and no default model. The picker adopts the first model the API lists.
+
+### Cost
+
+`calcCost` and the per-playground estimates resolve a model through the static catalog first, then the live cache — so an OpenRouter model with a quoted price is costed, and one with no rate card returns zero and is displayed as "—" by the output panel and flagged in the model tip. The usage meter still sums what it can; it already reads $0.00 for the free in-browser models.
+
+### What this reuses
+
+- The OpenAI-compatible adapter, with one addition: a `bearer` flag for direct endpoints (our proxies take the raw key in their own header).
+- The proxy guards (`lib/api-guard.ts`), unchanged.
+- `createLocalStore`, for the live-list store and the endpoint store.
+
+### Out of scope for v0.1
+
+- **Per-endpoint proxying.** Deliberately not built; see above.
+- **Keyless local endpoints.** The playgrounds gate on a saved key; a local server that needs none gets a placeholder. Removing the gate is a wider change than the value.
+- **Streaming quirks of specific gateways.** The adapter expects OpenAI's SSE shape with `stream_options.include_usage`; gateways that ignore the option report zero usage and cost.
+- **The in-browser list.** WebLLM's models are the downloads we chose; there is no API to ask.

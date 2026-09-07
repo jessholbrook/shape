@@ -1,6 +1,6 @@
 "use client";
 
-import { PROVIDERS } from "@/lib/providers";
+import { modelName as liveModelName, resolveModel } from "@/lib/live-models";
 import { ShareActions } from "./share-actions";
 import { StreamingPlaceholder } from "./streaming-placeholder";
 import type { ConfigState } from "./config-panel";
@@ -28,9 +28,8 @@ export function OutputPanel({
   output: OutputState;
   filenameStem?: string;
 }) {
-  const modelName =
-    PROVIDERS[config.provider].models.find((m) => m.id === config.model)?.name ??
-    config.model;
+  const modelName = liveModelName(config.provider, config.model);
+  const pricingUnknown = !!resolveModel(config.provider, config.model)?.pricingUnknown;
 
   const elapsed =
     output.startMs && output.endMs
@@ -91,10 +90,12 @@ export function OutputPanel({
         <div className="border-t border-line pt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
           <span>in {output.inputTokens} tok</span>
           <span>out {output.outputTokens} tok</span>
-          <span className="text-ink">
-            {output.costUsd < 0.01
-              ? "<$0.01"
-              : `$${output.costUsd.toFixed(3)}`}
+          <span className="text-ink" title={pricingUnknown ? "The API listed this model but we have no rate card for it" : undefined}>
+            {pricingUnknown
+              ? "cost —"
+              : output.costUsd < 0.01
+                ? "<$0.01"
+                : `$${output.costUsd.toFixed(3)}`}
           </span>
           {elapsed && <span>{elapsed}</span>}
         </div>

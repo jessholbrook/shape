@@ -3,7 +3,8 @@ export type ProviderId =
   | "anthropic"
   | "openai"
   | "gemini"
-  | "cerebras";
+  | "cerebras"
+  | "custom";
 
 export type Provider = {
   id: ProviderId;
@@ -29,6 +30,22 @@ export type ModelMeta = {
   downloadMb?: number;
   /** Optional one-line description shown in the model picker. */
   blurb?: string;
+  /**
+   * Set on models the provider's API listed but we have no rate card for.
+   * Cost estimates for these show as "—" rather than a fabricated zero.
+   */
+  pricingUnknown?: boolean;
+  /**
+   * Set on a model the API no longer lists but a draft or selection still
+   * references. Kept in the picker so the selection stays visible, flagged.
+   */
+  retired?: boolean;
+  /**
+   * Set on models known only from the API's list — no catalog entry, so no
+   * tier judgement either. The picker says "listed by the API" rather than
+   * pretending to recommend it.
+   */
+  live?: boolean;
 };
 
 export const PROVIDERS: Record<ProviderId, Provider> = {
@@ -210,6 +227,23 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
         blurb: "OpenAI open weights · fastest, may need a paid plan",
       },
     ],
+  },
+  custom: {
+    id: "custom",
+    name: "Custom endpoint",
+    // Any OpenAI-compatible `/chat/completions` base URL — OpenRouter, Groq,
+    // Together, a local LM Studio or Ollama. Called straight from the browser,
+    // never through our proxy (an edge route that forwards to arbitrary URLs
+    // is an open relay). The endpoint has to allow browser calls; OpenRouter
+    // and local servers do. Local servers ignore the key — type anything.
+    keyPrefixes: [],
+    keyMinLength: 1,
+    signupUrl: "https://openrouter.ai/",
+    consoleUrl: "https://openrouter.ai/keys",
+    // The model list comes from the endpoint's own `/models`; there is no
+    // static catalog to fall back to. The picker adopts the first live model.
+    defaultModel: "",
+    models: [],
   },
 };
 

@@ -46,9 +46,10 @@ two independent data points, treat it as a genuine north-star tension when
 designing the next surface — the rubric-inversion mode above is the natural
 place to test whether a more "native" playground shape earns its divergence.
 
-## Provider models — fetch dynamically instead of hardcoding
+## Provider models — fetch dynamically instead of hardcoding — **BUILT**
 
-**From:** building the Gemini integration (issue #117), 2026-07-17.
+**From:** building the Gemini integration (issue #117), 2026-07-17. **Built
+2026-09-07** together with the custom endpoint below; `SPEC.md` §22.
 
 **The problem:** provider model IDs and pricing are hardcoded in
 `lib/providers.ts`. That's fine for Anthropic/OpenAI (slow-moving), but Gemini
@@ -74,12 +75,17 @@ static.
 eyeballing. The app already caveats "actual charges come from the provider,"
 so this is polish, not correctness.
 
-**Decision:** Park. The static IDs are correct as of 2026-07 and the "Save &
-test" ping catches a bad key immediately; dynamic fetch is the durable fix but
-a bigger change than the launch warranted. Revisit next time a model 404
-surfaces in feedback.
+**What was built:** every BYOK provider's picker is populated from its
+model-list endpoint (Anthropic and Gemini direct, OpenAI and Cerebras through
+the proxies' new `GET`), merged with the static catalog for names, tiers, and
+pricing. Models the API lists that we don't know show with pricing marked
+unknown; models we list that the API dropped disappear — unless they are the
+current selection, which stays visible and flagged. Cached an hour per
+session. The pricing-review reminder is moot for listed models where the API
+quotes a price (OpenRouter does; the first-party APIs don't), and still
+applies to the hand-typed rate cards.
 
-## Custom OpenAI-compatible endpoints + aggregators (OpenRouter, endpoint selector)
+## Custom OpenAI-compatible endpoints + aggregators (OpenRouter, endpoint selector) — **BUILT**
 
 **From:** beta feedback (Linear #122), `/play`, 2026-07-18 — "OpenRouter support
 plus endpoint selector for allllll the models. Also Cerebras for speed."
@@ -104,9 +110,12 @@ unknown (aggregators pass through varied rates) so cost estimates degrade
 gracefully to "—". Also needs per-endpoint CORS-vs-proxy handling and a UX for
 entering base URL + key + model.
 
-**Decision:** Park the general endpoint-selector/OpenRouter piece; build it
-together with dynamic model fetching. Cerebras (the bounded, speed-focused
-slice) shipped now.
+**Built 2026-09-07,** together with dynamic model fetching as predicted;
+`SPEC.md` §22. One "Custom endpoint" provider: base URL plus key on the Keys
+page, model list from the endpoint's own `/models`, pricing from the list
+where the endpoint quotes it (OpenRouter) and "—" where it doesn't. Called
+straight from the browser — no per-endpoint proxy, on purpose: a relay to a
+user-supplied URL is an open relay. Plain http only for localhost.
 
 ## Part II — advanced curriculum (modules 08–11 + three demos)
 

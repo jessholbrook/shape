@@ -1,4 +1,5 @@
-import { PROVIDERS, type ProviderId } from "./providers";
+import { type ProviderId } from "./providers";
+import { resolveModel } from "./live-models";
 
 /**
  * Judge Lab automates the scoring you did by hand in Eval Lab — and then
@@ -261,7 +262,7 @@ export function estimateJudgeCost(
   system: string,
   pairs: Pair[],
 ): number {
-  const meta = PROVIDERS[provider].models.find((m) => m.id === model);
+  const meta = resolveModel(provider, model);
   if (!meta) return 0;
   const assumedOutput = 120;
   return pairs.reduce((sum, pair) => {

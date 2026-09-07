@@ -1,4 +1,5 @@
-import { ProviderId, getModel } from "./providers";
+import { ProviderId } from "./providers";
+import { resolveModel } from "./live-models";
 
 const USAGE_KEY = "shape:usage:log";
 const MAX_RECORDS = 500;
@@ -18,8 +19,11 @@ export function calcCost(
   inputTokens: number,
   outputTokens: number,
 ): number {
-  const meta = getModel(providerId, modelId);
-  if (!meta) return 0;
+  // Static catalog first, then the live list — an API-listed model with a
+  // quoted price (OpenRouter) is costed; one without stays 0 and is shown as
+  // unknown by the panels that read `pricingUnknown`.
+  const meta = resolveModel(providerId, modelId);
+  if (!meta || meta.pricingUnknown) return 0;
   const input = (inputTokens / 1_000_000) * meta.inputPer1M;
   const output = (outputTokens / 1_000_000) * meta.outputPer1M;
   return input + output;
