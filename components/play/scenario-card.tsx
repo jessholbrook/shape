@@ -7,6 +7,7 @@ import {
   gradeDecision,
   toolUsed,
   type Expected,
+  type Scenario,
   type ScenarioRow,
   type Tool,
 } from "@/lib/agency";
@@ -21,22 +22,25 @@ const EXPECTATIONS: Expected[] = ["act", "ask", "answer"];
  * The expectation is set *before* the run and edited here rather than in the
  * report, so the judgement stays a design decision rather than a reaction to
  * the output — the same reason a rubric gets written before the scoring.
+ *
+ * The results area is a slot: solo mode renders the replies, relay mode
+ * renders the trace. The editing half is the same either way.
  */
 export function ScenarioCard({
-  row,
+  scenario,
   tools,
   onChange,
   onRemove,
   canRemove,
+  children,
 }: {
-  row: ScenarioRow;
+  scenario: Scenario;
   tools: Tool[];
-  onChange: (next: ScenarioRow["scenario"]) => void;
+  onChange: (next: Scenario) => void;
   onRemove: () => void;
   canRemove: boolean;
+  children?: React.ReactNode;
 }) {
-  const { scenario } = row;
-
   return (
     <div className="bg-surface border border-line rounded-[14px] p-4 flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -108,8 +112,17 @@ export function ScenarioCard({
         )}
       </div>
 
-      {row.runs.length > 0 && (
-        <div className="border-t border-line pt-3 flex flex-col gap-3">
+      {children}
+    </div>
+  );
+}
+
+/** Solo mode's results: one reply per run, graded. */
+export function SoloRuns({ row, tools }: { row: ScenarioRow; tools: Tool[] }) {
+  const { scenario } = row;
+  if (row.runs.length === 0) return null;
+  return (
+    <div className="border-t border-line pt-3 flex flex-col gap-3">
           {row.runs.map((run, i) => {
             const decision =
               run.status === "done" ? row.decisions[i] : undefined;
@@ -174,9 +187,7 @@ export function ScenarioCard({
                 )}
               </div>
             );
-          })}
-        </div>
-      )}
+      })}
     </div>
   );
 }

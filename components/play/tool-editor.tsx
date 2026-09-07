@@ -3,7 +3,9 @@
 import {
   RISK_BLURB,
   RISK_LABEL,
+  type Agent,
   type Tool,
+  type ToolOwner,
   type ToolRisk,
 } from "@/lib/agency";
 import { InfoTip } from "@/components/info-tip";
@@ -24,11 +26,14 @@ export function ToolEditor({
   onChange,
   onRemove,
   canRemove,
+  agents,
 }: {
   tool: Tool;
   onChange: (next: Tool) => void;
   onRemove: () => void;
   canRemove: boolean;
+  /** Relay mode: who can call this tool. Absent in solo mode. */
+  agents?: Agent[];
 }) {
   return (
     <div className="bg-canvas border border-line rounded-[12px] p-4 flex flex-col gap-3">
@@ -72,6 +77,24 @@ export function ToolEditor({
           ))}
         </select>
         <InfoTip>{RISK_BLURB[tool.risk]}</InfoTip>
+        {agents && (
+          <select
+            value={tool.owner ?? "both"}
+            onChange={(e) =>
+              onChange({ ...tool, owner: e.target.value as ToolOwner })
+            }
+            aria-label="Tool owner"
+            title="Which agent can call this tool"
+            className="bg-surface border border-line rounded-[8px] px-2 py-1.5 font-mono text-[11px] text-ink focus:border-ink focus:outline-none"
+          >
+            {agents.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name || a.id.toUpperCase()}
+              </option>
+            ))}
+            <option value="both">Both</option>
+          </select>
+        )}
         <button
           type="button"
           onClick={onRemove}

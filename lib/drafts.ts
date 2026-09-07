@@ -12,7 +12,7 @@ import type {
   SetResult,
   Source,
 } from "./context-lab";
-import type { Scenario, ScenarioResult, Tool } from "./agency";
+import type { RelayConfig, Scenario, ScenarioResult, Tool } from "./agency";
 import type { Pair, PairResult } from "./judge";
 
 const DRAFTS_KEY = "shape:drafts:log";
@@ -304,6 +304,11 @@ export type AgencyDraft = {
   scenarios: Scenario[];
   runsPerScenario: number;
   results: ScenarioResult[];
+  /**
+   * Present when the draft was run in relay mode — two agents, the tools
+   * split between them, the user attached to one. Absent for solo runs.
+   */
+  relay?: RelayConfig;
   /** The user's answer to the playground's reflection question, if they jotted one. */
   reflection?: string;
   createdAt: number;
@@ -611,6 +616,27 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     }
     if (typeof d.policy !== "string" || !Array.isArray(d.results)) {
       return { ok: false, reason: "Agency draft is missing policy or results." };
+    }
+    if (d.relay !== undefined) {
+      const relay = d.relay as Partial<RelayConfig> | null;
+      const agents = Array.isArray(relay?.agents) ? relay!.agents : [];
+      const ids = new Set(agents.map((a) => a?.id));
+      if (
+        agents.length !== 2 ||
+        !ids.has("a") ||
+        !ids.has("b") ||
+        agents.some((a) => typeof a?.name !== "string" || typeof a?.role !== "string")
+      ) {
+        return { ok: false, reason: "Relay draft needs two named agents." };
+      }
+      if (!ids.has(relay!.entryAgentId as never)) {
+        return { ok: false, reason: "Relay draft's entry agent isn't one of its agents." };
+      }
+      const owners = new Set(["a", "b", "both"]);
+      const tools = d.tools as Partial<Tool>[];
+      if (tools.some((t) => t?.owner !== undefined && !owners.has(t.owner))) {
+        return { ok: false, reason: "Relay draft has a tool owned by nobody." };
+      }
     }
   } else if (kind === "judge") {
     if (!Array.isArray(d.pairs) || !Array.isArray(d.results)) {

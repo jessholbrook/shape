@@ -31,6 +31,10 @@ import {
   RISK_LABEL,
   buildAgencyReport,
   composeSystemPrompt,
+  AGENT_IDS,
+  agentById,
+  buildRelayReport,
+  composeRelaySystemPrompt,
 } from "@/lib/agency";
 import {
   VERDICT_LABEL as JUDGE_VERDICT_LABEL,
@@ -613,24 +617,11 @@ function JudgeBody({ draft }: { draft: JudgeDraft }) {
 }
 
 function AgencyBody({ draft }: { draft: AgencyDraft }) {
+  if (draft.relay) return <RelayBody draft={draft} relay={draft.relay} />;
   const report = buildAgencyReport(draft.scenarios, draft.tools, draft.results);
   return (
     <>
-      <Section label="Tools">
-        <ul className="flex flex-col gap-2">
-          {draft.tools.map((t) => (
-            <li key={t.id}>
-              <p className="font-mono text-[12px] text-ink">
-                {t.name}({t.params}){" "}
-                <span className="text-ink-muted">({RISK_LABEL[t.risk]})</span>
-              </p>
-              <p className="font-mono text-[11px] text-ink-quiet mt-0.5">
-                {t.description}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </Section>
+      <AgencyTools draft={draft} />
       <Section label="Policy">
         <Prose>{draft.policy}</Prose>
       </Section>
@@ -673,6 +664,159 @@ function AgencyBody({ draft }: { draft: AgencyDraft }) {
           {composeSystemPrompt(draft.role, draft.tools, draft.policy)}
         </MonoBlock>
       </Section>
+    </>
+  );
+}
+
+function AgencyTools({ draft }: { draft: AgencyDraft }) {
+  const relay = draft.relay;
+  return (
+    <Section label="Tools">
+      <ul className="flex flex-col gap-2">
+        {draft.tools.map((t) => (
+          <li key={t.id}>
+            <p className="font-mono text-[12px] text-ink">
+              {t.name}({t.params}){" "}
+              <span className="text-ink-muted">({RISK_LABEL[t.risk]})</span>
+              {relay && (
+                <span className="text-ink-quiet">
+                  {" · "}
+                  {(t.owner ?? "both") === "both"
+                    ? "both agents"
+                    : agentById(relay, t.owner as "a" | "b").name}
+                </span>
+              )}
+            </p>
+            <p className="font-mono text-[11px] text-ink-quiet mt-0.5">
+              {t.description}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  );
+}
+
+/**
+ * Relay mode: the room, then both columns of the report, then each scenario
+ * as a trace, then what each agent was told. The gap between the per-agent
+ * column and the group column is the finding, so the report line leads
+ * with it.
+ */
+function RelayBody({
+  draft,
+  relay,
+}: {
+  draft: AgencyDraft;
+  relay: NonNullable<AgencyDraft["relay"]>;
+}) {
+  const report = buildRelayReport(
+    draft.scenarios,
+    draft.tools,
+    draft.results,
+    relay,
+  );
+  const entry = agentById(relay, relay.entryAgentId);
+  const headline = report.gap
+    ? `Neither agent broke its policy; the group acted without asking in ${report.overActed} of ${report.scored}`
+    : `${report.overActed} of ${report.scored} scenarios acted without asking`;
+  return (
+    <>
+      <Section label="Agents — the room">
+        <ul className="flex flex-col gap-2">
+          {relay.agents.map((a) => (
+            <li key={a.id}>
+              <p className="font-mono text-[12px] text-ink">
+                {a.name}
+                {a.id === relay.entryAgentId && (
+                  <span className="text-ink-muted"> · talks to the user</span>
+                )}
+              </p>
+              <p className="font-mono text-[11px] text-ink-quiet mt-0.5">
+                {a.role}
+              </p>
+            </li>
+          ))}
+        </ul>
+        <p className="font-mono text-[11px] text-ink-quiet mt-3">
+          {relay.everyoneCanReachUser
+            ? "Every agent can reach the user."
+            : `Only ${entry.name} can reach the user.`}{" "}
+          {relay.showOtherDescriptions
+            ? "Agents see each other's tool descriptions."
+            : "Agents know each other's tools by name only."}
+        </p>
+      </Section>
+      <AgencyTools draft={draft} />
+      <Section label="Policy — given to both agents">
+        <Prose>{draft.policy}</Prose>
+      </Section>
+      <Section label={`Relay — ${headline}`}>
+        <ul className="flex flex-col gap-1.5">
+          {report.rows.map((row) => (
+            <li key={row.scenario.id} className="font-mono text-[12px] text-ink">
+              <div className="flex justify-between gap-4">
+                <span>
+                  {row.scenario.label}
+                  <span className="text-ink-quiet">
+                    {" "}
+                    (wanted {AGENCY_EXPECTED_LABEL[row.scenario.expected]})
+                  </span>
+                </span>
+                <span className="text-ink-muted text-right">
+                  {row.runsScored === 0
+                    ? "Not run"
+                    : [
+                        `group: ${OUTCOME_LABEL[row.group]}`,
+                        ...AGENT_IDS.map((id) => {
+                          const o = row.agents[id].outcome;
+                          return `${agentById(relay, id).name}: ${o ? OUTCOME_LABEL[o] : "—"}`;
+                        }),
+                      ].join(" · ")}
+                </span>
+              </div>
+              {row.runsScored > 0 && (
+                <p className="font-mono text-[10px] text-ink-quiet mt-0.5">
+                  {row.grades[row.worstRunIndex].steps
+                    .map((v) => v.summary)
+                    .join(" · ")}
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      </Section>
+      {report.rows.map((row) => (
+        <Section key={row.scenario.id} label={row.scenario.label}>
+          <Exchange who="User">{row.scenario.userMessage}</Exchange>
+          {row.runs.map((run, i) => (
+            <div key={i} className="mt-2">
+              {row.runs.length > 1 && (
+                <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet mt-3">
+                  Run {i + 1}
+                </p>
+              )}
+              {(row.grades[i]?.steps ?? []).map((v, j) => (
+                <Exchange
+                  key={j}
+                  who={`${agentById(relay, v.step.agentId).name} — ${v.summary}`}
+                >
+                  {v.step.raw || v.step.error || "…"}
+                </Exchange>
+              ))}
+              {!run.trace?.length && <MonoBlock>Not run.</MonoBlock>}
+            </div>
+          ))}
+          {row.runs.length === 0 && <MonoBlock>Not run.</MonoBlock>}
+        </Section>
+      ))}
+      {AGENT_IDS.map((id) => (
+        <Section key={id} label={`What ${agentById(relay, id).name} read`}>
+          <MonoBlock>
+            {composeRelaySystemPrompt(id, draft.tools, draft.policy, relay)}
+          </MonoBlock>
+        </Section>
+      ))}
     </>
   );
 }

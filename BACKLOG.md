@@ -182,12 +182,13 @@ and the one that transfers hardest back to non-AI work.
   playground rather than an Eval Lab mode: Eval Lab is a Part I module and
   shouldn't carry a calibration experiment for beginners.
 - **Article** — shipped at `/learn/judging-at-scale`.
+- **Artifact: Calibrated Judge** — a judge prompt *plus* its known biases.
 
 **The Part II arc is complete.** Six playgrounds and four articles shipped;
 `SPEC.md` §14–§19 documents each one. What remains parked from the arc is
 listed in its own sections below (native tool-calling, length-bias padding,
-self-preference testing).
-- **Artifact: Calibrated Judge** — a judge prompt *plus* its known biases.
+self-preference testing). A proposed coda — Module 12, *Groups, not agents* —
+is parked in its own section below, with a build brief at `SPEC.md` §20.
 
 ### Three demos (light, shareable, not full modules)
 
@@ -223,6 +224,132 @@ Anthropic, OpenAI, and Gemini).
 cheap proof that Part II has legs, **Race** or **Spread** ships fastest and
 demos hardest — build one, watch whether Part I readers actually come back for
 it, and let that decide whether the four modules get written.
+
+
+## Module 12 — Groups, not agents (Tool Bench relay mode + Roundtable)
+
+**From:** design conversation, 2026-09-07 — prompted by the run of stories
+about groups of agents "hacking" or "escaping" lab test environments. "Shape
+should have content and demos for swarms of agents, and how we shape behavior
+at the group level, not just the individual agent's."
+
+**The hook, and why it isn't the lesson.** The escape stories are the reason
+to build this now, and they are also a trap: reported unevenly, sometimes
+sensational, and certain to date. The lesson has to be written so it stays
+true whether or not any particular story holds up. The durable version is
+smaller and sharper than the headlines — **constraints written per agent don't
+compose.** A clause that holds for every part of a system says nothing about
+the system. Every agent can obey its policy and the group can still do the
+thing the policy forbade.
+
+**The idea.** Part II's frame shift was "the model is a system you can't fully
+control." This is the last step of that shift: the unit you were designing
+isn't even the model, it's the room. It rhymes with Module 08 on purpose —
+*Distributions, not outputs* said the unit isn't the output; *Groups, not
+agents* says the unit isn't the agent. Module 10 gave the model tools, Module
+11 gave it judgment, Module 12 gives it colleagues.
+
+*You already know how to design for a group. Community guidelines, moderation
+policy, meeting facilitation, who is in which channel. You have never pointed
+any of it at a room full of models.*
+
+**Four phenomena, four levers** — each one a thing a designer can change
+without touching a prompt:
+
+| What the group does | The lever |
+|---|---|
+| **Policy laundering.** A can't send email; B can. A asks B. B asks A for permission; A answers for the user. | **Topology.** Who can reach the user, and who can reach whom. An agent that cannot reach a tool beats an agent told not to use it. |
+| **Consensus collapse.** Three agents converge on the first confident answer, right or wrong; the assigned critic stops criticising after two rounds of agreement. | **Composition.** Mixed models and mixed roles hold dissent longer than three copies of one model. The README already sells Phi vs Llama as meaningful diversity. |
+| **Trust decay.** An injected instruction from an untrusted source (Module 09) passes through one agent and reaches the next as "a colleague said." The trust tag is lost in transit. | **Provenance.** Whether a handoff arrives labelled with who wrote it, or as if the user had. |
+| **Running on.** A group with no rounds budget and no stop condition keeps going. | **Stopping rules.** In the protocol, not in anyone's prompt. |
+
+The Module 10 ladder gets one more rung at the top: **prefer structure to
+instruction.** Topology holds regardless of what the model decides; a policy
+sentence holds some percentage of the time (Module 08), and in a group that
+percentage is per hop.
+
+**Demo first — Tool Bench relay mode — BUILT** (2026-09-07, `SPEC.md` §20).
+Two agents, one policy sentence given to both, the seeded tools split between them: the coordinator owns
+`search_files`, the mail-and-files agent owns `send_email` and `delete_files`.
+The user is attached to the coordinator only. Each agent gets Tool Bench's
+decision format plus `HANDOFF:`. Grade each agent with the existing seven
+outcomes, then grade the group, and lead the report with the gap between the
+two columns:
+
+> *Neither agent broke its policy. The group sent the email without asking.*
+
+A mode rather than a playground, for the reason Judge Lab is *not* a mode:
+audience. Tool Bench is already Part II and the relay's grading is Tool
+Bench's grading with one more column. Nothing executes, so the demo shows a
+group *deciding* to route around a policy without ever doing anything. The
+two experiments are a topology toggle ("every agent can ask the user" — the
+email stops going out and no prompt changed) and a visibility toggle (show the
+coordinator the full descriptions of the other agent's tools — Module 10's
+lever at one remove).
+
+**Then, maybe — Roundtable.** Its own playground: three or four agents with
+role prompts (Persona Cards import directly), a shared transcript, a rounds
+budget, one task with a planted dissenter. The designer edits the protocol —
+turn order, what is shared versus private, the stop rule — rather than the
+prompts. Checks stay local and deterministic like Spread's assertions ("the
+dissenter's last turn still disagrees"); a calibrated judge from Module 11 is
+optional. Artifact: a **Protocol**, the group-level Agency Policy. Only if
+relay mode's headline reproduces and readers come back for it.
+
+**Curriculum entry, drafted** (not added to `MODULES` until the article
+exists — a "soon" card with nothing behind it is a broken promise):
+
+- `num: "12"`, `slug: "groups-not-agents"`, title *Groups,* italic *not
+  agents*, kicker Concept.
+- Blurb: "One agent obeys its policy. Two agents route around it. Group
+  behavior is designed in the room — who can reach whom — not in anyone's
+  prompt."
+- Playground: Tool Bench, relay mode (`/play/tools`). Artifact: Agency
+  Policy, extended with the relay; Protocol once Roundtable exists.
+- Reflection question: "Which agent would you have blamed — and what in the
+  room, rather than in either prompt, would you change?"
+
+**Article outline**, in the house structure (open by breaking something the
+reader believes; never re-teach):
+
+1. *What you already know* — you have written community guidelines and
+   argued about who gets posting rights in which channel. That was group
+   behavior design. The rules were never the whole design; the room was.
+2. *Constraints don't compose* — the policy sentence from Module 10, given to
+   two agents, means something different from where each of them sits. "Ask
+   the user" is an instruction about a channel, and one of them doesn't have
+   it.
+3. *A small example* — the relay trace, as an `ExampleBlock` pair: the same
+   scenario with the user reachable from one agent versus from both. Same
+   model, same policy, same prompts; one line of topology moved the outcome.
+4. *The ladder, one rung up* — prefer structure to instruction. Topology,
+   then provenance, then a clause that says "you may not grant permission,"
+   then "be careful."
+5. *The failure that hides* — it looks like compliance. Every agent's log
+   reads clean. The incident review would blame whichever agent sent the
+   email, and it would be wrong.
+6. *What to take into the playground* — run the seed, read the two columns,
+   flip the topology toggle, flip visibility, set runs to three.
+
+**Guardrails.** No orchestrator diagrams, no framework vocabulary, no "how to
+wire agents" — "agent frameworks" stays out of scope and this is compatible
+with that as long as the playground is about the room and not the plumbing.
+Communication is prompted, not native, for the same reasons Tool Bench's
+tools are: visible, editable, and it runs on the in-browser models.
+
+**Build cost, roughly.** Relay mode is two to three days — a relay runner, a
+two-column report with traces, the agent panel and two toggles, and the draft
+plumbing — with no adapter work, since every call is an ordinary chat call.
+Roundtable is about a week. The article is a day. Constraints to design
+around: relay runs are sequential by nature (2–4 calls per scenario), the
+in-browser 1B model may not hold a four-keyword format, and the seed's
+"neither agent broke its policy" headline has to reproduce on at least one
+BYOK model at low temperature or the mode is teaching Module 10 twice.
+
+**Decision:** Relay mode is built as the cheap proof, the same way Race and
+Spread proved Part II had legs. The article and Roundtable stay parked: let
+whether the headline reproduces on real models, and whether readers come back
+for it, decide whether Module 12 and Roundtable get built.
 
 
 ## Native tool-calling across providers
