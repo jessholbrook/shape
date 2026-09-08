@@ -85,3 +85,33 @@ test("nav labels carry no section numbers", async ({ page }) => {
   const nav = page.getByRole("navigation", { name: "Main" }).first();
   await expect(nav.getByRole("link", { name: "Learn" })).toHaveText("Learn");
 });
+
+/**
+ * The JSX whitespace hazard: a closing inline tag followed by a space and
+ * then text that wraps to the next source line silently loses the space, so
+ * `<strong>Overlap.</strong> If two…` renders as `Overlap.If two…`. The
+ * source looks right, so this can only be caught in the rendered output. It
+ * shipped fourteen times into live articles before anyone noticed (#136).
+ */
+const LESSON_ROUTES = MODULES.filter(
+  (m) => m.status === "ready" && m.href.startsWith("/learn/"),
+).map((m) => m.href);
+
+for (const route of LESSON_ROUTES) {
+  test(`${route} keeps its spaces around inline tags`, async ({ page }) => {
+    await page.goto(route, { waitUntil: "networkidle" });
+    const html = await page.locator("article").first().innerHTML();
+    const missing: string[] = [];
+    // Text glued to an inline tag on either side, e.g. `…rule.</strong>If` or `word<em>`.
+    for (const m of html.matchAll(/(<\/(?:strong|em)>)([A-Za-z])/g)) {
+      missing.push(html.slice(Math.max(0, m.index! - 40), m.index! + 20));
+    }
+    for (const m of html.matchAll(/([A-Za-z,.;:])(<(?:strong|em)[\s>])/g)) {
+      missing.push(html.slice(Math.max(0, m.index! - 30), m.index! + 30));
+    }
+    expect(
+      missing,
+      `${route}: text glued to an inline tag — add {" "} at the boundary:\n${missing.join("\n")}`,
+    ).toEqual([]);
+  });
+}
