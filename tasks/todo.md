@@ -825,21 +825,49 @@ Three load-bearing decisions:
 
 ## Next session
 
-The big things are merged; the publish loop is end-to-end and the
-playground/studio code has converged. Two open PRs to walk through, then
-pick from polish or expansion:
+*Refreshed 2026-09-07. Everything above this heading is a historical scaffold
+log; this section is the only part meant to be current.*
 
-1. **Walk #40 (use-draft-editing) + merge.** Pure refactor (−195 lines),
-   tsc / eslint / build clean, but it changes every playground's save
-   path. One save / reload-with-`?draft=` pass on each surface is enough.
-2. **Walk #33 (visitor demo) + merge.** Needs `DEMO_ANTHROPIC_KEY`,
-   `DEMO_IP_SALT`, and Supabase env set, plus migration `0002` applied.
-   Test the rate limit by running through the per-(IP, artifact) cap.
-3. **Second Studio.** `STUDIOS` array and `CaseStudyDraft` ready for a
-   second entry. SPEC §3 mentions support-copilot, onboarding-flow.
-4. **"Iteration log" step in the Studio** — currently rolled into
-   Reflection. A dedicated step that captures multiple sample-runs would
-   match SPEC §5 more literally.
-5. **Lint cleanliness pass.** `lib/hooks/{use-drafts, use-keys,
-   use-learn-progress, use-usage}.ts` all have the same
-   `set-state-in-effect` warning — apply the `useDraftEditing` pattern.
+The old list here has fully resolved: #40 merged, #33 closed, the Studio
+section was retired (#75), and `npm run lint` has been clean since #140.
+
+**Waiting on a merge — all green:**
+
+1. **#150 — Tool Bench relay mode.** The cheap proof for Module 12. Also
+   carries the backlog reconciliation that closed #139, #121, and #108.
+2. **#146 (Next group) and #147 (React group)** from Dependabot. #147 will
+   need a rebase once #146 lands — a `@dependabot rebase` comment does it.
+3. **The housekeeping PR this note ships in.** Dependabot ignore rules for
+   ESLint 10, TypeScript 7, and Node types past the Node 22 runtime, after
+   #149 failed at `npm ci` on `eslint-config-next`'s peer range. Once it is
+   merged, the next weekly dev-dependencies PR arrives without those bumps
+   (or comment `@dependabot recreate` on it to get one sooner).
+
+**Needs a key — not something CI can do:**
+
+4. **Run the relay seed on a live model** at temperature 0.2. The "neither
+   agent broke its policy" headline has to reproduce on at least one BYOK
+   model, or the seed needs redesign before Module 12 goes further
+   (`SPEC.md` §20). The same caveat applies to every Part II playground —
+   none has been run live by us; see BACKLOG "Still outstanding for the arc".
+
+**Build queue — built 2026-09-07,** each on its own branch stacked on #150
+so the spec and backlog edits don't conflict. Merge in order; GitHub
+retargets each PR to `main` as the one below it lands:
+
+5. **#150** Tool Bench relay mode (`SPEC.md` §20).
+6. **#152** Tone Dial reverse mode (`SPEC.md` §21) — issue #118.
+7. **#153** Live model lists + custom OpenAI-compatible endpoint (§22).
+8. **#154** Native tool-calling + the repair loop (§23).
+
+**Still parked, and why:**
+
+- **Module 12 article + Roundtable** — gated on item 4: the relay seed's
+  headline has to reproduce on a live model first.
+- **Judge Lab's other two bias passes**, the Eval Lab rubric inversion, and
+  the JSX whitespace hazard — see `BACKLOG.md`.
+
+**Every Part II playground, plus all four builds above, has been verified
+only with scripted provider responses.** None has been run against a live
+model by us. The seeds are tuned to misbehave; a uniformly clean first live
+run means a seed needs sharpening, not that all is well.

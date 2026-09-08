@@ -24,6 +24,16 @@ updates:
       # take it deliberately, after checking the model list still resolves.
       - dependency-name: "@mlc-ai/web-llm"
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # ESLint 10 is outside eslint-config-next's peer range — #149 failed on
+      # it at `npm ci`. TypeScript 7 is the rewritten compiler; take it with a
+      # Next release that supports it, not as a weekly bump. The Node types
+      # should track the Node 22 runtime CI and Vercel run on.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/node"
+        versions: [">=23"]
 
   - package-ecosystem: github-actions
     directory: "/"
