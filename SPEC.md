@@ -124,7 +124,7 @@ Every meaningful action in Shape produces an **artifact**. Artifacts are first-c
 | **Tone Dial** *(reverse mode: §21)* | Style as a design token; specification by demonstration | Behavior Spec |
 | **Persona Workshop** | Character design for AI | Persona Card |
 | **Refusal Lab** | Boundary design; over-/under-refusal | Refusal Scorecard |
-| **Eval Workshop** | Rubric-based evaluation | Eval Rubric + Scorecard |
+| **Eval Workshop** *(design mode: §24)* | Rubric-based evaluation; choosing the criteria is the skill | Eval Rubric + Scorecard |
 | **System Prompt Surgery** | Diagnosing prompt failures | (Exercise, not artifact) |
 | **Failure Museum** | Pattern recognition | (Browsable gallery) |
 | **Conversation Choreographer** | Multi-turn flow design | Behavior Spec |
@@ -1110,3 +1110,48 @@ The §18 seed with stubs attached. **Search fails on purpose** ("the index is re
 - **Argument grading.** Still text, still not the lesson.
 - **Parallel tool calls with distinct stubs per call.** Each call gets its tool's stub; a model calling the same tool twice gets the same result twice.
 - **In-browser native tools.** WebLLM's function calling is model-specific and unreliable at the sizes shipped.
+
+---
+
+## 24. Eval Lab design mode — v0.1 spec (built)
+
+*The rubric inversion two testers asked for independently (2026-06-16, 2026-07-08). Ships as an **Apply a rubric / Design a rubric** toggle on Eval Lab (§7). BACKLOG "Eval Lab".*
+
+### Purpose
+
+Eval Lab taught rubric *application*: the rubric is fixed, the outputs vary, the reader scores what the model produced. The inversion makes the outputs fixed — some clearly strong, some weak — and the rubric the experiment: write criteria that separate them the way a careful reader would.
+
+In real evaluation work the hard part isn't scoring, it's deciding what to measure. Apply mode teaches "rubrics make quality measurable"; design mode teaches "choosing the right criteria is the skill."
+
+### No model needed
+
+The outputs are a seeded set, the scoring is by hand, and the check is arithmetic. Design mode hides the provider row entirely. That makes it the one part of Eval Lab a first-time visitor can finish with no key and no download — and it is the more instructive half.
+
+### The mechanic: score first, then see the ranking
+
+Four replies to one prompt, shown in an order that isn't the ranking, with neutral labels. The reader writes or edits criteria, scores every output on every criterion, and only then can **Check the rubric** — the same rule as writing a rubric before scoring: a judgement made after seeing the answer isn't a judgement.
+
+The reveal shows, on each output, where a careful reader ranks it and **why** — a sentence of argument, not a verdict — and a report:
+
+- **The pair count.** Every pair of outputs, ordered by the rubric's totals the same way the reader's ranking orders them, or not, or tied. Six pairs for four outputs. This is the headline, because it is the one number that says whether the total means anything.
+- **Criterion by criterion.** Each criterion is diagnosed on its own: **separates them** (orders nearly every pair correctly), **partly**, **flat** (scores every output within a point — dead weight in the total), **pulls the wrong way** (rewards the outputs the reader ranks lower), or **crowns the wrong output** (its top score lands on something the reader ranks below the best, even if it is right about the rest). The last is the seed's trap: a friendliness criterion is right that the terse reply is bad and wrong that the chirpy one is best, and the pair count alone would call that "partly".
+
+Scores stay editable after the reveal and the report follows them, so the reader can move a criterion and watch the pair count change.
+
+### The trap in the seed
+
+An expired card at checkout. The best reply names the cause and gives two exits in one line. The chirpy one is actionable, eventually, never says the card expired, and is cheerful about somebody's money. A *friendliness* criterion ranks it first, and the reveal says so. The seed's own rubric (the Part I criteria) separates them; the trap is the criterion the reader is invited to add.
+
+### "A careful reader" is a position, not a fact
+
+The ranking is ours, with its reasons attached. The panel says so and invites disagreement — that is the conversation a real rubric review is made of. What it does not concede is the arithmetic: a total only means something if the criteria under it separate the outputs on purpose.
+
+### Artifact — Eval Rubric + Scorecard, extended
+
+`EvalsDraft` gains `mode` and a `design` block: the set id, the hand scores, notes, and whether the truth was revealed. Notebook summary and PDF export show the design body; import validation checks the mode and the block. Apply-mode drafts are untouched.
+
+### Out of scope for v0.1
+
+- **More sets.** One seeded set; a second (a different domain, a different trap) is the obvious next addition and needs no new mechanics.
+- **Generated sets.** Asking a model for four replies at temperature 1 and letting the reader rank them first, then design the rubric — the ranking becomes the reader's own truth. A good second mode, and one that needs a key.
+- **A judge scoring the rubric.** Module 11's instrument; not here.

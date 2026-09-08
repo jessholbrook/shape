@@ -1,0 +1,111 @@
+"use client";
+
+import {
+  SCORE_MAX,
+  designTotal,
+  type Criterion,
+  type DesignOutput,
+  type Score,
+} from "@/lib/evals";
+import { CriterionScoreRow } from "./eval-case-row";
+
+/**
+ * One fixed output, scored by hand against the rubric under design. The
+ * truth — where a careful reader ranks it, and why — stays hidden until the
+ * reader has committed to scores, the same reason a rubric is written before
+ * the scoring: a judgement made after seeing the answer isn't a judgement.
+ */
+export function DesignOutputCard({
+  output,
+  criteria,
+  scores,
+  note,
+  revealed,
+  onScore,
+  onNoteChange,
+}: {
+  output: DesignOutput;
+  criteria: Criterion[];
+  scores: Record<string, Score | null>;
+  note: string;
+  revealed: boolean;
+  onScore: (criterionId: string, score: Score | null) => void;
+  onNoteChange: (note: string) => void;
+}) {
+  const total = designTotal(criteria, scores);
+  const scored = criteria.filter((c) => typeof scores[c.id] === "number").length;
+  const ordinal = ["1st", "2nd", "3rd", "4th", "5th", "6th"][output.truthRank - 1] ?? `${output.truthRank}th`;
+
+  return (
+    <div className="bg-surface border border-line rounded-[14px] p-4 md:p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-3 pb-3 border-b border-line">
+        <div className="flex items-baseline gap-3 min-w-0">
+          <span className="font-display text-[16px] leading-[1.2] text-ink">
+            {output.label}
+          </span>
+          {revealed && (
+            <span
+              className={`font-mono text-[10px] uppercase tracking-[0.08em] rounded-full px-2 py-0.5 ${
+                output.truthRank === 1
+                  ? "bg-success/15 text-success"
+                  : "bg-highlight-soft text-highlight-ink"
+              }`}
+            >
+              A careful reader: {ordinal}
+            </span>
+          )}
+        </div>
+        <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted">
+          {total === null ? (
+            <span className="text-ink-quiet">
+              {scored}/{criteria.length} scored
+            </span>
+          ) : (
+            <>
+              <span className="text-ink">{total}</span>
+              <span className="text-ink-quiet">/{criteria.length * SCORE_MAX}</span>
+            </>
+          )}
+        </span>
+      </div>
+
+      <p className="mt-4 font-mono text-[13px] leading-[1.55] text-ink whitespace-pre-wrap break-words">
+        {output.text}
+      </p>
+
+      {revealed && (
+        <p className="mt-3 font-sans text-[13px] leading-[1.55] text-ink-muted border-l-2 border-highlight pl-3">
+          {output.why}
+        </p>
+      )}
+
+      <div className="mt-4 pt-4 border-t border-line flex flex-col gap-3">
+        <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+          Score against your rubric
+        </p>
+        {criteria.map((c) => (
+          <CriterionScoreRow
+            key={c.id}
+            criterion={c}
+            score={scores[c.id] ?? null}
+            disabled={false}
+            onScore={(s) => onScore(c.id, s)}
+          />
+        ))}
+      </div>
+
+      <div className="mt-4 pt-4 border-t border-line">
+        <label className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet block mb-1">
+          Note (optional)
+        </label>
+        <textarea
+          value={note}
+          onChange={(e) => onNoteChange(e.target.value)}
+          rows={1}
+          placeholder="What you'd want a criterion to catch here…"
+          className="w-full bg-canvas border border-line rounded-[8px] px-3 py-2 font-sans text-[13px] leading-[1.5] text-ink placeholder:text-ink-quiet focus:border-ink focus:outline-none resize-y"
+        />
+      </div>
+    </div>
+  );
+}

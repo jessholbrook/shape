@@ -12,7 +12,14 @@ import {
   VERDICT_LABEL,
   evaluateMatch,
 } from "@/lib/refusal";
-import { aggregateScore, caseScore, SCORE_MAX } from "@/lib/evals";
+import {
+  aggregateScore,
+  caseScore,
+  SCORE_MAX,
+  SEED_DESIGN_SET,
+  buildDesignReport,
+  CRITERION_VERDICT_LABEL,
+} from "@/lib/evals";
 import { assertionLabel, buildReport, rankRuns } from "@/lib/spread";
 import {
   PORTABILITY_LABEL,
@@ -474,6 +481,9 @@ function RefusalBody({ draft }: { draft: RefusalDraft }) {
 }
 
 function EvalsBody({ draft }: { draft: EvalsDraft }) {
+  if (draft.mode === "design" && draft.design) {
+    return <EvalsDesignBody draft={draft} design={draft.design} />;
+  }
   const agg = aggregateScore(draft.rubric, draft.cases, draft.results);
   const max = draft.rubric.length * SCORE_MAX;
   return (
@@ -1070,3 +1080,76 @@ function ChoreographerBody({ draft }: { draft: ChoreographerDraft }) {
   );
 }
 
+/**
+ * Design mode: the fixed set, the rubric as designed, the hand scores with
+ * the truth beside them, and the pair count. The outputs are the seed set;
+ * a draft only records which set it was.
+ */
+function EvalsDesignBody({
+  draft,
+  design,
+}: {
+  draft: EvalsDraft;
+  design: NonNullable<EvalsDraft["design"]>;
+}) {
+  const set = SEED_DESIGN_SET;
+  const report = buildDesignReport(draft.rubric, set, design.scores);
+  return (
+    <>
+      <Section label={`The set — ${set.title}`}>
+        <Prose>{set.brief}</Prose>
+        <div className="mt-2">
+          <Exchange who="Prompt">{set.userMessage}</Exchange>
+        </div>
+      </Section>
+      <Section label="Rubric, as designed">
+        <ul className="flex flex-col gap-2">
+          {report.criteria.map((d) => (
+            <li key={d.criterion.id}>
+              <p className="font-mono text-[12px] text-ink">
+                {d.criterion.name}{" "}
+                <span className="text-ink-muted">
+                  ({design.revealed ? CRITERION_VERDICT_LABEL[d.verdict] : "unrevealed"})
+                </span>
+              </p>
+              {d.criterion.description && (
+                <p className="font-sans text-[12px] text-ink-muted">
+                  {d.criterion.description}
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+        {design.revealed && report.fullyScored && (
+          <p className="font-mono text-[12px] text-ink mt-3">
+            Ordered {report.tally.concordant} of {report.tally.pairs} pairs the way a
+            careful reader does
+            {report.tally.ties > 0 ? `, ${report.tally.ties} tied` : ""}.
+          </p>
+        )}
+      </Section>
+      {report.ranked.map((r) => (
+        <Section key={r.output.id} label={r.output.label}>
+          <MonoBlock>{r.output.text}</MonoBlock>
+          <p className="font-mono text-[11px] text-ink mt-2">
+            Your total: {r.total === null ? "—" : `${r.total}/${r.max}`}
+            {design.revealed && (
+              <span className="text-ink-muted">
+                {" "}
+                · a careful reader ranks it {r.output.truthRank} of {set.outputs.length}
+              </span>
+            )}
+          </p>
+          {design.revealed && (
+            <p className="font-sans text-[12px] text-ink-muted mt-1">{r.output.why}</p>
+          )}
+          {design.notes?.[r.output.id]?.trim() && (
+            <p className="font-sans text-[12px] text-ink mt-1">
+              Note: {design.notes[r.output.id]}
+            </p>
+          )}
+        </Section>
+      ))}
+    </>
+  );
+}

@@ -16,7 +16,7 @@ import { downloadBlob, slugify } from "@/lib/download";
 import { PROVIDERS, type ProviderId } from "@/lib/providers";
 import { TONE_DIMENSIONS } from "@/lib/tone";
 import { evaluateMatch } from "@/lib/refusal";
-import { aggregateScore, SCORE_MAX } from "@/lib/evals";
+import { aggregateScore, SCORE_MAX, SEED_DESIGN_SET, buildDesignReport } from "@/lib/evals";
 import { buildReport } from "@/lib/spread";
 import { buildVerdict, formatFactor, formatMs, totalMs } from "@/lib/race";
 import { buildPortabilityReport, modelLabel } from "@/lib/portability";
@@ -510,6 +510,29 @@ function DraftSummary({ draft }: { draft: Draft }) {
               {draft.probes.length - scored} unscored
             </span>
           </>
+        )}
+      </p>
+    );
+  }
+
+  if (draft.kind === "evals" && draft.mode === "design" && draft.design) {
+    const report = buildDesignReport(draft.rubric, SEED_DESIGN_SET, draft.design.scores);
+    return (
+      <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
+        Rubric design · {draft.rubric.length} criteria · {SEED_DESIGN_SET.outputs.length}{" "}
+        fixed outputs
+        {draft.design.revealed && report.fullyScored ? (
+          <>
+            {" · "}
+            <span className="text-ink">
+              {report.tally.concordant}/{report.tally.pairs} pairs ordered
+            </span>
+          </>
+        ) : (
+          <span className="text-ink-quiet">
+            {" · "}
+            {draft.design.revealed ? "not fully scored" : "not yet checked"}
+          </span>
         )}
       </p>
     );
