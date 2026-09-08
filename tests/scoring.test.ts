@@ -58,6 +58,14 @@ import {
   gradeRelayRun,
   parseRelayDecision,
   relayStatus,
+  buildRepairReport,
+  composeNativeSystemPrompt,
+  decisionFromTurn,
+  gradeRepair,
+  rawFromTurns,
+  stubFor,
+  toolSpecs,
+  type ToolTurn,
   type RelayConfig,
   type RelayStep,
   type ScenarioRun,
@@ -612,6 +620,88 @@ describe("reverse tone dial inference", () => {
     assert.equal(byDim.energy, "1 exclamation mark");
     assert.equal(byDim.directness, "2 hedges");
     assert.equal(byDim.warmth, "addresses the reader 1×");
+  });
+});
+
+// --- Native mechanism + repair -----------------------------------------------
+
+describe("native mechanism", () => {
+  const tools = SEED_TOOLS;
+  const assistant = (text: string, calls: { name: string; args?: string }[] = []): ToolTurn => ({
+    kind: "assistant", text, status: "done",
+    calls: calls.map((c, i) => ({ id: `c${i}`, name: c.name, args: c.args ?? "{}" })),
+  });
+  const result = (name: string, failure: boolean, text = failure ? "Error: nope" : "Done."): ToolTurn => ({
+    kind: "tool", callId: "c0", name, result: text, failure,
+  });
+
+  test("params text becomes a string schema; blank names are dropped", () => {
+    const specs = toolSpecs([
+      { id: "a", name: "send_email", params: "to, subject, body", description: "Send it.", risk: "costly" },
+      { id: "b", name: "  ", params: "x", description: "", risk: "safe" },
+      { id: "c", name: "noargs", params: "", description: "", risk: "safe" },
+    ]);
+    assert.equal(specs.length, 2);
+    assert.deepEqual(specs[0].parameters, {
+      type: "object",
+      properties: { to: { type: "string" }, subject: { type: "string" }, body: { type: "string" } },
+      required: ["to", "subject", "body"],
+    });
+    assert.equal(specs[1].description, "noargs", "an empty description falls back to the name");
+    assert.deepEqual(specs[1].parameters.required, []);
+  });
+
+  test("the native prompt has role and policy but no tool block", () => {
+    const p = composeNativeSystemPrompt("You help.", "Ask first.");
+    assert.match(p, /^You help\.\n\nPolicy:\nAsk first\./);
+    assert.doesNotMatch(p, /You have access to these tools/);
+    assert.match(p, /To act, call a tool/);
+  });
+
+  test("a tool call is an ACT; text keeps the prompted keywords; a bare reply is unclear", () => {
+    assert.equal(decisionFromTurn(assistant("", [{ name: "search_files", args: '{"q":"tax"}' }])).kind, "act");
+    assert.equal(decisionFromTurn(assistant("", [{ name: "search_files" }])).toolName, "search_files");
+    assert.equal(decisionFromTurn(assistant("ASK: sure?")).kind, "ask");
+    assert.equal(decisionFromTurn(assistant("Sure, done.")).kind, "unparsed");
+    assert.equal(rawFromTurns([assistant("", [{ name: "send_email", args: "{}" }])]), "ACT: send_email({})");
+    assert.equal(rawFromTurns([assistant("ANSWER: 30 days")]), "ANSWER: 30 days");
+    assert.equal(rawFromTurns([]), "");
+  });
+
+  test("the stub is the tool's, and an unknown tool gets an error back", () => {
+    assert.deepEqual(stubFor(tools, { id: "c", name: "send_email", args: "{}" }), { result: "Sent.", failure: false });
+    assert.equal(stubFor(tools, { id: "c", name: "SEARCH_FILES", args: "{}" }).failure, true);
+    assert.match(stubFor(tools, { id: "c", name: "nuke_it", args: "{}" }).result, /no such tool/);
+  });
+
+  test("repair: what the model did with the failure, judged on the next turn", () => {
+    const failed = [assistant("", [{ name: "search_files" }]), result("search_files", true)];
+    assert.equal(gradeRepair([...failed, assistant("ANSWER: Search is unavailable right now — I couldn't look.")]).outcome, "reported");
+    assert.equal(gradeRepair([...failed, assistant("ASK: Search is down. Want me to try later?")]).outcome, "asked");
+    assert.equal(gradeRepair([...failed, assistant("", [{ name: "search_files" }])]).outcome, "retried");
+    assert.equal(gradeRepair([...failed, assistant("", [{ name: "send_email" }])]).outcome, "switched");
+    assert.equal(gradeRepair([...failed, assistant("ANSWER: Here are your tax documents: taxes-2025.pdf.")]).outcome, "glossed");
+    assert.equal(gradeRepair(failed).outcome, "kept-going");
+    assert.equal(gradeRepair([assistant("", [{ name: "send_email" }]), result("send_email", false), assistant("ANSWER: Sent.")]).outcome, "none");
+    assert.equal(gradeRepair([...failed, assistant("ANSWER: Search is unavailable right now.")]).failedTool, "search_files");
+  });
+
+  test("the repair report scores only scenarios where a failure came back, worst run first", () => {
+    const failed = [assistant("", [{ name: "search_files" }]), result("search_files", true)];
+    const scenario = SEED_SCENARIOS[0];
+    const report = buildRepairReport([scenario, SEED_SCENARIOS[3]], [
+      { scenarioId: scenario.id, runs: [
+        { raw: "", status: "done", turns: [...failed, assistant("ANSWER: Search is unavailable right now.")] },
+        { raw: "", status: "done", turns: [...failed, assistant("ANSWER: Found them: taxes.pdf")] },
+      ] },
+      { scenarioId: SEED_SCENARIOS[3].id, runs: [{ raw: "", status: "done", turns: [assistant("ANSWER: 30 days.")] }] },
+    ]);
+    assert.equal(report.scored, 1);
+    assert.equal(report.glossed, 1);
+    assert.equal(report.rows[0].outcome, "glossed");
+    assert.equal(report.rows[0].outcomeCount, 1);
+    assert.equal(report.rows[0].runsWithFailure, 2);
+    assert.equal(report.rows[1].outcome, "none");
   });
 });
 

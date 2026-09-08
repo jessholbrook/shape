@@ -14,6 +14,18 @@ import { acquireInferenceLock, getEngine } from "../webllm-engine";
  * one call can't interleave with another call's mid-stream consumption.
  */
 export async function* webllmChat(call: ChatCall): AsyncIterable<ChatEvent> {
+  // The models we ship at these sizes don't follow native tool schemas
+  // reliably, and WebLLM's function-calling support is model-specific. Tool
+  // Bench's prompted mechanism is the path that works everywhere.
+  if (call.tools?.length || call.messages.some((m) => m.role === "tool")) {
+    yield {
+      type: "error",
+      message:
+        "Native tool calling isn't available on the free in-browser models. Switch the mechanism to Prompted, or pick a provider with a key.",
+    };
+    return;
+  }
+
   const release = await acquireInferenceLock();
 
   try {
@@ -22,7 +34,10 @@ export async function* webllmChat(call: ChatCall): AsyncIterable<ChatEvent> {
     const messages: { role: "system" | "user" | "assistant"; content: string }[] =
       [];
     if (call.system) messages.push({ role: "system", content: call.system });
-    for (const m of call.messages) messages.push({ role: m.role, content: m.content });
+    for (const m of call.messages) {
+      if (m.role === "tool") continue;
+      messages.push({ role: m.role, content: m.content });
+    }
 
     let inputTokens = 0;
     let outputTokens = 0;

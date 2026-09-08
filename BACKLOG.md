@@ -479,9 +479,10 @@ Every inline-tag boundary in `app/learn/*/page.tsx` is now an explicit
 text, and check that `<last word inside the tag> <first word after it>` appears
 *with* its space. That catches it; reading the JSX does not.
 
-## Native tool-calling across providers
+## Native tool-calling across providers — **BUILT**
 
-**From:** building Tool Bench (Module 10), 2026-08-11.
+**From:** building Tool Bench (Module 10), 2026-08-11. **Built 2026-09-07**
+as a Prompted / Native mechanism toggle on Tool Bench; `SPEC.md` §23.
 
 **What shipped instead:** Tool Bench describes tools in the prompt and parses a
 one-line decision out of the reply. That was chosen deliberately — it makes
@@ -503,3 +504,14 @@ bundling with the other provider work parked above.
 
 **Would also unlock:** multi-turn repair, which Tool Bench v0.1 leaves out —
 what the model does when an action fails or returns something unexpected.
+
+**What was built:** the adapter work (Anthropic `tool_use` blocks, the
+fragmented OpenAI `tool_calls` deltas, Gemini `functionDeclarations`, the
+OpenAI-compatible path for Cerebras and the custom endpoint), a `tool_call`
+event, a `tools` field on the call, and — the reason to do it — the repair
+loop: each call gets a designer-written stub result fed back, the run
+continues for up to three rounds, and what the model did after the first
+failing result is graded (reported, asked, retried, switched, glossed over,
+kept going). Prompted stays the default for the reasons above; the
+descriptions are still shown in native mode, as the API receives them. The
+in-browser models fall back to prompted rather than failing.
