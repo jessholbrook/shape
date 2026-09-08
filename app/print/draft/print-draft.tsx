@@ -319,8 +319,41 @@ function ToneBody({ draft }: { draft: ToneDraft }) {
           </ul>
         </Section>
       )}
+      {draft.reverse && (
+        <Section label="Reverse mode — the target">
+          <Prose>{draft.reverse.target}</Prose>
+          {draft.reverse.inferred && (
+            <div className="mt-3">
+              <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet mb-1">
+                Dials the model proposed
+              </p>
+              <ul className="flex flex-col gap-1">
+                {toneSummary(draft.reverse.inferred.values).map((d) => (
+                  <li key={d} className="font-mono text-[12px] text-ink">
+                    {d}
+                  </li>
+                ))}
+                {toneSummary(draft.reverse.inferred.values).length === 0 && (
+                  <li className="font-mono text-[12px] text-ink-muted">
+                    All dials at neutral.
+                  </li>
+                )}
+              </ul>
+              {Object.entries(draft.reverse.inferred.why).length > 0 && (
+                <ul className="flex flex-col gap-1 mt-2">
+                  {Object.entries(draft.reverse.inferred.why).map(([dim, why]) => (
+                    <li key={dim} className="font-mono text-[11px] text-ink-quiet">
+                      <span className="text-ink-muted">{dim}</span> — {why}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </Section>
+      )}
       {(draft.lastUserMessage || draft.lastOutput) && (
-        <Section label="Sample">
+        <Section label={draft.reverse ? "What the dials produced" : "Sample"}>
           {draft.lastUserMessage && (
             <Exchange who="User message">{draft.lastUserMessage}</Exchange>
           )}

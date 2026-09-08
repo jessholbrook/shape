@@ -14,6 +14,7 @@ export const REFLECTION: {
   diffIndependent: ReflectionQuestion;
   diffConversation: ReflectionQuestion;
   tone: ReflectionQuestion;
+  toneReverse: ReflectionQuestion;
   persona: ReflectionQuestion;
   refusal: ReflectionQuestion;
   evals: ReflectionQuestion;
@@ -39,6 +40,11 @@ export const REFLECTION: {
   tone: {
     question:
       "Which dial moved the output most? Which had less effect than you expected?",
+    concept: { href: "/learn/voice-and-tone", label: "Voice & tone" },
+  },
+  toneReverse: {
+    question:
+      "Where did the model's guess differ from the dial you would have set — and which of you read the target more carefully?",
     concept: { href: "/learn/voice-and-tone", label: "Voice & tone" },
   },
   persona: {

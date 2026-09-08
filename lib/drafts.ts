@@ -1,5 +1,5 @@
 import type { ProviderId } from "./providers";
-import type { ToneValues } from "./tone";
+import type { InferredTone, ToneMode, ToneValues } from "./tone";
 import type { PersonaValues } from "./persona";
 import type { Probe, ProbeResult } from "./refusal";
 import type { Criterion, EvalCase, CaseResult } from "./evals";
@@ -132,6 +132,17 @@ export type ToneDraft = {
   tone: ToneValues;
   lastUserMessage: string;
   lastOutput?: string;
+  /** Defaults to "forward" when absent (pre-reverse-mode drafts). */
+  mode?: ToneMode;
+  /**
+   * Reverse mode: the reply the designer edited into what they wanted, and
+   * the dials the model inferred from it (raw reply kept for the record).
+   */
+  reverse?: {
+    target: string;
+    inferred?: InferredTone;
+    raw?: string;
+  };
   /** The user's answer to the playground's reflection question, if they jotted one. */
   reflection?: string;
   createdAt: number;
@@ -546,6 +557,15 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
   } else if (kind === "tone") {
     if (!isObject(d.tone) || typeof d.brief !== "string") {
       return { ok: false, reason: "Tone draft is missing tone values or brief." };
+    }
+    if (d.reverse !== undefined) {
+      const reverse = d.reverse as { target?: unknown; inferred?: unknown } | null;
+      if (!isObject(reverse) || typeof reverse.target !== "string") {
+        return { ok: false, reason: "Tone draft's reverse block is missing its target." };
+      }
+      if (reverse.inferred !== undefined && !isObject((reverse.inferred as { values?: unknown })?.values)) {
+        return { ok: false, reason: "Tone draft's inferred dials are malformed." };
+      }
     }
   } else if (kind === "persona") {
     if (!isObject(d.persona)) {

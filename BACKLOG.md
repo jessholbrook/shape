@@ -210,9 +210,9 @@ is parked in its own section below, with a build brief at `SPEC.md` §20.
 - **Portability** — **BUILT**, see `SPEC.md` §16. One spec across 2-4 models,
   with each clause classified portable / model-specific / unstable / not
   landing. No paired article yet — it shares Module 08 with Spread.
-- **Reverse Tone Dial** — **NOT BUILT.** Promoted to its own section below,
-  since it's the only piece of the arc that came from user feedback rather
-  than from our own sketch.
+- **Reverse Tone Dial** — **BUILT** as a Tone Dial mode, see `SPEC.md` §21
+  and its own section below. The only piece of the arc that came from user
+  feedback rather than from our own sketch.
 
 ### Explicitly out of scope
 
@@ -376,7 +376,8 @@ for it, decide whether Module 12 and Roundtable get built.
 ## Reverse Tone Dial — edit the output, infer the dials
 
 **From:** beta feedback (issue #118), `/play/tone`, 2026-07-16 — reiterated in
-the Part II design conversation, 2026-08-10. **Next build.**
+the Part II design conversation, 2026-08-10. **BUILT 2026-09-07** as a
+Forward / Reverse toggle on Tone Dial; `SPEC.md` §21 is the record.
 
 **The idea:** run the Tone Dial backwards. Instead of moving dials and reading
 the output, the user edits the output into what they actually wanted and the
@@ -397,15 +398,19 @@ came from us. This came from users, repeatedly. If the next thing built should
 be driven by what beta testers actually asked for rather than by our own arc,
 this is the one.
 
-**Shape if we build it:** a mode toggle on `/play/tone` mirroring the
-Independent/Conversation toggle in Diff Mode. The core is an inference loop —
-meta-prompt the model to emit structured dial values (matching `ToneValues`)
-that best match the user's edited target, then present them as a *proposal*
-the user accepts or adjusts. An inference presented as fact would teach
-exactly the overconfidence Module 08 warns about, so the proposal has to be
-checkable: run the inferred dials forward and put the result next to the
-target. Real caveats: small in-browser models are unreliable at structured
-inference, so this likely needs a BYOK model to feel good.
+**What was built:** a mode toggle on `/play/tone` mirroring the
+Independent/Conversation toggle in Diff Mode. One inference call, anchored to
+every stop's actual instruction, returns dial values plus a one-line reason
+per dial; it is rendered as a *proposal* — a diff against the current dials —
+that the user applies or adjusts, then runs forward and compares with the
+target. Local, model-free chips next to the target show what a rule could
+have counted (length, structure, exclamation, hedges) so the reader can see
+which of the model's lines are arithmetic and which are judgement. The
+caveat held: small in-browser models miss the JSON format sometimes, and the
+card grades that as *No clear proposal* rather than inventing a setting.
+
+**Still to learn:** whether a frontier model's proposal actually reproduces
+a target when run forward — the check is built, the live run isn't.
 
 ## Judge Lab — the other two bias passes
 

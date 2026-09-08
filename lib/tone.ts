@@ -254,3 +254,236 @@ export function composeSystemPrompt(brief: string, values: ToneValues): string {
   if (!trimmed) return tone;
   return `${trimmed}\n\n${tone}`;
 }
+
+// --- Reverse mode ------------------------------------------------------------
+
+/**
+ * Reverse mode runs the dial backwards: the designer edits a reply into what
+ * they actually wanted, and the model infers which stops would produce it.
+ *
+ * The inference is a *proposal*, never a setting. It arrives as a diff
+ * against the current dials with one line of reasoning per dial, and the
+ * designer accepts or adjusts it. Presenting an inference as fact would teach
+ * exactly the overconfidence Module 08 warns about — so the proposal is also
+ * checkable: run it forward and put the result next to the target.
+ */
+
+export type InferredTone = {
+  values: ToneValues;
+  /** One short line per dial citing the target, when the model gave one. */
+  why: Partial<Record<ToneDimensionId, string>>;
+};
+
+export type ToneMode = "forward" | "reverse";
+
+/**
+ * A target that reads distinctly off neutral on several dials — warm,
+ * brief, composed, prose — so the first inference has something to find.
+ * Pairs with the default brief (meditation-app onboarding) and message.
+ */
+export const DEFAULT_TARGET =
+  "Welcome in. There's nothing to get right today — find somewhere comfortable, and we'll take the first minute together.";
+
+/**
+ * The dial definitions, rendered for the model. Every stop's instruction is
+ * included so the inference is anchored to what the dials actually do rather
+ * than to the model's own idea of "warm" or "direct".
+ */
+function composeDialReference(): string {
+  return TONE_DIMENSIONS.map((dim) => {
+    const stops = dim.stops
+      .map((s, i) => {
+        const n = i - 2;
+        const num = n > 0 ? ` ${n}` : `${n}`;
+        return `  ${num.padStart(3)} ${s.label}: ${s.prompt ?? "adds no instruction"}`;
+      })
+      .join("\n");
+    return `${dim.label} — ${dim.blurb}\n${stops}`;
+  }).join("\n\n");
+}
+
+export function composeInferencePrompt(): string {
+  const shape = TONE_DIMENSIONS.map((d) => `"${d.id}": 0`).join(", ");
+  const why = TONE_DIMENSIONS.map(
+    (d) => `"${d.id}": "<one short sentence citing the target>"`,
+  ).join(", ");
+  return [
+    "You are calibrating a set of tone dials. A designer wrote or edited a reply by hand; your job is to infer which dial settings would most likely produce a reply like it.",
+    "There are six dials. Each has five stops, numbered -2 to 2. Stop 0 adds no instruction; every other stop adds the instruction shown.",
+    composeDialReference(),
+    "Read the brief, the user message, and the target reply. For each dial, pick the stop whose instruction the target reply most looks like it followed. Use 0 when the target gives no evidence either way. Describe the reply you were given, not the one you would have written.",
+    `Reply with JSON only, in exactly this shape:\n{${shape}, "why": {${why}}}`,
+  ].join("\n\n");
+}
+
+export function composeInferenceUserTurn(
+  brief: string,
+  userMessage: string,
+  target: string,
+): string {
+  return [
+    `Brief:\n${brief.trim() || "(none)"}`,
+    `User message:\n${userMessage.trim() || "(none)"}`,
+    `Target reply:\n${target.trim()}`,
+  ].join("\n\n");
+}
+
+function clampStop(n: unknown): ToneStop | null {
+  const v = typeof n === "string" ? Number(n) : n;
+  if (typeof v !== "number" || !Number.isFinite(v)) return null;
+  return Math.max(-2, Math.min(2, Math.round(v))) as ToneStop;
+}
+
+/**
+ * Lenient on purpose: code fences and a leading sentence are tolerated, and a
+ * missing dial reads as 0. A reply with no dial keys at all is `null` — the
+ * model didn't make a proposal, and pretending it did would be a fabricated
+ * setting.
+ */
+export function parseInferredTone(raw: string): InferredTone | null {
+  const cleaned = raw
+    .replace(/```[a-zA-Z]*\n?/g, "")
+    .replace(/```/g, "")
+    .trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) return null;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(cleaned.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== "object") return null;
+  const obj = parsed as Record<string, unknown>;
+
+  const values: ToneValues = { ...DEFAULT_TONE };
+  let found = 0;
+  for (const dim of TONE_DIMENSIONS) {
+    const stop = clampStop(obj[dim.id]);
+    if (stop !== null) {
+      values[dim.id] = stop;
+      found++;
+    }
+  }
+  if (found === 0) return null;
+
+  const why: InferredTone["why"] = {};
+  const rawWhy = obj.why;
+  if (rawWhy && typeof rawWhy === "object") {
+    for (const dim of TONE_DIMENSIONS) {
+      const line = (rawWhy as Record<string, unknown>)[dim.id];
+      if (typeof line === "string" && line.trim()) why[dim.id] = line.trim();
+    }
+  }
+  return { values, why };
+}
+
+export type DialChange = { dim: ToneDimensionId; from: ToneStop; to: ToneStop };
+
+/** The dials a proposal would move, in dial order. */
+export function proposalChanges(
+  current: ToneValues,
+  proposed: ToneValues,
+): DialChange[] {
+  const out: DialChange[] = [];
+  for (const dim of TONE_DIMENSIONS) {
+    if (current[dim.id] !== proposed[dim.id]) {
+      out.push({ dim: dim.id, from: current[dim.id], to: proposed[dim.id] });
+    }
+  }
+  return out;
+}
+
+export function sameTone(a: ToneValues, b: ToneValues): boolean {
+  return TONE_DIMENSIONS.every((dim) => a[dim.id] === b[dim.id]);
+}
+
+// --- What a rule can read off the target --------------------------------------
+
+export type TargetSignal = {
+  /** Short chip text. */
+  label: string;
+  /** The dial this bears on. */
+  dim: ToneDimensionId;
+};
+
+const HEDGES =
+  /\b(might|could|perhaps|maybe|possibly|seems?|likely|arguably|i think|it depends)\b/gi;
+const EXAMPLES = /\b(for example|for instance|e\.g\.|such as)\b|\d+/gi;
+const READER = /\b(you|your|you're|yours)\b/gi;
+
+function count(text: string, re: RegExp): number {
+  return (text.match(re) ?? []).length;
+}
+
+/**
+ * The mechanical facts a rule can read off the target without a model —
+ * length, structure, exclamation, hedging, address, specifics. Shown next to
+ * the proposal so the reader can see which dials the model had to *judge*
+ * (warmth, energy) and which it could have *counted* (verbosity, structure).
+ * Same boundary as Spread's assertions: mechanical drift is checkable,
+ * tonal drift is not.
+ */
+export function readTargetSignals(target: string): TargetSignal[] {
+  const text = target.trim();
+  if (!text) return [];
+  const words = (text.match(/\S+/g) ?? []).length;
+  const sentences = Math.max(
+    1,
+    (text.match(/[^.!?\n]+[.!?]+(\s|$)/g) ?? []).length,
+  );
+  const lines = text.split("\n");
+  const listItems = lines.filter((l) => /^\s*([-*•]|\d+[.)])\s+/.test(l)).length;
+  const headings = lines.filter((l) => /^\s*#{1,6}\s+\S/.test(l)).length;
+  const exclamations = count(text, /!/g);
+  const hedges = count(text, HEDGES);
+  const reader = count(text, READER);
+  const specifics = count(text, EXAMPLES);
+
+  const plural = (n: number, one: string, many = `${one}s`) =>
+    `${n} ${n === 1 ? one : many}`;
+
+  return [
+    {
+      label: `${plural(words, "word")} · ${plural(sentences, "sentence")}`,
+      dim: "verbosity",
+    },
+    {
+      label:
+        listItems === 0 && headings === 0
+          ? "no lists or headings"
+          : [
+              listItems > 0 ? plural(listItems, "list item") : null,
+              headings > 0 ? plural(headings, "heading") : null,
+            ]
+              .filter(Boolean)
+              .join(" · "),
+      dim: "structure",
+    },
+    {
+      label:
+        exclamations === 0
+          ? "no exclamation marks"
+          : plural(exclamations, "exclamation mark"),
+      dim: "energy",
+    },
+    {
+      label: hedges === 0 ? "no hedges" : plural(hedges, "hedge"),
+      dim: "directness",
+    },
+    {
+      label:
+        reader === 0 ? "never addresses the reader" : `addresses the reader ${reader}×`,
+      dim: "warmth",
+    },
+    {
+      label:
+        specifics === 0
+          ? "no numbers or examples"
+          : plural(specifics, "number or example", "numbers or examples"),
+      dim: "concreteness",
+    },
+  ];
+}

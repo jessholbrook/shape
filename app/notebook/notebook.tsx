@@ -766,6 +766,15 @@ function DraftSummary({ draft }: { draft: Draft }) {
       ) : (
         <span className="text-ink-quiet"> — dials at neutral</span>
       )}
+      {draft.reverse && (
+        <>
+          {" · "}
+          <span className="text-ink">
+            reverse
+            {draft.reverse.inferred ? " · proposal inferred" : ""}
+          </span>
+        </>
+      )}
     </p>
   );
 }
