@@ -431,9 +431,10 @@ card grades that as *No clear proposal* rather than inventing a setting.
 **Still to learn:** whether a frontier model's proposal actually reproduces
 a target when run forward — the check is built, the live run isn't.
 
-## Judge Lab — the other two bias passes
+## Judge Lab — the other two bias passes — **BUILT**
 
 **From:** building Judge Lab (Module 11), 2026-08-12. See `SPEC.md` §19.
+**Built 2026-09-08**; `SPEC.md` §25.
 
 Judge Lab ships the **position** check: every pair judged in both orders. Two
 other biases are named in the Module 11 article but not yet testable in the
@@ -450,9 +451,13 @@ model's. Needs two models generating and one judging, which the provider layer
 already supports — it's a bigger UI change than a third run, not a bigger
 technical one.
 
-**Decision:** park both. The order swap is the check that separates a verdict
-from a coin flip; the other two refine an instrument that already works.
-Revisit once someone has run the position check on real data and wants more.
+**What was built:** a length check on the hand-written pairs (the shorter
+answer padded with visible, editable filler and judged again both ways — a
+judge that now prefers it was reading length) and a self-preference mode
+(two writers answer every request, then each judges the pair both ways;
+"each preferred its own" is the finding). The swap runs inside both, so a
+judge that flips on position is never read for length or preference. The
+plain §19 report ignores the extra runs and doesn't move.
 
 ## Known bugs — small, live, unowned
 

@@ -27,6 +27,7 @@ export const REFLECTION: {
   agency: ReflectionQuestion;
   agencyRelay: ReflectionQuestion;
   judge: ReflectionQuestion;
+  judgeSelf: ReflectionQuestion;
 } = {
   diffIndependent: {
     question:
@@ -118,6 +119,11 @@ export const REFLECTION: {
   judge: {
     question:
       "Would you let this judge score a release — and what would you have to fix in the criteria first?",
+    concept: { href: "/learn/judging-at-scale", label: "Judging at scale" },
+  },
+  judgeSelf: {
+    question:
+      "If each model prefers its own writing, which one would you let judge the other's — and what would you change in the criteria to make either of them safe?",
     concept: { href: "/learn/judging-at-scale", label: "Judging at scale" },
   },
 };

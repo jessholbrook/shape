@@ -133,7 +133,7 @@ Every meaningful action in Shape produces an **artifact**. Artifacts are first-c
 | **Portability** *(§16)* | Whether a spec survives a change of model | Portability Report |
 | **Context Lab** *(§17)* | The system prompt is a fraction of what the model reads | Context Map |
 | **Tool Bench** *(§18)* | Where the line sits between acting and asking | Agency Policy |
-| **Judge Lab** *(§19)* | Automating the scoring, then checking the automation | Calibrated Judge |
+| **Judge Lab** *(§19; length and self-preference passes: §25)* | Automating the scoring, then checking the automation | Calibrated Judge |
 | **Roundtable** *(§20, proposed)* | Behavior at the group level — topology over policy | Protocol |
 
 ## 8. Curriculum sketch — "Behavior Designer 101 → 301"
@@ -769,8 +769,8 @@ The last `WINNER:` mention wins, because judges commonly reason through both can
 
 ### Out of scope for v0.1
 
-- **Length-bias padding as a separate experiment.** The seed already leans on it; an explicit "pad the shorter answer and rerun" pass would be a third call per pair. Worth adding once the order swap has proven itself.
-- **Self-preference.** Whether a model rates its own output higher needs two models generating and one judging — buildable on the provider layer, and a bigger change than this.
+- **Length-bias padding as a separate experiment.** The seed already leans on it; an explicit "pad the shorter answer and rerun" pass would be a third call per pair. Worth adding once the order swap has proven itself. *Built later, §25.*
+- **Self-preference.** Whether a model rates its own output higher needs two models generating and one judging — buildable on the provider layer, and a bigger change than this. *Built later, §25.*
 - **Numeric scoring.** Pairwise comparison is the sharper instrument for calibration; a 1–5 scale hides position effects inside the averages.
 
 ---
@@ -1155,3 +1155,56 @@ The ranking is ours, with its reasons attached. The panel says so and invites di
 - **More sets.** One seeded set; a second (a different domain, a different trap) is the obvious next addition and needs no new mechanics.
 - **Generated sets.** Asking a model for four replies at temperature 1 and letting the reader rank them first, then design the rubric — the ranking becomes the reader's own truth. A good second mode, and one that needs a key.
 - **A judge scoring the rubric.** Module 11's instrument; not here.
+
+---
+
+## 25. Judge Lab — the other two bias passes — v0.1 spec (built)
+
+*Closes the backlog item of the same name. Two additions to Judge Lab (§19): a **length check** on the hand-written pairs, and a **self-preference** mode where two models write and each judges.*
+
+### Purpose
+
+§19's order swap catches position. The Module 11 article names two other biases the playground couldn't test: a judge that reads **length** as quality, and a judge that prefers **its own** writing. Both are now testable, with the same discipline as the swap — the calibration question is asked in a way the judge can't see.
+
+### Length: pad the shorter answer
+
+The seed already leans on length bias (the shorter answer is the better one in every pair), but the swap can only say the verdict was consistent, not what it was reading. With the length check on, each pair is judged twice more with the **shorter answer padded with filler** — sentences that add length and nothing else, cycled until it is at least as long as the other — in both orders, so position can't confound the result. Four calls per pair.
+
+The verdict reads the padded pair against the plain one, and only when the plain verdict held steady:
+
+| Verdict | Meaning |
+|---|---|
+| **Held with padding** | Same answer before and after. Length wasn't what it was reading. |
+| **Flipped to the padded answer** | Preferred the shorter answer's padded version but not its original. Nothing changed but length — this is length bias, caught in the act. |
+| **Flipped away from the padded answer** | Filler cost it the verdict. A judge penalising padding, which is at least a judgement about the text. |
+| **Flipped when swapped, padded** | Position again; the length question can't be answered. |
+| **Can't isolate length** | The plain verdict already flipped on position, or the answers were the same length. |
+
+The filler is editable and visible: the padded text is one disclosure away on the pair card, because "what the judge saw" is the whole method.
+
+### Self-preference: two models write, each judges
+
+A mode, not a toggle: the pairs' answers are no longer hand-written. Two **writers** answer every request; then each writer judges the pair, both ways. Six calls per pair. The judge runs at a fixed low temperature — it is a reading, not a writing — and the writers use the temperature dial.
+
+| Verdict | Meaning |
+|---|---|
+| **Each preferred its own** | Writer A's judge picked A's answer and B's picked B's, both stable across the swap. Nothing changed but who was asking. |
+| **Both preferred the same answer** | One answer is simply better by these criteria; neither judge favoured itself. |
+| **Each preferred the other's** | Rare, and not the usual direction — but still two judges disagreeing about one pair. |
+| **A judge flipped when swapped** | Position, before preference. |
+
+The writers default to the keyed provider and, for B, a second keyed provider when there is one — two families tell you more than two sizes of one model, and the panel says so. The human pick is hidden in this mode: with generated answers there is nothing to pick before the run.
+
+### What stays the same
+
+The swap runs inside both passes. A judge that flips on position is never read for length or preference; those verdicts say "can't isolate" and "position, before preference" instead. The plain report (§19) reads only the plain, single-judge runs, so its numbers don't move when a pass is added.
+
+### Artifact — Calibrated Judge, extended
+
+`JudgeDraft` gains `mode`, `lengthCheck`, an edited `filler`, and the two `writers`; runs carry a `variant` (plain or padded) and, in self-preference mode, which writer was the `judge`. Notebook and PDF show the length line and the self-preference verdicts. Older drafts read as plain, single-judge.
+
+### Out of scope for v0.1
+
+- **A third, neutral judge** in self-preference mode. Having each writer judge is the experiment; a referee is a different one.
+- **Padding both ways.** Padding the longer answer too would test whether *any* padding moves the verdict; the shorter-only version is the sharper question.
+- **Length-matched generation** — asking the writers for the same length — which would make the self-preference pairs cleaner and is a good follow-up.

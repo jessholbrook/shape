@@ -24,6 +24,8 @@ export type Pair = {
   b: string;
   /** Your own call, made before the judge runs. Ground truth, such as it is. */
   humanPick: "a" | "b" | null;
+  /** Self-preference: the answers were written by the two writers, not by hand. */
+  generated?: boolean;
 };
 
 /** Which candidate the judge chose, already mapped back out of position. */
@@ -40,6 +42,10 @@ export type JudgeRun = {
   inputTokens?: number;
   outputTokens?: number;
   costUsd?: number;
+  /** Length pass: this run judged the pair with the shorter answer padded. Absent means plain. */
+  variant?: RunVariant;
+  /** Self-preference: which writer was the judge. Absent means the single judge. */
+  judge?: "a" | "b";
 };
 
 export type PairResult = {
@@ -216,8 +222,15 @@ export function buildJudgeReport(
   pairs: Pair[],
   results: PairResult[],
 ): JudgeReport {
+  // Only the plain, single-judge runs — the padded pass and the two
+  // self-preference judges have their own reports.
   const rows = pairs.map((p) =>
-    buildPairRow(p, results.find((r) => r.pairId === p.id)?.runs ?? []),
+    buildPairRow(
+      p,
+      (results.find((r) => r.pairId === p.id)?.runs ?? []).filter(
+        (r) => (r.variant ?? "plain") === "plain" && r.judge === undefined,
+      ),
+    ),
   );
   const scored = rows.filter((r) => r.verdict !== "incomplete").length;
   const flipped = rows.filter((r) => r.verdict === "position-flipped");
@@ -314,3 +327,318 @@ export const SEED_PAIRS: Pair[] = [
     humanPick: "a",
   },
 ];
+
+// --- Length bias: pad the shorter answer ---------------------------------------
+
+/**
+ * The seed already leans on length bias — the shorter answer is the better
+ * one in every pair — but the order swap only catches position. This pass
+ * catches length directly: the shorter answer is padded with filler that
+ * adds nothing until it is at least as long as the other, and the pair is
+ * judged again, both ways. A judge that now prefers the padded answer was
+ * reading length.
+ */
+
+export type RunVariant = "plain" | "padded";
+
+/** Sentences that add length and nothing else. Cycled until the answer is long enough. */
+export const DEFAULT_FILLER = `To restate the above for completeness: everything described here applies as written, and the details should be read in that light.
+It is worth being thorough about this, since there are a number of considerations involved, all of which have been taken into account above.
+In summary, the points made stand as stated, and no further action is implied beyond what has already been described.`;
+
+export type Padded = {
+  pair: Pair;
+  /** Which candidate was padded — the one that was shorter. */
+  paddedSide: "a" | "b";
+  /** Character counts before and after. */
+  from: number;
+  to: number;
+};
+
+/**
+ * Pad the shorter candidate until it is at least as long as the other.
+ * Returns null when they are already the same length — there is nothing to
+ * isolate. Filler sentences are appended in order and cycled.
+ */
+export function padShorter(pair: Pair, filler = DEFAULT_FILLER): Padded | null {
+  const a = pair.a.trim();
+  const b = pair.b.trim();
+  if (a.length === b.length) return null;
+  const paddedSide: "a" | "b" = a.length < b.length ? "a" : "b";
+  const target = Math.max(a.length, b.length);
+  const sentences = filler
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (sentences.length === 0) return null;
+  let text = paddedSide === "a" ? a : b;
+  const from = text.length;
+  let i = 0;
+  while (text.length < target) {
+    text += (text.endsWith("\n") ? "" : " ") + sentences[i % sentences.length];
+    i++;
+    if (i > 200) break;
+  }
+  return {
+    pair: { ...pair, [paddedSide]: text },
+    paddedSide,
+    from,
+    to: text.length,
+  };
+}
+
+export type LengthVerdict =
+  | "held"
+  | "moved-to-padded"
+  | "moved-away"
+  | "position-flipped"
+  | "tie"
+  | "unparsed"
+  | "incomplete"
+  | "not-applicable";
+
+export const LENGTH_LABEL: Record<LengthVerdict, string> = {
+  held: "Held with padding",
+  "moved-to-padded": "Flipped to the padded answer",
+  "moved-away": "Flipped away from the padded answer",
+  "position-flipped": "Flipped when swapped, padded",
+  tie: "Tie with padding",
+  unparsed: "No clear verdict, padded",
+  incomplete: "Not run padded",
+  "not-applicable": "Can't isolate length",
+};
+
+export const LENGTH_BLURB: Record<LengthVerdict, string> = {
+  held: "Same answer before and after the shorter one was padded. Length wasn't what it was reading.",
+  "moved-to-padded":
+    "Preferred the shorter answer's padded version but not its original. Nothing changed except length — this is length bias, caught in the act.",
+  "moved-away":
+    "Preferred the shorter answer until it was padded, then dropped it. Filler cost it the verdict — a judge penalising padding, which is at least a judgement about the text.",
+  "position-flipped":
+    "The padded pair flipped between orders. Position again; the length question can't be answered from this.",
+  tie: "Called the padded pair a tie.",
+  unparsed: "Didn't produce a verdict in the format asked for on the padded pair.",
+  incomplete: "Needs both padded runs before it can be checked.",
+  "not-applicable":
+    "Either the plain verdict already flipped on position, or the two answers were the same length — nothing to isolate.",
+};
+
+export type LengthRow = {
+  pair: Pair;
+  padded: Padded | null;
+  runs: JudgeRun[];
+  pickAB: Pick;
+  pickBA: Pick;
+  verdict: LengthVerdict;
+};
+
+function runsOf(runs: JudgeRun[], variant: RunVariant, judge?: "a" | "b"): JudgeRun[] {
+  return runs.filter(
+    (r) => (r.variant ?? "plain") === variant && (judge === undefined ? r.judge === undefined : r.judge === judge),
+  );
+}
+
+/**
+ * The padded verdict, read against the plain one. Only defined when the
+ * plain verdict held steady — a judge that already flipped on position tells
+ * us nothing about length.
+ */
+export function buildLengthRow(
+  pair: Pair,
+  runs: JudgeRun[],
+  filler = DEFAULT_FILLER,
+): LengthRow {
+  const padded = padShorter(pair, filler);
+  const paddedRuns = runsOf(runs, "padded");
+  const plain = buildPairRow(pair, runsOf(runs, "plain"));
+  const ab = paddedRuns.find((r) => r.order === "ab");
+  const ba = paddedRuns.find((r) => r.order === "ba");
+  const pickAB = ab ? pickFromRun(ab) : "unparsed";
+  const pickBA = ba ? pickFromRun(ba) : "unparsed";
+  const bothDone = ab?.status === "done" && ba?.status === "done";
+
+  let verdict: LengthVerdict;
+  if (!padded || plain.verdict === "position-flipped" || plain.verdict === "tie" || plain.verdict === "unparsed") {
+    verdict = "not-applicable";
+  } else if (!bothDone || plain.verdict === "incomplete") {
+    verdict = "incomplete";
+  } else if (pickAB === "unparsed" || pickBA === "unparsed") {
+    verdict = "unparsed";
+  } else if (pickAB === "tie" || pickBA === "tie") {
+    verdict = "tie";
+  } else if (pickAB !== pickBA) {
+    verdict = "position-flipped";
+  } else if (pickAB === plain.pickAB) {
+    verdict = "held";
+  } else if (pickAB === padded.paddedSide) {
+    verdict = "moved-to-padded";
+  } else {
+    verdict = "moved-away";
+  }
+  return { pair, padded, runs: paddedRuns, pickAB, pickBA, verdict };
+}
+
+export type LengthReport = {
+  rows: LengthRow[];
+  /** Pairs where the length question could be asked and was answered. */
+  checked: number;
+  movedToPadded: number;
+  movedAway: number;
+};
+
+export function buildLengthReport(
+  pairs: Pair[],
+  results: PairResult[],
+  filler = DEFAULT_FILLER,
+): LengthReport {
+  const rows = pairs.map((p) =>
+    buildLengthRow(p, results.find((r) => r.pairId === p.id)?.runs ?? [], filler),
+  );
+  const answered = rows.filter(
+    (r) => r.verdict !== "incomplete" && r.verdict !== "not-applicable",
+  );
+  return {
+    rows,
+    checked: answered.length,
+    movedToPadded: rows.filter((r) => r.verdict === "moved-to-padded").length,
+    movedAway: rows.filter((r) => r.verdict === "moved-away").length,
+  };
+}
+
+// --- Self-preference: two models write, each judges ---------------------------
+
+/**
+ * Whether a model rates its own writing higher. Two writers answer the same
+ * request; each then judges the pair, both ways. If writer A's judge picks
+ * A's answer and writer B's judge picks B's, the verdict is about the judge,
+ * not the answer.
+ */
+
+export type JudgeMode = "pairs" | "self";
+
+export type Writer = { provider: ProviderId; model: string };
+export type Writers = { a: Writer; b: Writer };
+
+/** Judging is a reading, not a writing: fixed low temperature regardless of the dial. */
+export const SELF_JUDGE_TEMPERATURE = 0.2;
+
+export function composeWriterSystem(): string {
+  return "Answer the request directly, in the voice the request implies. Do not explain your choices.";
+}
+
+export type SelfVerdict =
+  | "each-own"
+  | "each-other"
+  | "agreed"
+  | "flipped"
+  | "tie"
+  | "unparsed"
+  | "incomplete";
+
+export const SELF_LABEL: Record<SelfVerdict, string> = {
+  "each-own": "Each preferred its own",
+  "each-other": "Each preferred the other's",
+  agreed: "Both preferred the same answer",
+  flipped: "A judge flipped when swapped",
+  tie: "A judge called it a tie",
+  unparsed: "No clear verdict",
+  incomplete: "Not run all four ways",
+};
+
+export const SELF_BLURB: Record<SelfVerdict, string> = {
+  "each-own":
+    "Writer A's judge picked A's answer and writer B's judge picked B's, both stable across the swap. Nothing about the answers changed between the two judges — only who was asking. That is self-preference.",
+  "each-other":
+    "Each judge preferred the other model's answer. Rare, and not a bias in the usual direction — but still two judges disagreeing about the same pair.",
+  agreed:
+    "Both judges picked the same answer, both ways. One answer is simply better by these criteria, and neither judge favoured itself.",
+  flipped:
+    "At least one judge changed its answer when the order changed. Position, not preference — this pair can't say anything about self-preference.",
+  tie: "At least one judge wouldn't separate them.",
+  unparsed: "At least one judge didn't produce a verdict in the format asked for.",
+  incomplete: "Needs both judges in both orders.",
+};
+
+export type SelfRow = {
+  pair: Pair;
+  judgeA: PairRow;
+  judgeB: PairRow;
+  verdict: SelfVerdict;
+};
+
+function stablePick(row: PairRow): Pick | null {
+  if (row.verdict === "agrees" || row.verdict === "disagrees") return row.pickAB;
+  return null;
+}
+
+export function buildSelfRow(pair: Pair, runs: JudgeRun[]): SelfRow {
+  const judgeA = buildPairRow(pair, runsOf(runs, "plain", "a"));
+  const judgeB = buildPairRow(pair, runsOf(runs, "plain", "b"));
+  const rows = [judgeA, judgeB];
+  let verdict: SelfVerdict;
+  if (rows.some((r) => r.verdict === "incomplete")) verdict = "incomplete";
+  else if (rows.some((r) => r.verdict === "unparsed")) verdict = "unparsed";
+  else if (rows.some((r) => r.verdict === "position-flipped")) verdict = "flipped";
+  else if (rows.some((r) => r.verdict === "tie")) verdict = "tie";
+  else {
+    const pa = stablePick(judgeA);
+    const pb = stablePick(judgeB);
+    if (pa === "a" && pb === "b") verdict = "each-own";
+    else if (pa === "b" && pb === "a") verdict = "each-other";
+    else verdict = "agreed";
+  }
+  return { pair, judgeA, judgeB, verdict };
+}
+
+export type SelfReport = {
+  rows: SelfRow[];
+  scored: number;
+  eachOwn: number;
+  agreed: number;
+  flipped: number;
+};
+
+export function buildSelfReport(pairs: Pair[], results: PairResult[]): SelfReport {
+  const rows = pairs.map((p) =>
+    buildSelfRow(p, results.find((r) => r.pairId === p.id)?.runs ?? []),
+  );
+  return {
+    rows,
+    scored: rows.filter((r) => r.verdict !== "incomplete").length,
+    eachOwn: rows.filter((r) => r.verdict === "each-own").length,
+    agreed: rows.filter((r) => r.verdict === "agreed").length,
+    flipped: rows.filter((r) => r.verdict === "flipped").length,
+  };
+}
+
+/** Calls per pair for each configuration. */
+export function callsPerPair(mode: JudgeMode, lengthCheck: boolean): number {
+  if (mode === "self") return 6; // 2 writes + 2 judges × 2 orders
+  return lengthCheck ? 4 : 2;
+}
+
+/**
+ * Hand-written pairs judged by one model, with or without the padded pass.
+ * The self-preference mode has two writers and two judges; its estimate uses
+ * the pricier writer for every call, which is the honest upper bound.
+ */
+export function estimateJudgeCostFor(
+  mode: JudgeMode,
+  lengthCheck: boolean,
+  judge: Writer,
+  writers: Writers,
+  system: string,
+  pairs: Pair[],
+): number {
+  if (mode === "pairs") {
+    const base = estimateJudgeCost(judge.provider, judge.model, system, pairs);
+    return lengthCheck ? base * 2 : base;
+  }
+  const rate = (w: Writer) => {
+    const meta = resolveModel(w.provider, w.model);
+    return meta ? meta.inputPer1M + meta.outputPer1M : 0;
+  };
+  const dearer = rate(writers.a) >= rate(writers.b) ? writers.a : writers.b;
+  const base = estimateJudgeCost(dearer.provider, dearer.model, system, pairs);
+  return base * 3;
+}

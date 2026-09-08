@@ -1,9 +1,13 @@
 "use client";
 
 import {
+  LENGTH_BLURB,
+  LENGTH_LABEL,
   VERDICT_BLURB,
   VERDICT_LABEL,
   type JudgeReport,
+  type LengthReport,
+  type LengthVerdict,
   type PairVerdict,
 } from "@/lib/judge";
 
@@ -16,10 +20,18 @@ import {
  * the headline states the flip rate first and only then says how often it
  * agreed — and when the flip rate is high, it says the agreement doesn't count.
  */
-export function JudgeReportPanel({ report }: { report: JudgeReport }) {
+export function JudgeReportPanel({
+  report,
+  length,
+}: {
+  report: JudgeReport;
+  /** The padded pass, when the length check ran. */
+  length?: LengthReport;
+}) {
   if (report.scored === 0) return null;
 
   const clean = report.flipped === 0;
+  const lengthRowFor = (pairId: string) => length?.rows.find((r) => r.pair.id === pairId);
 
   return (
     <div className="bg-surface border border-line rounded-[16px] p-5 md:p-6 flex flex-col gap-5">
@@ -53,6 +65,35 @@ export function JudgeReportPanel({ report }: { report: JudgeReport }) {
 
       <AgreementLine report={report} clean={clean} />
 
+      {length && length.checked > 0 && (
+        <p className="font-sans text-[15px] leading-[1.5] text-ink">
+          {length.movedToPadded > 0 ? (
+            <>
+              Padding the shorter answer with filler{" "}
+              <strong className="text-danger">
+                flipped {length.movedToPadded} of {length.checked}
+              </strong>{" "}
+              {length.checked === 1 ? "pair" : "pairs"} toward it. Nothing
+              changed but length.
+            </>
+          ) : (
+            <>
+              Padding the shorter answer with filler{" "}
+              <strong className="text-success">moved none</strong> of the{" "}
+              {length.checked} {length.checked === 1 ? "pair" : "pairs"} it
+              could be checked on
+              {length.movedAway > 0 && (
+                <>
+                  {" "}
+                  — and cost the padded answer the verdict on {length.movedAway}
+                </>
+              )}
+              .
+            </>
+          )}
+        </p>
+      )}
+
       <div className="flex flex-col gap-2.5">
         {report.rows.map((row) => (
           <div
@@ -73,6 +114,9 @@ export function JudgeReportPanel({ report }: { report: JudgeReport }) {
               </span>
             )}
             <VerdictPill verdict={row.verdict} />
+            {length && lengthRowFor(row.pair.id) && (
+              <LengthPill verdict={lengthRowFor(row.pair.id)!.verdict} />
+            )}
           </div>
         ))}
       </div>
@@ -87,10 +131,24 @@ export function JudgeReportPanel({ report }: { report: JudgeReport }) {
             {VERDICT_BLURB[v]}
           </p>
         ))}
+        {length &&
+          presentLengthVerdicts(length).map((v) => (
+            <p key={v} className="font-mono text-[10px] leading-[1.6] text-ink-quiet">
+              <span className="text-ink-muted">{LENGTH_LABEL[v]}</span> —{" "}
+              {LENGTH_BLURB[v]}
+            </p>
+          ))}
         <p className="font-mono text-[10px] leading-[1.6] text-ink-quiet mt-1">
           Each pair is judged twice — once as written, once with the two
           answers swapped. That&apos;s why this costs double a plain scoring
           run, and it&apos;s the only way to tell a verdict from a coin flip.
+          {length && (
+            <>
+              {" "}
+              With the length check on, the pair is judged twice more with the
+              shorter answer padded to the longer one&apos;s length.
+            </>
+          )}
         </p>
       </div>
     </div>
@@ -179,6 +237,40 @@ function VerdictPill({ verdict }: { verdict: PairVerdict }) {
       className={`font-mono text-[10px] uppercase tracking-[0.08em] rounded-full px-2 py-0.5 whitespace-nowrap ${tone}`}
     >
       {VERDICT_LABEL[verdict]}
+    </span>
+  );
+}
+
+function presentLengthVerdicts(length: LengthReport): LengthVerdict[] {
+  const order: LengthVerdict[] = [
+    "moved-to-padded",
+    "moved-away",
+    "position-flipped",
+    "held",
+    "tie",
+    "unparsed",
+    "not-applicable",
+    "incomplete",
+  ];
+  const present = new Set(length.rows.map((r) => r.verdict));
+  return order.filter((v) => present.has(v));
+}
+
+function LengthPill({ verdict }: { verdict: LengthVerdict }) {
+  const tone =
+    verdict === "held"
+      ? "bg-success/15 text-success"
+      : verdict === "moved-to-padded"
+        ? "bg-danger/10 text-danger"
+        : verdict === "moved-away" || verdict === "position-flipped"
+          ? "bg-highlight-soft text-highlight-ink"
+          : "bg-line/60 text-ink-quiet";
+  return (
+    <span
+      title="The length check: the shorter answer padded with filler, judged both ways"
+      className={`font-mono text-[10px] uppercase tracking-[0.08em] rounded-full px-2 py-0.5 whitespace-nowrap ${tone}`}
+    >
+      length: {LENGTH_LABEL[verdict]}
     </span>
   );
 }
