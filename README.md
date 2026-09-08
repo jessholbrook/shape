@@ -16,8 +16,8 @@ The audience is people in UX — designers, researchers, writers, prototypers �
 
 ## What's inside
 
-- **`/learn`** — seven short concept lessons. Prompts as design, voice & tone, personas for AI, refusal & boundaries, output formatting, evaluation, multi-turn flows.
-- **`/play`** — six focused playgrounds. Each one isolates a single design lever and produces an artifact you can save and export.
+- **`/learn`** — eleven short concept lessons, in two parts. Part I: prompts as design, voice & tone, personas for AI, refusal & boundaries, output formatting, evaluation, multi-turn flows. Part II: distributions not outputs, context is the interface, designing agency, judging at scale.
+- **`/play`** — twelve focused playgrounds. Each one isolates a single design lever and produces an artifact you can save and export.
 - **`/notebook`** — your local working copies. Save drafts from any playground, duplicate them, export to JSON.
 
 ![Featured playgrounds and the three-step onboarding pitch on the home page](docs/screenshots/play-and-learn.png)
@@ -26,14 +26,20 @@ The audience is people in UX — designers, researchers, writers, prototypers �
 
 | Playground | What it teaches | Artifact |
 |---|---|---|
-| **Diff Mode** | Iteration. Compare two configs side by side — fresh each run, or as a running conversation. Starter example pairs included. | Diff Log |
-| **Tone Dial** | Style as a design token. Move warmth, verbosity, directness as independent dials. | Behavior Spec |
-| **Persona Lab** | Character design for AI. Backstory, beliefs, voice, blind spots. | Persona Card |
-| **Refusal Lab** | Boundary design. Where the model says no — and where it shouldn't. | Refusal Scorecard |
-| **Eval Lab** | Rubric-based evaluation. Define what good looks like, score against it. | Eval Rubric + Scorecard |
-| **Conversation Choreographer** | Multi-turn flow design. Script user turns, run the conversation end-to-end. | Behavior Spec |
+| **Diff mode** | Run one prompt through two configurations side-by-side. The fastest way to feel how prompts shape outputs. | Diff Log |
+| **Tone dial** | Treat style as a design token. Move dials for warmth, verbosity, energy, directness — see the prompt compose itself. | Behavior Spec |
+| **Persona lab** | Design a character — backstory, beliefs, blind spots — and watch the model embody them. | Persona Card |
+| **Refusal lab** | Probe boundary design with a panel of edge cases. Tune the line between over- and under-refusal. | Refusal Scorecard |
+| **Eval lab** | Rubric-based evaluation. Define what good looks like, score the model against it, watch the average move. | Eval Rubric + Scorecard |
+| **Conversation choreographer** | Write the user's side of a conversation in advance, then run it. Same script, different system prompt — see how the model holds the thread. | Behavior Spec |
+| **Spread lab** | Run one config many times. Outputs are a distribution, not a value — find out which clauses of your spec actually hold. | Stability Report |
+| **Race lab** | One prompt, two models, at once. Watch what the better answer actually costs — in seconds and in dollars. | Speed Trial |
+| **Portability lab** | One spec, several models. Find out which clauses are real rules and which are incantations tuned to a single vendor. | Portability Report |
+| **Context lab** | One question, several context sets. Your system prompt is a fraction of what the model reads — see the rest, and where the answer came from. | Context Map |
+| **Tool bench** | Now it does things, not just says things. Write the tools and the policy, then find out where it draws the line between asking and acting. | Agency Policy |
+| **Judge lab** | Hand the scoring to a model, then check it. Every comparison runs twice with the answers swapped — a judge reading position gives itself away. | Calibrated Judge |
 
-Each playground includes a composed system-prompt preview, streaming output from the selected model, save-to-Notebook as a draft, and export to portable JSON.
+Each playground includes a composed system-prompt preview, streaming output from the selected model, save-to-Notebook as a draft, and export to portable JSON. Several carry a second mode: Diff Mode runs independent or as a conversation, Tone Dial runs forward or in reverse (edit the output you wanted and infer the dials), and Tool Bench runs solo or as a two-agent relay, with tools described in the prompt or sent through the provider's tool API.
 
 **Diff Mode** — two configurations, output streamed side by side:
 

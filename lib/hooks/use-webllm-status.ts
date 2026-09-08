@@ -12,12 +12,16 @@ import {
  * global banner can show "Downloading model — 42%" while a fresh visitor's
  * first run is fetching weights.
  */
+/** What the server renders, and what the client renders while hydrating: nothing decided yet. */
+const SERVER_STATUS: WebLLMStatus = { kind: "idle" };
+
 export function useWebLLMStatus(): WebLLMStatus {
-  // The engine module keeps a stable status object between changes, so
-  // getWebLLMStatus doubles as both client and server snapshot.
+  // The server snapshot is a fixed "idle" so the HTML never carries a
+  // support verdict the client might disagree with; React swaps in the real
+  // status right after hydration, without a mismatch.
   return useSyncExternalStore(
     subscribeWebLLMStatus,
     getWebLLMStatus,
-    getWebLLMStatus,
+    () => SERVER_STATUS,
   );
 }

@@ -825,49 +825,33 @@ Three load-bearing decisions:
 
 ## Next session
 
-*Refreshed 2026-09-07. Everything above this heading is a historical scaffold
+*Refreshed 2026-09-08. Everything above this heading is a historical scaffold
 log; this section is the only part meant to be current.*
 
-The old list here has fully resolved: #40 merged, #33 closed, the Studio
-section was retired (#75), and `npm run lint` has been clean since #140.
-
-**Waiting on a merge — all green:**
-
-1. **#150 — Tool Bench relay mode.** The cheap proof for Module 12. Also
-   carries the backlog reconciliation that closed #139, #121, and #108.
-2. **#146 (Next group) and #147 (React group)** from Dependabot. #147 will
-   need a rebase once #146 lands — a `@dependabot rebase` comment does it.
-3. **The housekeeping PR this note ships in.** Dependabot ignore rules for
-   ESLint 10, TypeScript 7, and Node types past the Node 22 runtime, after
-   #149 failed at `npm ci` on `eslint-config-next`'s peer range. Once it is
-   merged, the next weekly dev-dependencies PR arrives without those bumps
-   (or comment `@dependabot recreate` on it to get one sooner).
+Merged on 2026-09-08, in order: #146, #151, #150 (relay mode, §20), #152
+(Tone Dial reverse mode, §21), #153 (live model lists + custom endpoint,
+§22), #154 (native tool-calling + repair, §23), #147, #155, #156. Nothing
+is open. Issue #118 closed as built by #152.
 
 **Needs a key — not something CI can do:**
 
-4. **Run the relay seed on a live model** at temperature 0.2. The "neither
-   agent broke its policy" headline has to reproduce on at least one BYOK
-   model, or the seed needs redesign before Module 12 goes further
-   (`SPEC.md` §20). The same caveat applies to every Part II playground —
-   none has been run live by us; see BACKLOG "Still outstanding for the arc".
+1. **A live-model pass.** Every Part II playground and all four September
+   builds have only ever seen scripted provider replies. One session with a
+   real key settles four questions at once: does the relay seed produce
+   "neither agent broke its policy" (§20); does a reverse-mode proposal
+   reproduce its target when run forward (§21); what does a frontier model
+   do with the native seed's failing search — report, retry, or gloss (§23);
+   does the custom endpoint work against a real OpenRouter key with its
+   quoted prices (§22). The seeds are tuned to misbehave; a uniformly clean
+   run means a seed needs sharpening, not that all is well.
 
-**Build queue — built 2026-09-07,** each on its own branch stacked on #150
-so the spec and backlog edits don't conflict. Merge in order; GitHub
-retargets each PR to `main` as the one below it lands:
+**Build queue, in order:**
 
-5. **#150** Tool Bench relay mode (`SPEC.md` §20).
-6. **#152** Tone Dial reverse mode (`SPEC.md` §21) — issue #118.
-7. **#153** Live model lists + custom OpenAI-compatible endpoint (§22).
-8. **#154** Native tool-calling + the repair loop (§23).
-
-**Still parked, and why:**
-
-- **Module 12 article + Roundtable** — gated on item 4: the relay seed's
-  headline has to reproduce on a live model first.
-- **Judge Lab's other two bias passes**, the Eval Lab rubric inversion, and
-  the JSX whitespace hazard — see `BACKLOG.md`.
-
-**Every Part II playground, plus all four builds above, has been verified
-only with scripted provider responses.** None has been run against a live
-model by us. The seeds are tuned to misbehave; a uniformly clean first live
-run means a seed needs sharpening, not that all is well.
+2. **Eval Lab "design a rubric" mode** — two independent testers; the
+   inversion pattern proved out as a mode toggle in §21. BACKLOG "Eval Lab".
+3. **Judge Lab's two remaining bias passes** — self-preference is cheap now
+   that the roster and the custom endpoint make "two models generate, one
+   judges" easy; length-bias padding is a third call per pair.
+4. **Module 12 article + Roundtable** — gated on item 1.
+5. **Native relay; keyless local endpoints** — both left out of the
+   September builds on purpose, both small once someone wants them.

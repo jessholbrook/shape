@@ -72,7 +72,11 @@ export async function resetEngineSingleton(): Promise<void> {
 }
 
 function detectInitialStatus(): WebLLMStatus {
-  if (typeof navigator === "undefined") return { kind: "idle" };
+  // Node 21+ defines a global `navigator` (with no `gpu`), so checking for
+  // navigator alone made the *server* decide the browser was unsupported and
+  // render the banner into the HTML — a hydration mismatch on every machine
+  // that actually has WebGPU. Only a real window can answer this.
+  if (typeof window === "undefined") return { kind: "idle" };
   if (!("gpu" in navigator)) return { kind: "unsupported" };
   return { kind: "idle" };
 }
