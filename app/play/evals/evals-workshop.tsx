@@ -14,11 +14,16 @@ import {
   EMPTY_CASE_RESULT,
   SEED_CASES,
   SEED_CRITERIA,
+  SEED_DESIGN_SET,
   SCORE_MAX,
   aggregateScore,
+  buildDesignReport,
+  emptyDesignScores,
   type CaseResult,
   type Criterion,
+  type DesignScores,
   type EvalCase,
+  type EvalMode,
   type Score,
 } from "@/lib/evals";
 import { suggestTitle, type EvalsDraft } from "@/lib/drafts";
@@ -27,6 +32,8 @@ import { InfoTip } from "@/components/info-tip";
 import { SystemPromptTip } from "@/components/play/config-help";
 import { RubricEditor } from "@/components/play/rubric-editor";
 import { EvalCaseRow } from "@/components/play/eval-case-row";
+import { DesignOutputCard } from "@/components/play/design-output-card";
+import { DesignReportPanel } from "@/components/play/design-report";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { ReflectionCard } from "@/components/play/reflection-card";
@@ -53,6 +60,12 @@ export function EvalsWorkshop() {
   const [results, setResults] = useState<Record<string, CaseResult>>(() =>
     emptyResults(SEED_CASES),
   );
+  const [mode, setMode] = useState<EvalMode>("apply");
+  const [designScores, setDesignScores] = useState<DesignScores>(() =>
+    emptyDesignScores(SEED_DESIGN_SET),
+  );
+  const [designNotes, setDesignNotes] = useState<Record<string, string>>({});
+  const [revealed, setRevealed] = useState(false);
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [reflectionDismissed, setReflectionDismissed] = useState(false);
@@ -76,6 +89,12 @@ export function EvalsWorkshop() {
       };
     }
     setResults(filled);
+    setMode(draft.mode ?? "apply");
+    if (draft.design) {
+      setDesignScores({ ...emptyDesignScores(SEED_DESIGN_SET), ...draft.design.scores });
+      setDesignNotes(draft.design.notes ?? {});
+      setRevealed(draft.design.revealed);
+    }
   }, []);
   const { draftId, title, setTitle, saveStatus, save } = useDraftEditing({
     initialDraftId,
@@ -103,8 +122,38 @@ export function EvalsWorkshop() {
     () => cases.filter((c) => results[c.id]?.status === "done").length,
     [cases, results],
   );
-  const showReflection =
-    completedCases >= 2 && !running && !reflectionDismissed;
+  const isDesign = mode === "design";
+  const designSet = SEED_DESIGN_SET;
+  const designReport = useMemo(
+    () => buildDesignReport(rubric, designSet, designScores),
+    [rubric, designSet, designScores],
+  );
+  const showReflection = isDesign
+    ? revealed && !reflectionDismissed
+    : completedCases >= 2 && !running && !reflectionDismissed;
+
+  function switchMode(next: EvalMode) {
+    if (next === mode || running) return;
+    setMode(next);
+    setReflectionDismissed(false);
+  }
+
+  function setDesignScore(outputId: string, criterionId: string, score: Score | null) {
+    setDirty(true);
+    setDesignScores((prev) => {
+      const forOutput = { ...(prev[outputId] ?? {}) };
+      if (score === null) delete forOutput[criterionId];
+      else forOutput[criterionId] = score;
+      return { ...prev, [outputId]: forOutput };
+    });
+  }
+
+  function resetDesign() {
+    setDesignScores(emptyDesignScores(designSet));
+    setDesignNotes({});
+    setRevealed(false);
+    setReflectionDismissed(false);
+  }
 
   function updateResult(id: string, updater: (prev: CaseResult) => CaseResult) {
     setResults((prev) => ({
@@ -219,10 +268,12 @@ export function EvalsWorkshop() {
     save({
       title:
         title.trim() ||
-        suggestTitle(
-          systemPrompt.split("\n")[0] ?? "",
-          "Untitled eval workshop",
-        ),
+        (isDesign
+          ? `Rubric design — ${designSet.title}`
+          : suggestTitle(
+              systemPrompt.split("\n")[0] ?? "",
+              "Untitled eval workshop",
+            )),
       provider,
       model,
       temperature,
@@ -230,6 +281,10 @@ export function EvalsWorkshop() {
       rubric,
       cases,
       results,
+      mode,
+      design: isDesign
+        ? { setId: designSet.id, scores: designScores, notes: designNotes, revealed }
+        : undefined,
       reflection: reflectionNote.trim() || undefined,
     });
     setDirty(false);
@@ -237,24 +292,73 @@ export function EvalsWorkshop() {
 
   return (
     <div className="flex flex-col gap-6">
-      <MissingKeyBanner
-        show={hydrated && !ready}
-        providerName={PROVIDERS[provider].name}
-        action="run the eval"
-      />
-      <WebLLMUnsupportedBanner show={provider === "webllm"} />
+      <div className="bg-surface border border-line rounded-[16px] p-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex rounded-[10px] border border-line bg-canvas p-0.5">
+          <ModeButton
+            active={!isDesign}
+            disabled={running}
+            onClick={() => switchMode("apply")}
+          >
+            Apply a rubric
+          </ModeButton>
+          <ModeButton
+            active={isDesign}
+            disabled={running}
+            onClick={() => switchMode("design")}
+          >
+            Design a rubric
+          </ModeButton>
+        </div>
+        <p className="font-mono text-[11px] leading-[1.5] text-ink-quiet max-w-md">
+          {isDesign
+            ? "The outputs are fixed — some strong, some weak. Write criteria that separate them, score by hand, then see whether your rubric ranks them the way a careful reader does. No model needed."
+            : "Your rubric is fixed; the outputs vary. Run the system prompt through the cases and score what comes back."}
+        </p>
+      </div>
 
-      {/* Provider / model / temperature */}
-      <ProviderModelTempRow
-        provider={provider}
-        model={model}
-        temperature={temperature}
-        onProviderChange={setProvider}
-        onModelChange={setModel}
-        onTemperatureChange={setTemperature}
-      />
+      {!isDesign && (
+        <>
+          <MissingKeyBanner
+            show={hydrated && !ready}
+            providerName={PROVIDERS[provider].name}
+            action="run the eval"
+          />
+          <WebLLMUnsupportedBanner show={provider === "webllm"} />
+
+          {/* Provider / model / temperature */}
+          <ProviderModelTempRow
+            provider={provider}
+            model={model}
+            temperature={temperature}
+            onProviderChange={setProvider}
+            onModelChange={setModel}
+            onTemperatureChange={setTemperature}
+          />
+        </>
+      )}
+
+      {isDesign && (
+        <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-col gap-3">
+          <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet inline-flex items-center gap-1.5">
+            The set — {designSet.title}
+            <InfoTip>
+              Four replies to one prompt, in no particular order. A careful
+              reader ranks them; you&apos;ll see that ranking, and the reasons,
+              after you&apos;ve scored. Try adding a criterion like
+              &ldquo;Friendliness&rdquo; and watch which output it rewards.
+            </InfoTip>
+          </span>
+          <p className="font-sans text-[14px] leading-[1.55] text-ink-muted">
+            {designSet.brief}
+          </p>
+          <p className="font-sans text-[14px] leading-[1.55] text-ink italic">
+            &ldquo;{designSet.userMessage}&rdquo;
+          </p>
+        </div>
+      )}
 
       {/* System prompt */}
+      {!isDesign && (
       <div className="bg-surface border border-line rounded-[16px] p-5">
         <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet mb-2 inline-flex items-center gap-1.5">
           System prompt under test
@@ -271,11 +375,71 @@ export function EvalsWorkshop() {
           see scores shift.
         </p>
       </div>
+      )}
 
       {/* Rubric editor */}
       <RubricEditor criteria={rubric} onChange={setRubric} />
 
+      {isDesign && (
+        <>
+          <div className="flex flex-col gap-3">
+            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
+              Outputs — {designSet.outputs.length} fixed × {rubric.length} criteria
+            </p>
+            {designSet.outputs.map((o) => (
+              <DesignOutputCard
+                key={o.id}
+                output={o}
+                criteria={rubric}
+                scores={designScores[o.id] ?? {}}
+                note={designNotes[o.id] ?? ""}
+                revealed={revealed}
+                onScore={(criterionId, score) => setDesignScore(o.id, criterionId, score)}
+                onNoteChange={(note) => {
+                  setDesignNotes((prev) => ({ ...prev, [o.id]: note }));
+                  setDirty(true);
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setRevealed(true);
+                  setDirty(true);
+                }}
+                disabled={!designReport.fullyScored || revealed}
+                className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ink/90 transition-colors"
+              >
+                {revealed ? "Revealed" : "Check the rubric"}
+                <span className="text-highlight">→</span>
+              </button>
+              <button
+                type="button"
+                onClick={resetDesign}
+                className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+              >
+                Reset
+              </button>
+            </div>
+            <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
+              {designReport.fullyScored
+                ? revealed
+                  ? "Scores stay editable — the report follows them."
+                  : "Every output scored. Check when you're ready."
+                : "Score every output on every criterion first."}
+            </span>
+          </div>
+
+          {revealed && <DesignReportPanel report={designReport} />}
+        </>
+      )}
+
       {/* Run row + scorecard */}
+      {!isDesign && (
       <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <button
@@ -304,7 +468,10 @@ export function EvalsWorkshop() {
         />
       </div>
 
+      )}
+
       {/* Case panel */}
+      {!isDesign && (
       <div className="flex flex-col gap-3">
         <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
           Cases — {cases.length} prompts × {rubric.length} criteria
@@ -321,10 +488,11 @@ export function EvalsWorkshop() {
           />
         ))}
       </div>
+      )}
 
       {showReflection && (
         <ReflectionCard
-          reflection={REFLECTION.evals}
+          reflection={isDesign ? REFLECTION.evalsDesign : REFLECTION.evals}
           answer={reflectionNote}
           onAnswerChange={(v) => {
             setReflectionNote(v);
@@ -373,3 +541,30 @@ function AggregateScorecard({
   );
 }
 
+function ModeButton({
+  active,
+  disabled,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={active}
+      className={`font-mono text-[11px] uppercase tracking-[0.08em] rounded-[8px] px-3 py-1.5 transition-colors disabled:cursor-not-allowed ${
+        active
+          ? "bg-ink text-canvas"
+          : "text-ink-muted hover:text-ink disabled:opacity-50"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}

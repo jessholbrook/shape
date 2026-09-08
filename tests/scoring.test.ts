@@ -37,6 +37,17 @@ import {
   type Pair,
 } from "../lib/judge";
 import {
+  SEED_CRITERIA,
+  SEED_DESIGN_SET,
+  buildDesignReport,
+  designTotal,
+  diagnoseCriterion,
+  emptyDesignScores,
+  tallyPairs,
+  type DesignScores,
+  type Score,
+} from "../lib/evals";
+import {
   DEFAULT_TONE,
   DEFAULT_TARGET,
   composeInferencePrompt,
@@ -702,6 +713,82 @@ describe("native mechanism", () => {
     assert.equal(report.rows[0].outcomeCount, 1);
     assert.equal(report.rows[0].runsWithFailure, 2);
     assert.equal(report.rows[1].outcome, "none");
+  });
+});
+
+// --- Eval Lab design mode -----------------------------------------------------
+
+describe("eval lab design mode", () => {
+  const set = SEED_DESIGN_SET;
+  const [clarity, tone] = SEED_CRITERIA;
+  const byRank = (rank: number) => set.outputs.find((o) => o.truthRank === rank)!.id;
+
+  /** Score every output on the given criteria with one number per output, keyed by truth rank. */
+  const scoreAll = (criteria: typeof SEED_CRITERIA, perRank: Record<number, Score>): DesignScores => {
+    const scores = emptyDesignScores(set);
+    for (const o of set.outputs) for (const c of criteria) scores[o.id][c.id] = perRank[o.truthRank];
+    return scores;
+  };
+
+  test("the seed's display order is not its ranking, and every rank is present once", () => {
+    assert.deepEqual(set.outputs.map((o) => o.truthRank), [4, 1, 3, 2]);
+  });
+
+  test("a total needs every criterion scored", () => {
+    assert.equal(designTotal([clarity, tone], { [clarity.id]: 5, [tone.id]: 3 }), 8);
+    assert.equal(designTotal([clarity, tone], { [clarity.id]: 5 }), null);
+    assert.equal(designTotal([clarity, tone], undefined), null);
+  });
+
+  test("pairs: concordant when the value order matches the truth, ties counted, missing skipped", () => {
+    const values = { [byRank(1)]: 10, [byRank(2)]: 8, [byRank(3)]: 8, [byRank(4)]: 2 };
+    assert.deepEqual(tallyPairs(values, set.outputs), { concordant: 5, discordant: 0, ties: 1, pairs: 6 });
+    const inverted = { [byRank(1)]: 1, [byRank(2)]: 2, [byRank(3)]: 3, [byRank(4)]: 4 };
+    assert.equal(tallyPairs(inverted, set.outputs).discordant, 6);
+    const partial = { [byRank(1)]: 10, [byRank(2)]: null, [byRank(3)]: 5, [byRank(4)]: null };
+    assert.equal(tallyPairs(partial, set.outputs).pairs, 1);
+  });
+
+  test("criterion verdicts: separating, flat, inverted, mixed, unscored", () => {
+    const sep = diagnoseCriterion(clarity, set.outputs, scoreAll([clarity], { 1: 5, 2: 4, 3: 2, 4: 1 }));
+    assert.equal(sep.verdict, "separating");
+    assert.equal(sep.spread, 4);
+    const flat = diagnoseCriterion(clarity, set.outputs, scoreAll([clarity], { 1: 4, 2: 4, 3: 3, 4: 4 }));
+    assert.equal(flat.verdict, "flat");
+    // "Friendliness", scored honestly: the chirpy one (rank 3) wins, the terse
+    // one (rank 4) loses, the best is middling. Right about the bottom, wrong
+    // about the top — the trap, named as such.
+    const trap = diagnoseCriterion(tone, set.outputs, scoreAll([tone], { 1: 3, 2: 3, 3: 5, 4: 1 }));
+    assert.equal(trap.verdict, "crowns-wrong");
+    const inv = diagnoseCriterion(tone, set.outputs, scoreAll([tone], { 1: 1, 2: 2, 3: 5, 4: 4 }));
+    assert.equal(inv.verdict, "inverted");
+    // A tie for the top isn't a wrong crown.
+    const tied = diagnoseCriterion(clarity, set.outputs, scoreAll([clarity], { 1: 5, 2: 5, 3: 2, 4: 1 }));
+    assert.equal(tied.verdict, "separating");
+    // Right about the best, wrong about the middle: four pairs of six.
+    const mixed = diagnoseCriterion(clarity, set.outputs, scoreAll([clarity], { 1: 5, 2: 1, 3: 4, 4: 3 }));
+    assert.equal(mixed.verdict, "mixed");
+    const un = diagnoseCriterion(clarity, set.outputs, emptyDesignScores(set));
+    assert.equal(un.verdict, "unscored");
+  });
+
+  test("the report ranks by total, shares ranks on ties, and counts verdicts", () => {
+    const scores = scoreAll([clarity, tone], { 1: 5, 2: 4, 3: 4, 4: 1 });
+    const report = buildDesignReport([clarity, tone], set, scores);
+    assert.equal(report.fullyScored, true);
+    // Ties share a rank and keep display order, which is not the truth order.
+    assert.deepEqual(report.ranked.map((r) => [r.output.truthRank, r.total, r.rubricRank]), [
+      [1, 10, 1], [3, 8, 2], [2, 8, 2], [4, 2, 4],
+    ]);
+    assert.deepEqual(report.tally, { concordant: 5, discordant: 0, ties: 1, pairs: 6 });
+    assert.equal(report.separating, 2);
+    assert.equal(report.flat, 0);
+    assert.equal(report.wrongWay, 0);
+
+    const partial = buildDesignReport([clarity, tone], set, emptyDesignScores(set));
+    assert.equal(partial.fullyScored, false);
+    assert.equal(partial.ranked[0].total, null);
+    assert.equal(partial.tally.pairs, 0);
   });
 });
 

@@ -18,6 +18,7 @@ export const REFLECTION: {
   persona: ReflectionQuestion;
   refusal: ReflectionQuestion;
   evals: ReflectionQuestion;
+  evalsDesign: ReflectionQuestion;
   choreographer: ReflectionQuestion;
   spread: ReflectionQuestion;
   race: ReflectionQuestion;
@@ -63,6 +64,11 @@ export const REFLECTION: {
   evals: {
     question:
       "Which criterion is the model weakest on — and is that a model problem or a rubric problem?",
+    concept: { href: "/learn/evaluation", label: "Evaluation" },
+  },
+  evalsDesign: {
+    question:
+      "Which criterion did the separating — and which one would have scored every output the same?",
     concept: { href: "/learn/evaluation", label: "Evaluation" },
   },
   choreographer: {

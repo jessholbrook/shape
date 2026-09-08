@@ -3,9 +3,10 @@
 Things we've deliberately decided *not* to build yet, with enough context to
 pick them up later. Distinct from `tasks/todo.md` (historical scaffold log).
 
-## Eval Lab — "Design a rubric" mode (inversion)
+## Eval Lab — "Design a rubric" mode (inversion) — **BUILT**
 
-**From:** beta feedback (Linear), `/play/evals`, 2026-06-16.
+**From:** beta feedback (Linear), `/play/evals`, 2026-06-16. **Built 2026-09-08**
+as an Apply / Design toggle on Eval Lab; `SPEC.md` §24.
 
 **The idea:** Eval Lab today is *rubric application* — you define a rubric, run
 a system prompt, and score the varying outputs against your fixed rubric. The
@@ -35,6 +36,15 @@ firing: two independent testers, pre-launch and at launch, same idea. Still not
 a launch-week patch (it's a new mode, not a fix) — but it's earned a slot in the
 next round rather than staying parked. See also "Reverse Tone Dial" below: the
 same inversion, on a different playground, from a third tester.
+
+**What was built:** a mode toggle, as sketched. Four seeded replies to one
+prompt, shown out of order; the reader designs criteria, scores by hand,
+and only then reveals where a careful reader ranks each output and why. The
+report is the pair count — how many of the six pairs the rubric's totals
+order the same way — and a diagnosis per criterion: separating, partly,
+flat, or pulling the wrong way. The seed's trap is a "friendliness"
+criterion, which ranks the chirpy reply first. No model is needed, so it is
+the one part of Eval Lab a first visitor can finish with no key.
 
 **Related meta-note — now also recurred (2 testers).** Both testers flagged the
 same thing about the shared components (provider/model/temp row, save bar, the

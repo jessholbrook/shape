@@ -2,7 +2,7 @@ import type { ProviderId } from "./providers";
 import type { InferredTone, ToneMode, ToneValues } from "./tone";
 import type { PersonaValues } from "./persona";
 import type { Probe, ProbeResult } from "./refusal";
-import type { Criterion, EvalCase, CaseResult } from "./evals";
+import type { CaseResult, Criterion, DesignScores, EvalCase, EvalMode } from "./evals";
 import type { ChoreographedTurn } from "./choreographer";
 import type { Assertion, SpreadRun } from "./spread";
 import type { LaneId, RaceResult } from "./race";
@@ -203,6 +203,18 @@ export type EvalsDraft = {
   cases: EvalCase[];
   /** Per-case results, keyed by case id. */
   results: Record<string, CaseResult>;
+  /** Defaults to "apply" when absent (pre-design-mode drafts). */
+  mode?: EvalMode;
+  /**
+   * Design mode: the fixed output set the rubric was designed against, the
+   * hand scores, and whether the truth has been revealed.
+   */
+  design?: {
+    setId: string;
+    scores: DesignScores;
+    notes?: Record<string, string>;
+    revealed: boolean;
+  };
   /** The user's answer to the playground's reflection question, if they jotted one. */
   reflection?: string;
   createdAt: number;
@@ -584,6 +596,15 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
       };
     }
   } else if (kind === "evals") {
+    if (d.mode !== undefined && d.mode !== "apply" && d.mode !== "design") {
+      return { ok: false, reason: "Eval draft has an unknown mode." };
+    }
+    if (d.design !== undefined) {
+      const design = d.design as { setId?: unknown; scores?: unknown } | null;
+      if (!isObject(design) || typeof design.setId !== "string" || !isObject(design.scores)) {
+        return { ok: false, reason: "Eval draft's design block is missing its set or scores." };
+      }
+    }
     if (
       !Array.isArray(d.rubric) ||
       !Array.isArray(d.cases) ||

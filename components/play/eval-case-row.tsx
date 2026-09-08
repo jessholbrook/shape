@@ -175,7 +175,7 @@ export function EvalCaseRow({
   );
 }
 
-function CriterionScoreRow({
+export function CriterionScoreRow({
   criterion,
   score,
   disabled,
