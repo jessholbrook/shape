@@ -67,6 +67,8 @@ For better output quality, bring your own Anthropic or OpenAI key. We never see 
 
 - **Anthropic** calls go directly browser → API, using Anthropic's `anthropic-dangerous-direct-browser-access` header. The key never leaves your machine.
 - **OpenAI** is blocked from direct browser calls by Cloudflare bot management; we proxy through a Next.js edge route (`/api/proxy/openai`). The key flows through in memory only — never logged, persisted, or echoed. Same trust posture, one hop through Vercel Edge.
+- **Custom endpoint** — any OpenAI-compatible base URL (OpenRouter, Groq, Together, a local LM Studio or Ollama). Called straight from your browser, never through Shape's servers, so the endpoint has to allow browser requests. Its model list comes from the endpoint itself.
+- **Model lists are live.** Once a key is saved, the picker shows what the provider's API actually lists, with the built-in catalog supplying names and pricing. A model the API lists that Shape has no rate card for shows its cost as "—".
 - All drafts live in `localStorage`. No server-side artifact storage.
 
 Set keys at **Keys** (bottom of the sidebar) or during onboarding at `/start`.

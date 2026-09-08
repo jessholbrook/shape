@@ -1,4 +1,5 @@
-import { PROVIDERS, type ProviderId } from "./providers";
+import { type ProviderId } from "./providers";
+import { resolveModel } from "./live-models";
 
 /**
  * Tool Bench is about the moment the model stops writing and starts doing.
@@ -393,7 +394,7 @@ export function estimateAgencyCost(
   scenarios: Scenario[],
   runsPerScenario: number,
 ): number {
-  const meta = PROVIDERS[provider].models.find((m) => m.id === model);
+  const meta = resolveModel(provider, model);
   if (!meta) return 0;
   const assumedOutput = 80; // one decision line, not an essay
   return scenarios.reduce((sum, s) => {
@@ -1077,7 +1078,7 @@ export function estimateRelayCost(
   scenarios: Scenario[],
   runsPerScenario: number,
 ): number {
-  const meta = PROVIDERS[provider].models.find((m) => m.id === model);
+  const meta = resolveModel(provider, model);
   if (!meta || systemPrompts.length === 0) return 0;
   const assumedOutput = 80;
   const avgPrompt =

@@ -86,3 +86,50 @@ export async function POST(req: Request) {
     },
   });
 }
+
+const MODELS_URL = "https://api.openai.com/v1/models";
+
+// The model list is fetched once per session per key, so the budget is small.
+const MODELS_RATE_LIMIT = 20;
+
+/**
+ * GET forwards to the provider's model list with the same key header and the
+ * same guards as the chat proxy. This is what keeps the picker current: the
+ * static catalog supplies names and pricing, the API says what exists.
+ */
+export async function GET(req: Request) {
+  if (!isSameOrigin(req)) return forbidden();
+
+  const gate = rateLimit(
+    `openai-models:${clientIp(req)}`,
+    MODELS_RATE_LIMIT,
+    RATE_WINDOW_MS,
+    Date.now(),
+  );
+  if (!gate.ok) return tooManyRequests(gate.retryAfter);
+
+  const key = req.headers.get("x-shape-openai-key");
+  if (!key) {
+    return jsonError(400, "Missing x-shape-openai-key header.");
+  }
+
+  let upstream: Response;
+  try {
+    upstream = await fetch(MODELS_URL, {
+      headers: {
+        authorization: `Bearer ${key}`,
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return jsonError(502, `Upstream fetch failed: ${message}`);
+  }
+
+  return new Response(upstream.body, {
+    status: upstream.status,
+    headers: {
+      "content-type": upstream.headers.get("content-type") ?? "application/json",
+      "cache-control": "no-store",
+    },
+  });
+}

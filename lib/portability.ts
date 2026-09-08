@@ -1,4 +1,5 @@
 import { PROVIDERS, type ProviderId } from "./providers";
+import { resolveModel } from "./live-models";
 import {
   assertionIsComplete,
   checkAssertion,
@@ -193,7 +194,7 @@ export function estimateMatrixCost(
   const inputTokens = Math.ceil((system.length + userMessage.length) / 4);
   const assumedOutput = 250;
   return refs.reduce((sum, ref) => {
-    const meta = PROVIDERS[ref.provider].models.find((m) => m.id === ref.model);
+    const meta = resolveModel(ref.provider, ref.model);
     if (!meta) return sum;
     const perRun =
       (inputTokens / 1_000_000) * meta.inputPer1M +

@@ -143,7 +143,9 @@ export function lanesContendForGpu(a: ProviderId, b: ProviderId): boolean {
 export function fastestModelFor(providerId: ProviderId): string {
   const provider = PROVIDERS[providerId];
   const fast = provider.models.find((m) => m.tier === "fast");
-  return (fast ?? provider.models[provider.models.length - 1]).id;
+  // A provider with no static catalog (the custom endpoint) has nothing to
+  // pick from; the picker adopts the first live model instead.
+  return (fast ?? provider.models[provider.models.length - 1])?.id ?? provider.defaultModel;
 }
 
 export const SEED_SYSTEM =

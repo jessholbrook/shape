@@ -1,6 +1,7 @@
 "use client";
 
 import { PROVIDER_LIST, ProviderId, PROVIDERS } from "@/lib/providers";
+import { ModelSelect } from "@/components/play/model-select";
 import { InfoTip } from "@/components/info-tip";
 import {
   ModelTip,
@@ -28,7 +29,6 @@ export function ConfigPanel({
   onChange: (next: ConfigState) => void;
   connected: boolean;
 }) {
-  const provider = PROVIDERS[config.provider];
 
   return (
     <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-col gap-4">
@@ -76,17 +76,12 @@ export function ConfigPanel({
           label="Model"
           tip={<ModelTip provider={config.provider} model={config.model} />}
         >
-          <select
-            value={config.model}
-            onChange={(e) => onChange({ ...config, model: e.target.value })}
+          <ModelSelect
+            provider={config.provider}
+            model={config.model}
+            onChange={(model) => onChange({ ...config, model })}
             className="w-full bg-canvas border border-line rounded-[10px] px-3 py-2 font-mono text-[13px] text-ink focus:border-ink focus:outline-none"
-          >
-            {provider.models.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-          </select>
+          />
         </Field>
       </div>
 

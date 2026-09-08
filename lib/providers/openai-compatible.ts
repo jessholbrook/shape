@@ -12,10 +12,17 @@ import { readSse } from "./sse";
  * for that one request in memory and never logged or stored.
  */
 export type OpenAiCompatConfig = {
+  /** Where the request goes — one of our proxy routes, or a direct endpoint URL. */
   proxyUrl: string;
   keyHeader: string;
+  /** Send the key as `Bearer <key>` (direct endpoints) rather than raw (our proxies). */
+  bearer?: boolean;
   label: string;
 };
+
+function keyValue(cfg: OpenAiCompatConfig, apiKey: string): string {
+  return cfg.bearer ? `Bearer ${apiKey}` : apiKey;
+}
 
 export async function* openAiCompatibleChat(
   call: ChatCall,
@@ -28,7 +35,7 @@ export async function* openAiCompatibleChat(
     method: "POST",
     headers: {
       "content-type": "application/json",
-      [cfg.keyHeader]: call.apiKey,
+      [cfg.keyHeader]: keyValue(cfg, call.apiKey),
     },
     body: JSON.stringify({
       model: call.model,
@@ -81,7 +88,7 @@ export async function pingOpenAiCompatible(
     method: "POST",
     headers: {
       "content-type": "application/json",
-      [cfg.keyHeader]: apiKey,
+      [cfg.keyHeader]: keyValue(cfg, apiKey),
     },
     body: JSON.stringify({
       model,
