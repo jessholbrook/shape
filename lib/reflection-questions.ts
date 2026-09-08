@@ -23,6 +23,7 @@ export const REFLECTION: {
   portability: ReflectionQuestion;
   context: ReflectionQuestion;
   agency: ReflectionQuestion;
+  agencyRelay: ReflectionQuestion;
   judge: ReflectionQuestion;
 } = {
   diffIndependent: {
@@ -95,6 +96,11 @@ export const REFLECTION: {
   agency: {
     question:
       "Where did it act when you wanted it to ask — and would you fix that in the policy, or in the tool description?",
+    concept: { href: "/learn/designing-agency", label: "Designing agency" },
+  },
+  agencyRelay: {
+    question:
+      "Which agent would you have blamed — and what in the room, rather than in either prompt, would you change?",
     concept: { href: "/learn/designing-agency", label: "Designing agency" },
   },
   judge: {

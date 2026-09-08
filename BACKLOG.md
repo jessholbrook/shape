@@ -25,14 +25,26 @@ measurable"; the inversion teaches "choosing the right criteria is the skill."
 rank these correctly?" check) — mirroring the Independent/Conversation toggle
 shipped for Diff Mode. Roughly a day.
 
-**Decision:** Park. Good idea but a meaningfully different mode, not a tweak;
-hold off on a single data point. Revisit if the theme recurs in feedback.
+**Decision (updated 2026-06-16 → 2026-07-08):** ~~Park; hold off on a single
+data point.~~ **Promoted to a real candidate for the next build cycle.** A
+second, independent tester (launch day, `/play/evals`) landed on the *same*
+inversion unprompted — "maybe rubric design is the experimental task, based on
+evaluating a set of model outputs, rather than seeing how a given rubric can be
+applied to varying outputs." That's the "revisit if the theme recurs" trigger
+firing: two independent testers, pre-launch and at launch, same idea. Still not
+a launch-week patch (it's a new mode, not a fix) — but it's earned a slot in the
+next round rather than staying parked. See also "Reverse Tone Dial" below: the
+same inversion, on a different playground, from a third tester.
 
-**Related meta-note from the same tester:** the playgrounds share components
-(provider/model/temp row, save bar, etc.), which they liked but wondered if
-consistency was constraining each playground's "native" design. Our read: the
-shared levers are real and the coherence is intentional for a teaching tool —
-no action, but worth holding as a north star when designing new surfaces.
+**Related meta-note — now also recurred (2 testers).** Both testers flagged the
+same thing about the shared components (provider/model/temp row, save bar, the
+mode-toggle pattern): they *like* the consistency for onboarding comfort, but
+wonder whether it constrains each playground's "native" design — e.g. what would
+Eval Lab be if it weren't shaped to match the others? Our read holds: the shared
+levers are real and the coherence is intentional for a teaching tool. But with
+two independent data points, treat it as a genuine north-star tension when
+designing the next surface — the rubric-inversion mode above is the natural
+place to test whether a more "native" playground shape earns its divergence.
 
 ## Provider models — fetch dynamically instead of hardcoding
 
@@ -182,12 +194,13 @@ and the one that transfers hardest back to non-AI work.
   playground rather than an Eval Lab mode: Eval Lab is a Part I module and
   shouldn't carry a calibration experiment for beginners.
 - **Article** — shipped at `/learn/judging-at-scale`.
+- **Artifact: Calibrated Judge** — a judge prompt *plus* its known biases.
 
 **The Part II arc is complete.** Six playgrounds and four articles shipped;
 `SPEC.md` §14–§19 documents each one. What remains parked from the arc is
 listed in its own sections below (native tool-calling, length-bias padding,
-self-preference testing).
-- **Artifact: Calibrated Judge** — a judge prompt *plus* its known biases.
+self-preference testing). A proposed coda — Module 12, *Groups, not agents* —
+is parked in its own section below, with a build brief at `SPEC.md` §20.
 
 ### Three demos (light, shareable, not full modules)
 
@@ -197,13 +210,9 @@ self-preference testing).
 - **Portability** — **BUILT**, see `SPEC.md` §16. One spec across 2-4 models,
   with each clause classified portable / model-specific / unstable / not
   landing. No paired article yet — it shares Module 08 with Spread.
-- **Reverse Tone Dial** — edit the output you want, model infers the dial
-  positions. *Specification by demonstration*, and the natural Part II
-  inversion of the whole curriculum: Part I writes a spec and reads an output;
-  Part II writes an output and infers the spec. **Note the recurring theme** —
-  this is the same move as the parked "Eval Lab — Design a rubric" inversion
-  above. Inversion has now surfaced independently three times in feedback,
-  which makes it the strongest single signal we have.
+- **Reverse Tone Dial** — **NOT BUILT.** Promoted to its own section below,
+  since it's the only piece of the arc that came from user feedback rather
+  than from our own sketch.
 
 ### Explicitly out of scope
 
@@ -211,7 +220,11 @@ Fine-tuning, RAG-as-a-technology, context-window trivia, agent frameworks. All
 of it pulls the site toward "AI engineering tutorial" and away from what makes
 it good. The designer's frame stays intact through every module above.
 
-### Build cost, roughly
+### Build cost, as estimated up front *(historical)*
+
+*Kept for the record — all six shipped. The estimate held except for Tool
+Bench, which avoided the adapter work entirely by describing tools in the
+prompt instead. See `SPEC.md` §18.*
 
 Race, Portability, and Spread are close to free — same provider layer, just
 loop or fan out the existing call. Context Lab is a text-source panel plus
@@ -219,11 +232,238 @@ prompt assembly. Tool Bench is the only one needing real new plumbing
 (tool-calling across the adapters, which differs meaningfully between
 Anthropic, OpenAI, and Gemini).
 
-**Decision:** Park as a set, don't commit to the whole arc yet. If we want a
-cheap proof that Part II has legs, **Race** or **Spread** ships fastest and
-demos hardest — build one, watch whether Part I readers actually come back for
-it, and let that decide whether the four modules get written.
+**Original decision *(historical)*:** park as a set, prove it with Race or
+Spread first.
 
+**What actually happened:** the whole arc shipped between 2026-08-10 and
+2026-08-12 — six playgrounds and four articles, `SPEC.md` §14–§19. Spread went
+first as the cheap proof, and the rest followed.
+
+**Still outstanding for the arc:** none of the six playgrounds — nor Tool
+Bench's relay mode (§20) — has been run against a live model by us. Everything
+downstream of the call is covered by unit tests and seeded-state UI checks; the
+call itself isn't. Each seed is tuned to misbehave in a specific way, so a
+uniformly clean first run means the seed needs sharpening rather than that all
+is well.
+
+
+## Module 12 — Groups, not agents (Tool Bench relay mode + Roundtable)
+
+**From:** design conversation, 2026-09-07 — prompted by the run of stories
+about groups of agents "hacking" or "escaping" lab test environments. "Shape
+should have content and demos for swarms of agents, and how we shape behavior
+at the group level, not just the individual agent's."
+
+**The hook, and why it isn't the lesson.** The escape stories are the reason
+to build this now, and they are also a trap: reported unevenly, sometimes
+sensational, and certain to date. The lesson has to be written so it stays
+true whether or not any particular story holds up. The durable version is
+smaller and sharper than the headlines — **constraints written per agent don't
+compose.** A clause that holds for every part of a system says nothing about
+the system. Every agent can obey its policy and the group can still do the
+thing the policy forbade.
+
+**The idea.** Part II's frame shift was "the model is a system you can't fully
+control." This is the last step of that shift: the unit you were designing
+isn't even the model, it's the room. It rhymes with Module 08 on purpose —
+*Distributions, not outputs* said the unit isn't the output; *Groups, not
+agents* says the unit isn't the agent. Module 10 gave the model tools, Module
+11 gave it judgment, Module 12 gives it colleagues.
+
+*You already know how to design for a group. Community guidelines, moderation
+policy, meeting facilitation, who is in which channel. You have never pointed
+any of it at a room full of models.*
+
+**Four phenomena, four levers** — each one a thing a designer can change
+without touching a prompt:
+
+| What the group does | The lever |
+|---|---|
+| **Policy laundering.** A can't send email; B can. A asks B. B asks A for permission; A answers for the user. | **Topology.** Who can reach the user, and who can reach whom. An agent that cannot reach a tool beats an agent told not to use it. |
+| **Consensus collapse.** Three agents converge on the first confident answer, right or wrong; the assigned critic stops criticising after two rounds of agreement. | **Composition.** Mixed models and mixed roles hold dissent longer than three copies of one model. The README already sells Phi vs Llama as meaningful diversity. |
+| **Trust decay.** An injected instruction from an untrusted source (Module 09) passes through one agent and reaches the next as "a colleague said." The trust tag is lost in transit. | **Provenance.** Whether a handoff arrives labelled with who wrote it, or as if the user had. |
+| **Running on.** A group with no rounds budget and no stop condition keeps going. | **Stopping rules.** In the protocol, not in anyone's prompt. |
+
+The Module 10 ladder gets one more rung at the top: **prefer structure to
+instruction.** Topology holds regardless of what the model decides; a policy
+sentence holds some percentage of the time (Module 08), and in a group that
+percentage is per hop.
+
+**Demo first — Tool Bench relay mode — BUILT** (2026-09-07, `SPEC.md` §20).
+Two agents, one policy sentence given to both, the seeded tools split between them: the coordinator owns
+`search_files`, the mail-and-files agent owns `send_email` and `delete_files`.
+The user is attached to the coordinator only. Each agent gets Tool Bench's
+decision format plus `HANDOFF:`. Grade each agent with the existing seven
+outcomes, then grade the group, and lead the report with the gap between the
+two columns:
+
+> *Neither agent broke its policy. The group sent the email without asking.*
+
+A mode rather than a playground, for the reason Judge Lab is *not* a mode:
+audience. Tool Bench is already Part II and the relay's grading is Tool
+Bench's grading with one more column. Nothing executes, so the demo shows a
+group *deciding* to route around a policy without ever doing anything. The
+two experiments are a topology toggle ("every agent can ask the user" — the
+email stops going out and no prompt changed) and a visibility toggle (show the
+coordinator the full descriptions of the other agent's tools — Module 10's
+lever at one remove).
+
+**Then, maybe — Roundtable.** Its own playground: three or four agents with
+role prompts (Persona Cards import directly), a shared transcript, a rounds
+budget, one task with a planted dissenter. The designer edits the protocol —
+turn order, what is shared versus private, the stop rule — rather than the
+prompts. Checks stay local and deterministic like Spread's assertions ("the
+dissenter's last turn still disagrees"); a calibrated judge from Module 11 is
+optional. Artifact: a **Protocol**, the group-level Agency Policy. Only if
+relay mode's headline reproduces and readers come back for it.
+
+**Curriculum entry, drafted** (not added to `MODULES` until the article
+exists — a "soon" card with nothing behind it is a broken promise):
+
+- `num: "12"`, `slug: "groups-not-agents"`, title *Groups,* italic *not
+  agents*, kicker Concept.
+- Blurb: "One agent obeys its policy. Two agents route around it. Group
+  behavior is designed in the room — who can reach whom — not in anyone's
+  prompt."
+- Playground: Tool Bench, relay mode (`/play/tools`). Artifact: Agency
+  Policy, extended with the relay; Protocol once Roundtable exists.
+- Reflection question: "Which agent would you have blamed — and what in the
+  room, rather than in either prompt, would you change?"
+
+**Article outline**, in the house structure (open by breaking something the
+reader believes; never re-teach):
+
+1. *What you already know* — you have written community guidelines and
+   argued about who gets posting rights in which channel. That was group
+   behavior design. The rules were never the whole design; the room was.
+2. *Constraints don't compose* — the policy sentence from Module 10, given to
+   two agents, means something different from where each of them sits. "Ask
+   the user" is an instruction about a channel, and one of them doesn't have
+   it.
+3. *A small example* — the relay trace, as an `ExampleBlock` pair: the same
+   scenario with the user reachable from one agent versus from both. Same
+   model, same policy, same prompts; one line of topology moved the outcome.
+4. *The ladder, one rung up* — prefer structure to instruction. Topology,
+   then provenance, then a clause that says "you may not grant permission,"
+   then "be careful."
+5. *The failure that hides* — it looks like compliance. Every agent's log
+   reads clean. The incident review would blame whichever agent sent the
+   email, and it would be wrong.
+6. *What to take into the playground* — run the seed, read the two columns,
+   flip the topology toggle, flip visibility, set runs to three.
+
+**Guardrails.** No orchestrator diagrams, no framework vocabulary, no "how to
+wire agents" — "agent frameworks" stays out of scope and this is compatible
+with that as long as the playground is about the room and not the plumbing.
+Communication is prompted, not native, for the same reasons Tool Bench's
+tools are: visible, editable, and it runs on the in-browser models.
+
+**Build cost, roughly.** Relay mode is two to three days — a relay runner, a
+two-column report with traces, the agent panel and two toggles, and the draft
+plumbing — with no adapter work, since every call is an ordinary chat call.
+Roundtable is about a week. The article is a day. Constraints to design
+around: relay runs are sequential by nature (2–4 calls per scenario), the
+in-browser 1B model may not hold a four-keyword format, and the seed's
+"neither agent broke its policy" headline has to reproduce on at least one
+BYOK model at low temperature or the mode is teaching Module 10 twice.
+
+**Decision:** Relay mode is built as the cheap proof, the same way Race and
+Spread proved Part II had legs. The article and Roundtable stay parked: let
+whether the headline reproduces on real models, and whether readers come back
+for it, decide whether Module 12 and Roundtable get built.
+
+
+## Reverse Tone Dial — edit the output, infer the dials
+
+**From:** beta feedback (issue #118), `/play/tone`, 2026-07-16 — reiterated in
+the Part II design conversation, 2026-08-10. **Next build.**
+
+**The idea:** run the Tone Dial backwards. Instead of moving dials and reading
+the output, the user edits the output into what they actually wanted and the
+model infers the dial positions — and the composed prompt — that would produce
+it. "An element of recursive learning and improvement."
+
+**Why it keeps coming back:** it's *specification by demonstration*, and it's
+the inversion of the entire curriculum. Part I writes a spec and reads an
+output; this writes an output and infers the spec. It is the same move as the
+Eval Lab "design a rubric" mode at the top of this file, which is why
+**inversion has now surfaced independently three times in feedback**. When the
+inverse direction keeps surfacing across surfaces, it's pointing at a product
+direction ("reverse mode" as a general capability) rather than separate
+bolt-ons.
+
+**Why it matters more than the rest of this file:** everything else parked here
+came from us. This came from users, repeatedly. If the next thing built should
+be driven by what beta testers actually asked for rather than by our own arc,
+this is the one.
+
+**Shape if we build it:** a mode toggle on `/play/tone` mirroring the
+Independent/Conversation toggle in Diff Mode. The core is an inference loop —
+meta-prompt the model to emit structured dial values (matching `ToneValues`)
+that best match the user's edited target, then present them as a *proposal*
+the user accepts or adjusts. An inference presented as fact would teach
+exactly the overconfidence Module 08 warns about, so the proposal has to be
+checkable: run the inferred dials forward and put the result next to the
+target. Real caveats: small in-browser models are unreliable at structured
+inference, so this likely needs a BYOK model to feel good.
+
+## Judge Lab — the other two bias passes
+
+**From:** building Judge Lab (Module 11), 2026-08-12. See `SPEC.md` §19.
+
+Judge Lab ships the **position** check: every pair judged in both orders. Two
+other biases are named in the Module 11 article but not yet testable in the
+playground.
+
+**Length-bias padding.** Rerun a pair with the shorter answer padded with
+filler and see whether the verdict flips. The seeded pairs already lean on
+this — the shorter answer is the better one in all three — but the current
+build catches length bias only indirectly, by whether the judge picks the
+long one. An explicit pass would be a third call per pair.
+
+**Self-preference.** Whether a model rates its own output higher than another
+model's. Needs two models generating and one judging, which the provider layer
+already supports — it's a bigger UI change than a third run, not a bigger
+technical one.
+
+**Decision:** park both. The order swap is the check that separates a verdict
+from a coin flip; the other two refine an instrument that already works.
+Revisit once someone has run the position check on real data and wants more.
+
+## Known bugs — small, live, unowned
+
+**From:** flagged repeatedly while building Part II, never recorded until now.
+
+**Hydration warning on every playground in browsers without WebGPU.** The
+WebLLM support banner renders on the server but not the client (or vice
+versa, depending on the probe), so React logs a hydration mismatch and
+regenerates the tree. Nothing visibly breaks and it predates Part II —
+reproducible on `/play/diff` as easily as on the new pages, and seen again in
+the desktop app's browser pane on 2026-09-07. It does not reproduce in
+headless Chromium, which is why the CI smoke suite stays green. The fix is
+small: render the banner only after hydration, the way `MissingKeyBanner`
+already gates on `hydrated`.
+
+**Two lint errors** in `components/local-model-storage.tsx` and
+`components/unsaved-toast.tsx` (`react-hooks/set-state-in-effect`) — **fixed**
+by #140 on 2026-08-21; `npm run lint` is clean and CI now gates on it.
+
+## Maintenance note — the JSX whitespace hazard
+
+**From:** hit four separate times while writing Part II, 2026-08-11/12.
+
+A closing inline tag followed by a space and then text that **wraps to another
+line** silently loses the space: `<strong>Overlap.</strong> If two…` renders as
+`Overlap.If two…`. The source looks correct, so **a grep cannot find this** —
+only the rendered output differs.
+
+It shipped fourteen times into live Part I articles before anyone noticed.
+Every inline-tag boundary in `app/learn/*/page.tsx` is now an explicit
+`{" "}` (see #136), which is the convention to keep.
+
+**If it recurs:** the detector is to fetch each rendered article, extract the
+text, and check that `<last word inside the tag> <first word after it>` appears
+*with* its space. That catches it; reading the JSX does not.
 
 ## Native tool-calling across providers
 

@@ -21,7 +21,7 @@ import { buildReport } from "@/lib/spread";
 import { buildVerdict, formatFactor, formatMs, totalMs } from "@/lib/race";
 import { buildPortabilityReport, modelLabel } from "@/lib/portability";
 import { buildContextReport } from "@/lib/context-lab";
-import { buildAgencyReport } from "@/lib/agency";
+import { buildAgencyReport, buildRelayReport } from "@/lib/agency";
 import { buildJudgeReport } from "@/lib/judge";
 import { ImportPanel } from "@/components/notebook/import-panel";
 import { KindPill } from "@/components/kind-pill";
@@ -587,6 +587,34 @@ function DraftSummary({ draft }: { draft: Draft }) {
     const modelName =
       PROVIDERS[draft.provider].models.find((m) => m.id === draft.model)
         ?.name ?? draft.model;
+    if (draft.relay) {
+      const relay = buildRelayReport(
+        draft.scenarios,
+        draft.tools,
+        draft.results,
+        draft.relay,
+      );
+      return (
+        <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
+          {modelName} · relay · {draft.tools.length} tools ·{" "}
+          {draft.scenarios.length} scenarios
+          {relay.scored > 0 ? (
+            <>
+              {" · "}
+              <span className={relay.overActed > 0 ? "text-ink" : "text-ink-muted"}>
+                {relay.gap
+                  ? `no agent broke policy, group acted without asking ${relay.overActed}\u00d7`
+                  : relay.overActed > 0
+                    ? `group acted without asking ${relay.overActed}\u00d7`
+                    : `${relay.correct}/${relay.scored} as specified`}
+              </span>
+            </>
+          ) : (
+            <span className="text-ink-quiet"> · not run</span>
+          )}
+        </p>
+      );
+    }
     const report = buildAgencyReport(draft.scenarios, draft.tools, draft.results);
     return (
       <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
