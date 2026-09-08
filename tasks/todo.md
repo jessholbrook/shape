@@ -845,13 +845,17 @@ is open. Issue #118 closed as built by #152.
    quoted prices (§22). The seeds are tuned to misbehave; a uniformly clean
    run means a seed needs sharpening, not that all is well.
 
-**Build queue, in order:**
+**Build queue, in order** (Eval Lab design mode shipped in #158, 2026-09-08):
 
-2. **Eval Lab "design a rubric" mode** — two independent testers; the
-   inversion pattern proved out as a mode toggle in §21. BACKLOG "Eval Lab".
-3. **Judge Lab's two remaining bias passes** — self-preference is cheap now
+2. **Judge Lab's two remaining bias passes** — self-preference is cheap now
    that the roster and the custom endpoint make "two models generate, one
-   judges" easy; length-bias padding is a third call per pair.
-4. **Module 12 article + Roundtable** — gated on item 1.
-5. **Native relay; keyless local endpoints** — both left out of the
+   judges" easy; length-bias padding is a third call per pair. BACKLOG
+   "Judge Lab — the other two bias passes".
+3. **A second design-mode set** — the mechanics are done; a second domain
+   with a different trap needs only a seed. Half a day.
+4. **Generated sets for design mode** — a model writes four replies, the
+   reader ranks them first, then designs the rubric against their own
+   ranking. Needs a key; pairs with item 1.
+5. **Module 12 article + Roundtable** — gated on item 1.
+6. **Native relay; keyless local endpoints** — both left out of the
    September builds on purpose, both small once someone wants them.

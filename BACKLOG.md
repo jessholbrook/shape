@@ -454,19 +454,17 @@ technical one.
 from a coin flip; the other two refine an instrument that already works.
 Revisit once someone has run the position check on real data and wants more.
 
-## Known bugs — small, live, unowned
+## Known bugs — small, live, unowned — **both fixed**
 
 **From:** flagged repeatedly while building Part II, never recorded until now.
 
-**Hydration warning on every playground in browsers without WebGPU.** The
-WebLLM support banner renders on the server but not the client (or vice
-versa, depending on the probe), so React logs a hydration mismatch and
-regenerates the tree. Nothing visibly breaks and it predates Part II —
-reproducible on `/play/diff` as easily as on the new pages, and seen again in
-the desktop app's browser pane on 2026-09-07. It does not reproduce in
-headless Chromium, which is why the CI smoke suite stays green. The fix is
-small: render the banner only after hydration, the way `MissingKeyBanner`
-already gates on `hydrated`.
+**Hydration warning on every playground** — **fixed** by #157 on 2026-09-08.
+The cause was not the client: Node 21+ defines a global `navigator` with no
+`gpu`, so the *server* decided the browser was unsupported and rendered the
+WebLLM banner into the HTML, and any client with WebGPU disagreed. Detection
+now requires a real `window`, and the status hook's server snapshot is a
+fixed "idle". Headless Chromium never showed it (no WebGPU on either side),
+which is why the CI smoke suite had stayed green throughout.
 
 **Two lint errors** in `components/local-model-storage.tsx` and
 `components/unsaved-toast.tsx` (`react-hooks/set-state-in-effect`) — **fixed**
