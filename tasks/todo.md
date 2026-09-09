@@ -825,37 +825,37 @@ Three load-bearing decisions:
 
 ## Next session
 
-*Refreshed 2026-09-08. Everything above this heading is a historical scaffold
+*Refreshed 2026-09-09. Everything above this heading is a historical scaffold
 log; this section is the only part meant to be current.*
 
-Merged on 2026-09-08, in order: #146, #151, #150 (relay mode, §20), #152
-(Tone Dial reverse mode, §21), #153 (live model lists + custom endpoint,
-§22), #154 (native tool-calling + repair, §23), #147, #155, #156, #157
-(tidy-ups), #158 (Eval Lab design mode, §24), #159, #160 (Judge Lab length
-check + self-preference, §25). Issue #118 closed as built by #152. The
-second design-mode set ("Delivery by Friday?", §24) is in the branch that
-carries this refresh.
+Merged 2026-09-08: #146, #151, #150 (relay mode, §20), #152 (Tone Dial
+reverse mode, §21), #153 (live model lists + custom endpoint, §22), #154
+(native tool-calling + repair, §23), #147, #155, #156, #157 (tidy-ups),
+#158 (Eval Lab design mode, §24), #159, #160 (Judge Lab length check +
+self-preference, §25). Merged 2026-09-09: #161 (second design set, §24).
 
-**Needs a key — not something CI can do:**
+**Open, stacked in order, each verified with scripted replies only:** #162
+generated design sets (§24) → #163 Module 12 article + Roundtable (§26) →
+#164 native relay (§20) + keyless local endpoints (§22) → the third design
+set (§24, the branch that carries this refresh). Merge in that order; each
+PR's base is the one before it.
 
-1. **A live-model pass.** Every Part II playground and all of September's
-   builds have only ever seen scripted provider replies. One session with a
-   real key settles five questions at once: does the relay seed produce
-   "neither agent broke its policy" (§20); does a reverse-mode proposal
-   reproduce its target when run forward (§21); what does a frontier model
-   do with the native seed's failing search — report, retry, or gloss (§23);
-   does the custom endpoint work against a real OpenRouter key with its
-   quoted prices (§22); does a real judge flip toward the padded answer, and
-   does a model prefer its own writing (§25). The seeds are tuned to
-   misbehave; a uniformly clean run means a seed needs sharpening, not that
-   all is well.
+**The build queue is empty.** What remains needs a key:
 
-**Build queue, in order** (shipped 2026-09-09, each verified with scripted
-replies only: generated design sets §24; Module 12 article + Roundtable §26;
-native relay §20 and keyless local endpoints §22 — the live pass above
-should include writing one real set, seating three real models at the table
-to watch Noor, running the relay seed natively, and pointing the custom
-endpoint at a real local server with the keyless box ticked):
+1. **A live-model pass.** Everything built since 2026-09-07 has only ever
+   seen scripted provider replies. One session with a real key settles, in
+   one sitting: the relay seed's headline, prompted and native (§20); a
+   reverse-mode proposal run forward (§21); the custom endpoint against real
+   OpenRouter prices, and against a real local server with the keyless box
+   ticked (§22); a frontier model's repair after the native seed's failing
+   search (§23); one generated design set written by a real model (§24); a
+   real judge against the padded answer, and a model against its own writing
+   (§25); three real models at the Roundtable, to see whether Noor holds
+   (§26). The seeds are tuned to misbehave; a uniformly clean run means a
+   seed needs sharpening, not that all is well.
 
-2. **A third design-mode set** — one more entry in the registry, no other
-   change.
+**If the live pass turns something up**, the seeds are the first place to
+look; the mechanics are covered by 140 unit tests and a 49-test smoke suite.
+Otherwise the next candidates are the ones the specs parked: injected
+handoffs in the relay (§20 v0.2), a judge reading the Roundtable transcript
+(§26), private side-channels at the table (§26), and a fourth design set.

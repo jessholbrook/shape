@@ -56,6 +56,13 @@ that scored the lie as well as the truth. Sets are chosen from a picker,
 scores are kept per set, and each set carries its own hint and lesson.
 `SPEC.md` §24.
 
+**Third set (2026-09-09):** "Factory reset" — the trap is a criterion the
+reader already has. Conciseness, from the Part I rubric, crowns the
+confirmation that is short because it left out what a reset costs; the
+hinted addition, brevity, doubles the damage; a criterion for naming the
+consequence fixes it. Three traps across three sets: a criterion you'd add,
+one you'd think you need, one you already have. `SPEC.md` §24.
+
 **Generated sets (2026-09-09):** "Your own" in the set picker. The reader
 writes the surface and the request, a model writes four independent replies
 at temperature 1, and the reader ranks them before a criterion can be scored

@@ -1154,11 +1154,13 @@ Scores stay editable after the reveal and the report follows them, so the reader
 
 ### The sets, and their traps
 
-Two seeded sets, chosen from a picker on the set card. Each is four replies to one prompt; each carries the criterion the reader is invited to add, shown as a suggestion before the reveal, and a one-paragraph lesson shown with the report after it. Scores are kept per set, so switching sets loses nothing, and a draft records which set it was scored against.
+Three seeded sets, chosen from a picker on the set card. Each is four replies to one prompt; each carries the criterion the reader is invited to add, shown as a suggestion before the reveal, and a one-paragraph lesson shown with the report after it. Scores are kept per set, so switching sets loses nothing, and a draft records which set it was scored against.
 
 **Expired card at checkout** (2026-09-08). The best reply names the cause and gives two exits in one line. The chirpy one is actionable, eventually, never says the card expired, and is cheerful about somebody's money. A *friendliness* criterion ranks it first, and the reveal says so. The Part I criteria separate this set on their own; the trap is the criterion the reader is invited to add.
 
 **Delivery by Friday?** (2026-09-08). A support assistant that can see the order but has no delivery estimate, asked whether a birthday present will arrive in time. The best reply says what it knows, what it doesn't, where the real estimate lives, and what to do if it's bad. One reply answers "Yes!" with a made-up transit time, and it is ranked last: a confident promise the user acts on costs more than a policy paragraph that tells them nothing. The trap is *directness*. The second lesson is the one the first set can't teach: the Part I criteria have no criterion for truth, so scored honestly they order five of the six pairs and put the invented promise above the useless-but-honest reply — clarity ties it with the best, conciseness is flat. A criterion for saying only what it knows separates the outputs, but as one criterion in six it barely moves the total; the reader gets every pair only by also dropping the criteria that scored the lie as well as the truth. Which criteria to leave out is the skill.
+
+**Factory reset** (2026-09-09). A smart-home thermostat that holds schedules and scenes and is paired to an account; the confirmation shown before a reset. The best reply names what is lost, says how to keep it, and asks, in three sentences. The shortest reply — *Reset this device?* — is ranked last: a user who taps through loses every schedule without having been told. The trap is a criterion the reader already has: **conciseness**, from the Part I rubric, crowns the terse confirm and pulls the wrong way across the set, and the hinted addition, *brevity*, doubles the damage. Scored honestly the Part I rubric orders five of six pairs and puts the terse confirm above the legalistic one that at least warns. A criterion for naming the consequence separates the outputs; the reader gets every pair by adding it and dropping the length criteria. The lesson: a confirmation that is short because it left out the consequence isn't concise, it's incomplete.
 
 ### Your own set — generated replies, your ranking (2026-09-09)
 
@@ -1180,7 +1182,7 @@ The ranking is ours, with its reasons attached. The panel says so and invites di
 
 ### Out of scope for v0.1
 
-- **More sets.** Two are seeded. A third is one more entry in the set registry — a different domain, a different trap — with no other change.
+- **More sets.** Three are seeded, each with a different trap: a criterion you'd add, a criterion you'd think you need, a criterion you already have. A fourth is one more entry in the set registry with no other change.
 - ~~**Generated sets.**~~ Built 2026-09-09 as "Your own" in the set picker; see above.
 - **A judge scoring the rubric.** Module 11's instrument; not here.
 

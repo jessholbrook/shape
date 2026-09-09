@@ -301,8 +301,56 @@ export const DELIVERY_DESIGN_SET: DesignSet = {
   ],
 };
 
+/**
+ * The third set's trap is already in the rubric the reader starts with.
+ * Conciseness crowns the confirmation that is short because it left out what
+ * a factory reset costs — and a second length criterion, the one the reader
+ * is invited to add, doubles the damage. Length is a virtue only once the
+ * message has said what's at stake.
+ */
+export const RESET_DESIGN_SET: DesignSet = {
+  id: "factory-reset",
+  title: "Factory reset",
+  brief:
+    "A smart-home app. The user tapped \"Factory reset\" on a thermostat that holds their heating schedules and scenes and is paired to their account.",
+  userMessage: "Write the confirmation dialog shown before the reset goes ahead.",
+  hint: "Brevity",
+  lesson:
+    "Conciseness is in the rubric you started with, and here it crowns the reply that hides what a reset costs. A confirmation that is short because it left out the consequence isn't concise, it's incomplete — length is only a virtue once the message has said what's at stake. Add a criterion for naming the consequence, and ask whether two length criteria deserve a vote each.",
+  outputs: [
+    {
+      id: "o1",
+      label: "Output 1",
+      text: "Warning: Performing a factory reset will permanently remove all user-configured settings, schedules, scenes, and account associations from this device and restore it to its original out-of-box state. This action cannot be reversed. Please ensure that you have exported any configurations you wish to retain prior to proceeding. Do you wish to continue?",
+      truthRank: 3,
+      why: "Everything the user needs is in here, in the voice of a terms-of-service page. It warns, which puts it above the reply that doesn't, and it makes the user work for the warning.",
+    },
+    {
+      id: "o2",
+      label: "Output 2",
+      text: "This erases the thermostat's schedules and scenes and unpairs it from your account. You can back them up first in Settings › Backup. Reset anyway?",
+      truthRank: 1,
+      why: "Names what is lost, says how to keep it, and asks. Three sentences, each carrying something the user needs before they tap.",
+    },
+    {
+      id: "o3",
+      label: "Output 3",
+      text: "Reset this device?",
+      truthRank: 4,
+      why: "The shortest reply, and the one that costs the most: a user who taps through loses every schedule without having been told. A conciseness criterion ranks this first — which is the trap, and it was in your rubric from the start.",
+    },
+    {
+      id: "o4",
+      label: "Output 4",
+      text: "Heads up — resetting wipes this thermostat's schedules and scenes and removes it from your account. There's no undo. Reset it?",
+      truthRank: 2,
+      why: "Warm, complete about what is lost, honest that there is no undo. It gives the user no way to keep their schedules, which is the one thing the best reply adds.",
+    },
+  ],
+};
+
 /** Every seeded set, in the order the picker shows them. The first is the default. */
-export const DESIGN_SETS: DesignSet[] = [SEED_DESIGN_SET, DELIVERY_DESIGN_SET];
+export const DESIGN_SETS: DesignSet[] = [SEED_DESIGN_SET, DELIVERY_DESIGN_SET, RESET_DESIGN_SET];
 
 /** The set with that id, or the default when a draft names one that no longer exists. */
 export function designSetById(id: string | undefined): DesignSet {
