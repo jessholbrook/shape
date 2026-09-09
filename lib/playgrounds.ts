@@ -163,4 +163,15 @@ export const PLAYGROUNDS: Playground[] = [
     status: "ready",
     concept: { href: "/learn/judging-at-scale", label: "Judging at scale" },
   },
+  {
+    num: "13",
+    href: "/play/roundtable",
+    title: "Round",
+    italic: "table",
+    blurb:
+      "Three seats, one decision, a planted dissenter. Edit the protocol — who speaks first, whether the first round is blind, when it stops — and watch the room decide, not the prompts.",
+    artifact: "Protocol",
+    status: "ready",
+    concept: { href: "/learn/groups-not-agents", label: "Groups, not agents" },
+  },
 ];

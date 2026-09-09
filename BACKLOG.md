@@ -284,7 +284,7 @@ uniformly clean first run means the seed needs sharpening rather than that all
 is well.
 
 
-## Module 12 — Groups, not agents (Tool Bench relay mode + Roundtable)
+## Module 12 — Groups, not agents (Tool Bench relay mode + Roundtable) — **BUILT**
 
 **From:** design conversation, 2026-09-07 — prompted by the run of stories
 about groups of agents "hacking" or "escaping" lab test environments. "Shape
@@ -345,7 +345,19 @@ email stops going out and no prompt changed) and a visibility toggle (show the
 coordinator the full descriptions of the other agent's tools — Module 10's
 lever at one remove).
 
-**Then, maybe — Roundtable.** Its own playground: three or four agents with
+**Roundtable and the article — BUILT** (2026-09-09, `SPEC.md` §26). The
+article follows the outline below and claims no live result: the example
+trace is presented as the run the relay seed is built to produce. Roundtable
+ships with three seats (up to four), private role prompts, a shared
+transcript in the user channel, and a protocol the designer edits instead of
+the prompts: speaking order, rounds, an open or blind first round, stop after
+rounds or at consensus, a model per seat, a planted stance per seat. Every
+check reads the STANCE line each turn ends with. Persona Cards take a seat.
+Artifact: Protocol. The "only if relay reproduces" gate was waived on
+2026-09-09 by the instruction to work the queue to the end; the live pass
+now has a third table to watch.
+
+**As originally sketched — Roundtable.** Its own playground: three or four agents with
 role prompts (Persona Cards import directly), a shared transcript, a rounds
 budget, one task with a planted dissenter. The designer edits the protocol —
 turn order, what is shared versus private, the stop rule — rather than the
@@ -354,8 +366,8 @@ dissenter's last turn still disagrees"); a calibrated judge from Module 11 is
 optional. Artifact: a **Protocol**, the group-level Agency Policy. Only if
 relay mode's headline reproduces and readers come back for it.
 
-**Curriculum entry, drafted** (not added to `MODULES` until the article
-exists — a "soon" card with nothing behind it is a broken promise):
+**Curriculum entry** (added to `MODULES` with the article, 2026-09-09; the
+playground is now Roundtable and the artifact Protocol):
 
 - `num: "12"`, `slug: "groups-not-agents"`, title *Groups,* italic *not
   agents*, kicker Concept.

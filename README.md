@@ -16,8 +16,8 @@ The audience is people in UX — designers, researchers, writers, prototypers �
 
 ## What's inside
 
-- **`/learn`** — eleven short concept lessons, in two parts. Part I: prompts as design, voice & tone, personas for AI, refusal & boundaries, output formatting, evaluation, multi-turn flows. Part II: distributions not outputs, context is the interface, designing agency, judging at scale.
-- **`/play`** — twelve focused playgrounds. Each one isolates a single design lever and produces an artifact you can save and export.
+- **`/learn`** — twelve short concept lessons, in two parts. Part I: prompts as design, voice & tone, personas for AI, refusal & boundaries, output formatting, evaluation, multi-turn flows. Part II: distributions not outputs, context is the interface, designing agency, judging at scale, groups not agents.
+- **`/play`** — thirteen focused playgrounds. Each one isolates a single design lever and produces an artifact you can save and export.
 - **`/notebook`** — your local working copies. Save drafts from any playground, duplicate them, export to JSON.
 
 ![Featured playgrounds and the three-step onboarding pitch on the home page](docs/screenshots/play-and-learn.png)
@@ -38,6 +38,7 @@ The audience is people in UX — designers, researchers, writers, prototypers �
 | **Context lab** | One question, several context sets. Your system prompt is a fraction of what the model reads — see the rest, and where the answer came from. | Context Map |
 | **Tool bench** | Now it does things, not just says things. Write the tools and the policy, then find out where it draws the line between asking and acting. | Agency Policy |
 | **Judge lab** | Hand the scoring to a model, then check it. Every comparison runs twice with the answers swapped — a judge reading position gives itself away. | Calibrated Judge |
+| **Round table** | Three seats, one decision, a planted dissenter. Edit the protocol — who speaks first, whether the first round is blind, when it stops — and watch the room decide, not the prompts. | Protocol |
 
 Each playground includes a composed system-prompt preview, streaming output from the selected model, save-to-Notebook as a draft, and export to portable JSON. Several carry a second mode: Diff Mode runs independent or as a conversation, Tone Dial runs forward or in reverse (edit the output you wanted and infer the dials), and Tool Bench runs solo or as a two-agent relay, with tools described in the prompt or sent through the provider's tool API.
 
@@ -91,7 +92,7 @@ Drafts persist to `localStorage` — close the tab, come back, your work is stil
 
 ## Curriculum
 
-Eleven micro-lessons. Each pairs a short reading with a playground. Recommended path, never gated.
+Twelve micro-lessons. Each pairs a short reading with a playground. Recommended path, never gated.
 
 | # | Lesson | Pairs with |
 |---|---|---|
@@ -106,6 +107,7 @@ Eleven micro-lessons. Each pairs a short reading with a playground. Recommended 
 | 09 | Context is the interface | Context Lab |
 | 10 | Designing agency | Tool Bench |
 | 11 | Judging at scale | Judge Lab |
+| 12 | Groups, not agents | Roundtable |
 
 ## Running locally
 

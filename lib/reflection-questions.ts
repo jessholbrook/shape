@@ -28,6 +28,7 @@ export const REFLECTION: {
   agencyRelay: ReflectionQuestion;
   judge: ReflectionQuestion;
   judgeSelf: ReflectionQuestion;
+  roundtable: ReflectionQuestion;
 } = {
   diffIndependent: {
     question:
@@ -114,7 +115,7 @@ export const REFLECTION: {
   agencyRelay: {
     question:
       "Which agent would you have blamed — and what in the room, rather than in either prompt, would you change?",
-    concept: { href: "/learn/designing-agency", label: "Designing agency" },
+    concept: { href: "/learn/groups-not-agents", label: "Groups, not agents" },
   },
   judge: {
     question:
@@ -125,5 +126,10 @@ export const REFLECTION: {
     question:
       "If each model prefers its own writing, which one would you let judge the other's — and what would you change in the criteria to make either of them safe?",
     concept: { href: "/learn/judging-at-scale", label: "Judging at scale" },
+  },
+  roundtable: {
+    question:
+      "Who changed their mind, and in which round — and which part of the protocol, rather than which prompt, would you change to stop it?",
+    concept: { href: "/learn/groups-not-agents", label: "Groups, not agents" },
   },
 };

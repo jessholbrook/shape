@@ -194,6 +194,20 @@ export const MODULES: CurriculumModule[] = [
     status: "ready",
     readMinutes: 7,
   },
+  {
+    num: "12",
+    slug: "groups-not-agents",
+    title: "Groups,",
+    italic: "not agents",
+    kicker: "Concept",
+    blurb:
+      "One agent obeys its policy. Two agents route around it. Group behavior is designed in the room — who can reach whom, who speaks first — not in anyone's prompt.",
+    playground: { label: "Roundtable", href: "/play/roundtable" },
+    artifact: "Protocol",
+    href: "/learn/groups-not-agents",
+    status: "ready",
+    readMinutes: 7,
+  },
 ];
 
 export function getModule(slug: string): CurriculumModule | undefined {

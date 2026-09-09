@@ -170,3 +170,30 @@ test("/play/evals design mode offers the reader's own set without a key", async 
   await expect(page.getByRole("button", { name: /Write 4 replies/ })).toBeDisabled();
   expect(errors).toEqual([]);
 });
+
+/**
+ * Roundtable's levers are the protocol, not the prompts: seating order,
+ * a blind first round, the stop rule. They have to work before any key is
+ * present, and the run button has to hold until every seat has one.
+ */
+test("/play/roundtable reorders seats and toggles the protocol without a key", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/play/roundtable", { waitUntil: "networkidle" });
+  const names = () =>
+    page.locator('input[aria-label$=" name"]').evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value));
+  expect(await names()).toEqual(["Priya", "Sam", "Noor"]);
+  await page.getByRole("button", { name: "Move Noor earlier" }).click();
+  expect(await names()).toEqual(["Priya", "Noor", "Sam"]);
+  const firstRound = page.getByRole("group", { name: "First round" });
+  await firstRound.getByRole("button", { name: "Blind" }).click();
+  await expect(firstRound.getByRole("button", { name: "Blind" })).toHaveAttribute("aria-pressed", "true");
+  const stop = page.getByRole("group", { name: "Stop rule" });
+  await stop.getByRole("button", { name: "At consensus" }).click();
+  await expect(stop.getByRole("button", { name: "At consensus" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText(/stops early the moment a round agrees/)).toBeVisible();
+  // Seat a keyed provider with no key: the table can't run.
+  await page.getByLabel("Seat 1 provider").selectOption("anthropic");
+  await expect(page.getByRole("button", { name: /Run the table/ })).toBeDisabled();
+  expect(errors).toEqual([]);
+});

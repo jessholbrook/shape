@@ -17,6 +17,7 @@ import { PROVIDERS, type ProviderId } from "@/lib/providers";
 import { TONE_DIMENSIONS } from "@/lib/tone";
 import { evaluateMatch } from "@/lib/refusal";
 import { aggregateScore, SCORE_MAX, buildDesignReport, designSetById, setFromGenerated } from "@/lib/evals";
+import { buildRoundtableReport, roundtableSummary } from "@/lib/roundtable";
 import { buildReport } from "@/lib/spread";
 import { buildVerdict, formatFactor, formatMs, totalMs } from "@/lib/race";
 import { buildPortabilityReport, modelLabel } from "@/lib/portability";
@@ -111,6 +112,7 @@ export function Notebook() {
   const contextDrafts = drafts.filter((d) => d.kind === "context");
   const agencyDrafts = drafts.filter((d) => d.kind === "agency");
   const judgeDrafts = drafts.filter((d) => d.kind === "judge");
+  const protocolDrafts = drafts.filter((d) => d.kind === "protocol");
   const noDrafts = drafts.length === 0;
 
   return (
@@ -289,6 +291,20 @@ export function Notebook() {
           {agencyDrafts.length > 0 && (
             <Section title="Agency policies" count={agencyDrafts.length}>
               {agencyDrafts.map((d) => (
+                <DraftRow
+                  key={d.id}
+                  draft={d}
+                  onDuplicate={() => handleDuplicate(d)}
+                  onExport={() => handleExport(d)}
+                  onDelete={() => handleDelete(d)}
+                />
+              ))}
+            </Section>
+          )}
+
+          {protocolDrafts.length > 0 && (
+            <Section title="Protocols" count={protocolDrafts.length}>
+              {protocolDrafts.map((d) => (
                 <DraftRow
                   key={d.id}
                   draft={d}
@@ -771,6 +787,15 @@ function DraftSummary({ draft }: { draft: Draft }) {
             </span>
           </>
         )}
+      </p>
+    );
+  }
+
+  if (draft.kind === "protocol") {
+    const report = buildRoundtableReport(draft.seats, draft.protocol, draft.turns, draft.stopReason ?? null);
+    return (
+      <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
+        Roundtable · {roundtableSummary(draft.seats, report)}
       </p>
     );
   }
