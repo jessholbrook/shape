@@ -56,6 +56,14 @@ that scored the lie as well as the truth. Sets are chosen from a picker,
 scores are kept per set, and each set carries its own hint and lesson.
 `SPEC.md` §24.
 
+**Generated sets (2026-09-09):** "Your own" in the set picker. The reader
+writes the surface and the request, a model writes four independent replies
+at temperature 1, and the reader ranks them before a criterion can be scored
+— the ranking is the truth the rubric is checked against, so the report can
+only say whether the rubric measures what they used, never whether the
+ranking was right. Ranks lock once scoring starts. The generated set travels
+with the draft. `SPEC.md` §24.
+
 **Related meta-note — now also recurred (2 testers).** Both testers flagged the
 same thing about the shared components (provider/model/temp row, save bar, the
 mode-toggle pattern): they *like* the consistency for onboarding comfort, but

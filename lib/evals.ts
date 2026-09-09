@@ -1,3 +1,5 @@
+import type { ProviderId } from "./providers";
+
 export const SCORE_MIN = 1;
 export const SCORE_MAX = 5;
 
@@ -305,6 +307,138 @@ export const DESIGN_SETS: DesignSet[] = [SEED_DESIGN_SET, DELIVERY_DESIGN_SET];
 /** The set with that id, or the default when a draft names one that no longer exists. */
 export function designSetById(id: string | undefined): DesignSet {
   return DESIGN_SETS.find((s) => s.id === id) ?? DESIGN_SETS[0];
+}
+
+// --- Generated sets ---------------------------------------------------------------
+
+/**
+ * The seeded sets come with our ranking. A generated set comes with none: a
+ * model writes four replies to the reader's own brief at temperature 1 — the
+ * model's spread, not its best attempt — and the reader ranks them *before*
+ * writing a criterion. That ranking is the truth the rubric is checked
+ * against, so the report can't say whether the ranking was right, only
+ * whether the rubric measures what the reader used when they made it. The
+ * careful reader is you.
+ */
+
+export const GENERATED_SET_ID = "generated";
+export const GENERATION_TEMPERATURE = 1;
+export const GENERATED_COUNT = 4;
+
+export type GeneratedOutput = {
+  id: string;
+  label: string;
+  text: string;
+  status: "idle" | "running" | "done" | "error";
+  error?: string;
+};
+
+export type GeneratedSet = {
+  /** The surface the copy is for — becomes the writer's system prompt. */
+  brief: string;
+  /** The request every reply answers. */
+  userMessage: string;
+  /** What wrote the replies, for the record. */
+  provider: ProviderId;
+  model: string;
+  outputs: GeneratedOutput[];
+  /** The reader's ranking by output id, 1 = best. Set before any scoring. */
+  ranks: Record<string, number>;
+};
+
+export const DEFAULT_GENERATED_BRIEF =
+  "A banking app. The user tried to send money to a friend and the transfer failed because they have reached their daily transfer limit.";
+export const DEFAULT_GENERATED_USER_MESSAGE =
+  "Write the message the user sees when the transfer fails because they've hit the daily limit.";
+
+export function emptyGeneratedOutputs(): GeneratedOutput[] {
+  return Array.from({ length: GENERATED_COUNT }, (_, i) => ({
+    id: `g${i + 1}`,
+    label: `Output ${i + 1}`,
+    text: "",
+    status: "idle" as const,
+  }));
+}
+
+export function emptyGeneratedSet(provider: ProviderId, model: string): GeneratedSet {
+  return {
+    brief: DEFAULT_GENERATED_BRIEF,
+    userMessage: DEFAULT_GENERATED_USER_MESSAGE,
+    provider,
+    model,
+    outputs: emptyGeneratedOutputs(),
+    ranks: {},
+  };
+}
+
+/**
+ * The writer's system prompt. It gets the surface and nothing about quality:
+ * the point is four honest samples, not four deliberately varied ones.
+ */
+export function composeGenerationSystem(brief: string): string {
+  const surface = brief.trim() || "a product screen";
+  return [
+    "You are writing the copy a product shows its user.",
+    `The surface: ${surface}`,
+    "Reply with the text the user would see and nothing else — no preamble, no options, no commentary.",
+  ].join("\n");
+}
+
+/** True once every written output has a distinct rank from 1 to n. */
+export function rankingComplete(set: GeneratedSet): boolean {
+  return rankingProblem(set) === null;
+}
+
+/**
+ * Why the ranking isn't usable yet, in a sentence, or null when it is. A
+ * rank given to two outputs is the common slip, so it is named.
+ */
+export function rankingProblem(set: GeneratedSet): string | null {
+  const written = set.outputs.filter((o) => o.status === "done" && o.text.trim());
+  if (written.length < 2) return "Write the replies first.";
+  const ranks = written.map((o) => set.ranks[o.id]);
+  const seen = new Map<number, number>();
+  for (const r of ranks) if (typeof r === "number") seen.set(r, (seen.get(r) ?? 0) + 1);
+  for (const [r, n] of seen) if (n > 1) return `Two outputs are both ${ordinalWord(r)} — every rank once.`;
+  const missing = ranks.filter((r) => typeof r !== "number").length;
+  if (missing > 0) return `Rank ${missing === written.length ? "every output" : `${missing} more output${missing === 1 ? "" : "s"}`} first.`;
+  return null;
+}
+
+function ordinalWord(n: number): string {
+  return ["1st", "2nd", "3rd", "4th", "5th", "6th"][n - 1] ?? `${n}th`;
+}
+
+export const GENERATED_LESSON =
+  "This ranking is yours, so the report can't say whether it was right — only whether the rubric measures what you used when you made it. Criteria that come out flat are the ones you didn't actually use. If nothing separates them, the four may simply be the same quality, and a total that says otherwise is noise.";
+
+/**
+ * The generated replies as a design set. Only written outputs are included;
+ * an unranked one gets rank 0, which is why callers gate on
+ * `rankingComplete` before reading a report. The reader's note on each
+ * output stands in for the seeded sets' "why".
+ */
+export function setFromGenerated(
+  set: GeneratedSet,
+  notes: Record<string, string> = {},
+): DesignSet {
+  return {
+    id: GENERATED_SET_ID,
+    title: "Your own set",
+    brief: set.brief,
+    userMessage: set.userMessage,
+    hint: "the thing you actually used to rank them",
+    lesson: GENERATED_LESSON,
+    outputs: set.outputs
+      .filter((o) => o.status === "done" && o.text.trim())
+      .map((o) => ({
+        id: o.id,
+        label: o.label,
+        text: o.text,
+        truthRank: set.ranks[o.id] ?? 0,
+        why: notes[o.id]?.trim() ?? "",
+      })),
+  };
 }
 
 /** Scores by output id, then by criterion id. */

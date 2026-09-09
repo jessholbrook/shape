@@ -15,13 +15,38 @@ import {
  * pulling the wrong way. The last group is the lesson: a criterion that
  * sounds right and rewards the wrong output.
  */
+export type TruthVoice = {
+  /** Badge label on each output, e.g. "A careful reader" or "Your ranking". */
+  label: string;
+  /** Completes "ordered N pairs the way …". */
+  phrase: string;
+  /** The closing note on whose ranking this is, or null to omit it. */
+  footnote: string | null;
+};
+
+export const CAREFUL_READER: TruthVoice = {
+  label: "A careful reader",
+  phrase: "a careful reader does",
+  footnote:
+    "“A careful reader” is our ranking, with its reasons on each output. Disagree with it — that is allowed, and it is the conversation a real rubric review is made of. The point is that the total only means something if the criteria under it separate the outputs on purpose.",
+};
+
+export const YOUR_RANKING: TruthVoice = {
+  label: "Your ranking",
+  phrase: "you did",
+  footnote: null,
+};
+
 export function DesignReportPanel({
   report,
   lesson,
+  truth = CAREFUL_READER,
 }: {
   report: DesignReport;
   /** The set's own reading of its trap, shown once the truth is out. */
   lesson?: string;
+  /** Whose ranking the rubric is checked against. */
+  truth?: TruthVoice;
 }) {
   const { tally } = report;
   return (
@@ -44,8 +69,7 @@ export function DesignReportPanel({
         ) : tally.concordant === tally.pairs ? (
           <>
             Your rubric ordered{" "}
-            <span className="text-success">every pair</span> the way a careful
-            reader does.
+            <span className="text-success">every pair</span> the way {truth.phrase}.
           </>
         ) : tally.discordant > tally.concordant ? (
           <>
@@ -61,7 +85,7 @@ export function DesignReportPanel({
             <span className="text-highlight-ink">
               {tally.concordant} of {tally.pairs} pairs
             </span>{" "}
-            the way a careful reader does
+            the way {truth.phrase}
             {tally.ties > 0 && (
               <>
                 , and couldn&apos;t tell {tally.ties}{" "}
@@ -104,7 +128,7 @@ export function DesignReportPanel({
                   : "bg-highlight-soft text-highlight-ink"
               }`}
             >
-              a careful reader: {ordinal(r.output.truthRank)}
+              {truth.label.toLowerCase()}: {ordinal(r.output.truthRank)}
             </span>
           </div>
         ))}
@@ -140,13 +164,11 @@ export function DesignReportPanel({
             {CRITERION_VERDICT_BLURB[v]}
           </p>
         ))}
-        <p className="font-mono text-[10px] leading-[1.6] text-ink-quiet mt-1">
-          &ldquo;A careful reader&rdquo; is our ranking, with its reasons on
-          each output. Disagree with it — that is allowed, and it is the
-          conversation a real rubric review is made of. The point is that
-          the total only means something if the criteria under it separate
-          the outputs on purpose.
-        </p>
+        {truth.footnote && (
+          <p className="font-mono text-[10px] leading-[1.6] text-ink-quiet mt-1">
+            {truth.footnote}
+          </p>
+        )}
       </div>
     </div>
   );

@@ -16,7 +16,7 @@ import { downloadBlob, slugify } from "@/lib/download";
 import { PROVIDERS, type ProviderId } from "@/lib/providers";
 import { TONE_DIMENSIONS } from "@/lib/tone";
 import { evaluateMatch } from "@/lib/refusal";
-import { aggregateScore, SCORE_MAX, buildDesignReport, designSetById } from "@/lib/evals";
+import { aggregateScore, SCORE_MAX, buildDesignReport, designSetById, setFromGenerated } from "@/lib/evals";
 import { buildReport } from "@/lib/spread";
 import { buildVerdict, formatFactor, formatMs, totalMs } from "@/lib/race";
 import { buildPortabilityReport, modelLabel } from "@/lib/portability";
@@ -516,12 +516,15 @@ function DraftSummary({ draft }: { draft: Draft }) {
   }
 
   if (draft.kind === "evals" && draft.mode === "design" && draft.design) {
-    const set = designSetById(draft.design.setId);
+    const own = draft.design.generated;
+    const set = own
+      ? setFromGenerated(own, draft.design.notes)
+      : designSetById(draft.design.setId);
     const report = buildDesignReport(draft.rubric, set, draft.design.scores);
     return (
       <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
-        Rubric design · {set.title} · {draft.rubric.length} criteria ·{" "}
-        {set.outputs.length} fixed outputs
+        Rubric design · {own ? "your own set" : set.title} · {draft.rubric.length} criteria ·{" "}
+        {set.outputs.length} {own ? "written" : "fixed"} outputs
         {draft.design.revealed && report.fullyScored ? (
           <>
             {" · "}

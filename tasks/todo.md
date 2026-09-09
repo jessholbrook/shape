@@ -850,13 +850,14 @@ carries this refresh.
    misbehave; a uniformly clean run means a seed needs sharpening, not that
    all is well.
 
-**Build queue, in order:**
+**Build queue, in order** (generated design sets shipped 2026-09-09, §24 —
+verified with scripted replies only; the live pass above should include
+writing one real set):
 
-2. **Generated sets for design mode** — a model writes four replies, the
-   reader ranks them first, then designs the rubric against their own
-   ranking. Needs a key; pairs with item 1.
-3. **Module 12 article + Roundtable** — gated on item 1.
-4. **Native relay; keyless local endpoints** — both left out of the
+2. **Module 12 article + Roundtable** — the article written so it stays
+   true without a live run; the Roundtable seeds tuned like every other
+   seed, to misbehave.
+3. **Native relay; keyless local endpoints** — both left out of the
    September builds on purpose, both small once someone wants them.
-5. **A third design-mode set** — only if the second earns it. One more
-   entry in the registry, no other change.
+4. **A third design-mode set** — one more entry in the registry, no other
+   change.
