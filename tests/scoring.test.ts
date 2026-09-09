@@ -45,14 +45,19 @@ import {
   type Pair,
 } from "../lib/judge";
 import {
+  DELIVERY_DESIGN_SET,
+  DESIGN_SETS,
   SEED_CRITERIA,
   SEED_DESIGN_SET,
   buildDesignReport,
+  designSetById,
   designTotal,
   diagnoseCriterion,
   emptyDesignScores,
   tallyPairs,
+  type Criterion,
   type DesignScores,
+  type DesignSet,
   type Score,
 } from "../lib/evals";
 import {
@@ -797,6 +802,103 @@ describe("eval lab design mode", () => {
     assert.equal(partial.fullyScored, false);
     assert.equal(partial.ranked[0].total, null);
     assert.equal(partial.tally.pairs, 0);
+  });
+});
+
+// --- Eval Lab design sets ---------------------------------------------------
+
+describe("eval lab design sets", () => {
+  test("every set is four replies with the ranks 1–4 once each, shown out of order, with a hint and a lesson", () => {
+    assert.equal(DESIGN_SETS[0], SEED_DESIGN_SET);
+    assert.equal(new Set(DESIGN_SETS.map((s) => s.id)).size, DESIGN_SETS.length);
+    for (const set of DESIGN_SETS) {
+      assert.equal(set.outputs.length, 4, set.id);
+      assert.equal(new Set(set.outputs.map((o) => o.id)).size, 4, set.id);
+      assert.deepEqual([...set.outputs.map((o) => o.truthRank)].sort(), [1, 2, 3, 4], set.id);
+      assert.notDeepEqual(set.outputs.map((o) => o.truthRank), [1, 2, 3, 4], set.id);
+      assert.ok(set.hint.trim() && set.lesson.trim(), set.id);
+      for (const o of set.outputs) assert.ok(o.text.trim() && o.why.trim(), `${set.id}/${o.id}`);
+    }
+  });
+
+  test("a set is found by id, and a draft naming an unknown set lands on the default", () => {
+    assert.equal(designSetById(DELIVERY_DESIGN_SET.id), DELIVERY_DESIGN_SET);
+    assert.equal(designSetById("retired-set"), SEED_DESIGN_SET);
+    assert.equal(designSetById(undefined), SEED_DESIGN_SET);
+  });
+
+  /**
+   * The second set, scored the way a careful reader scores it. The Part I
+   * rubric has no criterion for truth, so this is where the invented promise
+   * gets past it.
+   */
+  const set: DesignSet = DELIVERY_DESIGN_SET;
+  const [clarity, tone, completeness, actionability, conciseness] = SEED_CRITERIA;
+  const directness: Criterion = {
+    id: "directness",
+    name: "Directness",
+    description: "Gives a straight answer instead of hedging.",
+  };
+  const honesty: Criterion = {
+    id: "honesty",
+    name: "Honesty",
+    description: "Says what it knows, and only what it knows.",
+  };
+  /** Scores per criterion id, keyed by truth rank. */
+  const honest: Record<string, Record<number, Score>> = {
+    clarity: { 1: 5, 2: 5, 3: 3, 4: 5 },
+    tone: { 1: 4, 2: 3, 3: 2, 4: 3 },
+    completeness: { 1: 5, 2: 3, 3: 1, 4: 1 },
+    actionability: { 1: 5, 2: 4, 3: 1, 4: 1 },
+    conciseness: { 1: 4, 2: 5, 3: 4, 4: 4 },
+    directness: { 1: 3, 2: 4, 3: 1, 4: 5 },
+    honesty: { 1: 5, 2: 5, 3: 3, 4: 1 },
+  };
+  const score = (criteria: Criterion[]): DesignScores => {
+    const scores = emptyDesignScores(set);
+    for (const o of set.outputs) for (const c of criteria) scores[o.id][c.id] = honest[c.id][o.truthRank];
+    return scores;
+  };
+  const byRank = (rank: number) => set.outputs.find((o) => o.truthRank === rank)!;
+
+  test("the invented promise is ranked last, and the display order hides that", () => {
+    assert.match(byRank(4).text, /Yes! Your order will arrive by Friday/);
+    assert.match(byRank(1).text, /I can't promise Friday/);
+    assert.deepEqual(set.outputs.map((o) => o.truthRank), [2, 4, 1, 3]);
+  });
+
+  test("the Part I rubric, scored honestly, puts the invented promise above the policy paragraph", () => {
+    const report = buildDesignReport(SEED_CRITERIA, set, score(SEED_CRITERIA));
+    assert.equal(report.fullyScored, true);
+    assert.deepEqual(report.tally, { concordant: 5, discordant: 1, ties: 0, pairs: 6 });
+    assert.deepEqual(report.ranked.map((r) => r.output.truthRank), [1, 2, 4, 3]);
+    // Form criteria can't see the lie: clarity ties it with the best, conciseness is dead weight.
+    const verdictOf = (c: Criterion) => report.criteria.find((d) => d.criterion.id === c.id)!.verdict;
+    assert.equal(verdictOf(clarity), "mixed");
+    assert.equal(verdictOf(conciseness), "flat");
+    assert.equal(verdictOf(completeness), "separating");
+    assert.equal(verdictOf(actionability), "separating");
+    assert.equal(verdictOf(tone), "mixed");
+    assert.equal(report.wrongWay, 0);
+  });
+
+  test("the hinted criterion — directness — pulls the wrong way", () => {
+    assert.equal(set.hint, directness.name);
+    const d = diagnoseCriterion(directness, set.outputs, score([directness]));
+    assert.equal(d.verdict, "inverted");
+    assert.equal(d.tally.discordant, 4);
+  });
+
+  test("an honesty criterion separates them, but only wins once the form criteria stop outvoting it", () => {
+    assert.equal(diagnoseCriterion(honesty, set.outputs, score([honesty])).verdict, "separating");
+    // Six criteria, one about truth: the bottom pair is still the wrong way round.
+    const six = [...SEED_CRITERIA, honesty];
+    assert.equal(buildDesignReport(six, set, score(six)).tally.discordant, 1);
+    // Drop the two that scored the lie as well as the truth, and every pair falls into place.
+    const four = [honesty, completeness, actionability, tone];
+    const report = buildDesignReport(four, set, score(four));
+    assert.deepEqual(report.tally, { concordant: 6, discordant: 0, ties: 0, pairs: 6 });
+    assert.deepEqual(report.ranked.map((r) => r.output.truthRank), [1, 2, 3, 4]);
   });
 });
 

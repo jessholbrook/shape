@@ -12,16 +12,18 @@ import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
 import {
   DEFAULT_EVAL_SYSTEM_PROMPT,
   EMPTY_CASE_RESULT,
+  DESIGN_SETS,
   SEED_CASES,
   SEED_CRITERIA,
-  SEED_DESIGN_SET,
   SCORE_MAX,
   aggregateScore,
   buildDesignReport,
+  designSetById,
   emptyDesignScores,
   type CaseResult,
   type Criterion,
   type DesignScores,
+  type DesignSet,
   type EvalCase,
   type EvalMode,
   type Score,
@@ -46,6 +48,17 @@ function emptyResults(cases: EvalCase[]): Record<string, CaseResult> {
   return out;
 }
 
+/** Hand scores, notes, and whether the truth is out — kept per set, so switching sets loses nothing. */
+type DesignState = {
+  scores: DesignScores;
+  notes: Record<string, string>;
+  revealed: boolean;
+};
+
+function emptyDesignState(set: DesignSet): DesignState {
+  return { scores: emptyDesignScores(set), notes: {}, revealed: false };
+}
+
 export function EvalsWorkshop() {
   const { keys, hydrated } = useKeys();
   const searchParams = useSearchParams();
@@ -61,11 +74,8 @@ export function EvalsWorkshop() {
     emptyResults(SEED_CASES),
   );
   const [mode, setMode] = useState<EvalMode>("apply");
-  const [designScores, setDesignScores] = useState<DesignScores>(() =>
-    emptyDesignScores(SEED_DESIGN_SET),
-  );
-  const [designNotes, setDesignNotes] = useState<Record<string, string>>({});
-  const [revealed, setRevealed] = useState(false);
+  const [designSetId, setDesignSetId] = useState<string>(DESIGN_SETS[0].id);
+  const [designBySet, setDesignBySet] = useState<Record<string, DesignState>>({});
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [reflectionDismissed, setReflectionDismissed] = useState(false);
@@ -91,9 +101,16 @@ export function EvalsWorkshop() {
     setResults(filled);
     setMode(draft.mode ?? "apply");
     if (draft.design) {
-      setDesignScores({ ...emptyDesignScores(SEED_DESIGN_SET), ...draft.design.scores });
-      setDesignNotes(draft.design.notes ?? {});
-      setRevealed(draft.design.revealed);
+      // A draft that names a set we no longer ship lands on the default one.
+      const set = designSetById(draft.design.setId);
+      setDesignSetId(set.id);
+      setDesignBySet({
+        [set.id]: {
+          scores: { ...emptyDesignScores(set), ...draft.design.scores },
+          notes: draft.design.notes ?? {},
+          revealed: draft.design.revealed,
+        },
+      });
     }
   }, []);
   const { draftId, title, setTitle, saveStatus, save } = useDraftEditing({
@@ -123,7 +140,12 @@ export function EvalsWorkshop() {
     [cases, results],
   );
   const isDesign = mode === "design";
-  const designSet = SEED_DESIGN_SET;
+  const designSet = designSetById(designSetId);
+  const designState = useMemo(
+    () => designBySet[designSet.id] ?? emptyDesignState(designSet),
+    [designBySet, designSet],
+  );
+  const { scores: designScores, notes: designNotes, revealed } = designState;
   const designReport = useMemo(
     () => buildDesignReport(rubric, designSet, designScores),
     [rubric, designSet, designScores],
@@ -138,20 +160,41 @@ export function EvalsWorkshop() {
     setReflectionDismissed(false);
   }
 
+  function switchSet(id: string) {
+    if (id === designSet.id) return;
+    setDesignSetId(id);
+    setReflectionDismissed(false);
+  }
+
+  function updateDesign(updater: (prev: DesignState) => DesignState) {
+    setDesignBySet((prev) => ({
+      ...prev,
+      [designSet.id]: updater(prev[designSet.id] ?? emptyDesignState(designSet)),
+    }));
+  }
+
   function setDesignScore(outputId: string, criterionId: string, score: Score | null) {
     setDirty(true);
-    setDesignScores((prev) => {
-      const forOutput = { ...(prev[outputId] ?? {}) };
+    updateDesign((prev) => {
+      const forOutput = { ...(prev.scores[outputId] ?? {}) };
       if (score === null) delete forOutput[criterionId];
       else forOutput[criterionId] = score;
-      return { ...prev, [outputId]: forOutput };
+      return { ...prev, scores: { ...prev.scores, [outputId]: forOutput } };
     });
   }
 
+  function setDesignNote(outputId: string, note: string) {
+    setDirty(true);
+    updateDesign((prev) => ({ ...prev, notes: { ...prev.notes, [outputId]: note } }));
+  }
+
+  function reveal() {
+    setDirty(true);
+    updateDesign((prev) => ({ ...prev, revealed: true }));
+  }
+
   function resetDesign() {
-    setDesignScores(emptyDesignScores(designSet));
-    setDesignNotes({});
-    setRevealed(false);
+    updateDesign(() => emptyDesignState(designSet));
     setReflectionDismissed(false);
   }
 
@@ -339,15 +382,32 @@ export function EvalsWorkshop() {
 
       {isDesign && (
         <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-col gap-3">
-          <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet inline-flex items-center gap-1.5">
-            The set — {designSet.title}
-            <InfoTip>
-              Four replies to one prompt, in no particular order. A careful
-              reader ranks them; you&apos;ll see that ranking, and the reasons,
-              after you&apos;ve scored. Try adding a criterion like
-              &ldquo;Friendliness&rdquo; and watch which output it rewards.
-            </InfoTip>
-          </span>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet inline-flex items-center gap-1.5">
+              The set — {designSet.title}
+              <InfoTip>
+                Four replies to one prompt, in no particular order. A careful
+                reader ranks them; you&apos;ll see that ranking, and the reasons,
+                after you&apos;ve scored. Try adding a criterion like
+                &ldquo;{designSet.hint}&rdquo; and watch which output it rewards.
+              </InfoTip>
+            </span>
+            <div
+              role="group"
+              aria-label="Set"
+              className="inline-flex rounded-[10px] border border-line bg-canvas p-0.5"
+            >
+              {DESIGN_SETS.map((s) => (
+                <ModeButton
+                  key={s.id}
+                  active={s.id === designSet.id}
+                  onClick={() => switchSet(s.id)}
+                >
+                  {s.title}
+                </ModeButton>
+              ))}
+            </div>
+          </div>
           <p className="font-sans text-[14px] leading-[1.55] text-ink-muted">
             {designSet.brief}
           </p>
@@ -395,10 +455,7 @@ export function EvalsWorkshop() {
                 note={designNotes[o.id] ?? ""}
                 revealed={revealed}
                 onScore={(criterionId, score) => setDesignScore(o.id, criterionId, score)}
-                onNoteChange={(note) => {
-                  setDesignNotes((prev) => ({ ...prev, [o.id]: note }));
-                  setDirty(true);
-                }}
+                onNoteChange={(note) => setDesignNote(o.id, note)}
               />
             ))}
           </div>
@@ -407,10 +464,7 @@ export function EvalsWorkshop() {
             <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                onClick={() => {
-                  setRevealed(true);
-                  setDirty(true);
-                }}
+                onClick={reveal}
                 disabled={!designReport.fullyScored || revealed}
                 className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ink/90 transition-colors"
               >
@@ -434,7 +488,7 @@ export function EvalsWorkshop() {
             </span>
           </div>
 
-          {revealed && <DesignReportPanel report={designReport} />}
+          {revealed && <DesignReportPanel report={designReport} lesson={designSet.lesson} />}
         </>
       )}
 

@@ -46,6 +46,16 @@ flat, or pulling the wrong way. The seed's trap is a "friendliness"
 criterion, which ranks the chirpy reply first. No model is needed, so it is
 the one part of Eval Lab a first visitor can finish with no key.
 
+**Second set (2026-09-08):** "Delivery by Friday?" — a support assistant
+that can't know the answer, and one reply that gives it anyway. The trap is
+a *directness* criterion, and the second lesson is that the Part I rubric
+has no criterion for truth: scored honestly it ranks the invented promise
+above the useless-but-honest reply, and the reader gets every pair only by
+adding a criterion for saying only what it knows *and* dropping the ones
+that scored the lie as well as the truth. Sets are chosen from a picker,
+scores are kept per set, and each set carries its own hint and lesson.
+`SPEC.md` §24.
+
 **Related meta-note — now also recurred (2 testers).** Both testers flagged the
 same thing about the shared components (provider/model/temp row, save bar, the
 mode-toggle pattern): they *like* the consistency for onboarding comfort, but
