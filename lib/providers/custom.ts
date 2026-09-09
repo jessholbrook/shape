@@ -11,7 +11,8 @@ import {
 
 /**
  * Custom OpenAI-compatible endpoint — OpenRouter, Groq, Together, a local
- * LM Studio or Ollama. Called straight from the browser with a bearer key;
+ * LM Studio or Ollama. Called straight from the browser with a bearer key,
+ * or with none when the endpoint is marked keyless;
  * never proxied, because a relay to a user-supplied URL is an open relay.
  * The endpoint has to allow browser calls (OpenRouter and local servers do);
  * one that doesn't fails with a CORS error, which the message names.
@@ -25,6 +26,9 @@ function config(): OpenAiCompatConfig {
     proxyUrl: customChatUrl(endpoint.baseUrl),
     keyHeader: "authorization",
     bearer: true,
+    // A keyless local server gets no Authorization header; with a key saved
+    // the header goes out as before. The UI decides whether a key is needed.
+    keyOptional: true,
     label: "Custom endpoint",
   };
 }

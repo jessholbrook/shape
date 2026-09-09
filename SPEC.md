@@ -895,6 +895,14 @@ Only if relay produces the headline reliably and readers come back for it. The s
 
 Cost is the constraint: four agents over four rounds is sixteen sequential calls per run. The free tier gets three agents and two rounds, or a plain banner.
 
+### Native relay (built 2026-09-09)
+
+The Prompted / Native mechanism toggle (§23) now applies in relay mode. Each agent's **own tools go through the provider's tool API**, and HANDOFF becomes a tool too — `handoff({ message })`, described as *"Hand this request to <colleague>, with what you need them to do. They will see your message labelled as coming from you, not from the user."* What an agent knows about its colleague's tools **stays in its prompt as a directory**, names or descriptions per the visibility toggle, because a directory is all a coordinator ever sees of them. ASK and ANSWER stay as text and route by channel exactly as before; a colleague's message says "call handoff" where the prompted relay said "use HANDOFF".
+
+Every native turn is read back into the prompted format before anything else sees it — a handoff call becomes a `HANDOFF:` line, any other call an `ACT:` line, text stays text — so the status table, the grader, the two-column report, and the trace read both mechanisms identically. A run still ends at the first call: nothing is executed, and the stub-result repair loop stays in solo mode, where the failing search is the experiment. The prompt disclosure shows each agent's prompt and its tool list as the API receives it. The draft records the mechanism for relay runs too.
+
+The spec's worry above — that a native relay would hide the descriptions and the handoffs — is addressed by the directory staying in the prompt and the disclosure showing the specs; what it does hide is the exact wire format, which is the point of comparing the two mechanisms on the same seed.
+
 ### What this reuses
 
 - §18 entirely: tools, risks, expectations, parser, seven outcomes, worst-outcome-wins, and the report panel's structure.
@@ -922,7 +930,7 @@ Cost is the constraint: four agents over four rounds is sixteen sequential calls
 - **Simulated user replies.** A run ends at the first ask that reaches the user, as in §18.
 - **More than two agents in relay.** Chains of three are Roundtable's job.
 - **Mixed models per agent in relay.** The lesson is topology; one model removes a confound. Roundtable is where composition becomes the lever.
-- **Native tool-calling and multi-turn repair.** Still parked together; a relay over the native API would hide both the descriptions and the handoffs.
+- ~~**Native tool-calling and multi-turn repair.**~~ The native relay shipped 2026-09-09 — see "Native relay" below. The repair loop stays solo.
 - **Injected handoffs.** Context Lab's untrusted-source mechanic applied to a handoff — an instruction planted in a document that one agent relays to another as a request — is the third experiment and a good one, but it needs the §17 source panel inside Tool Bench. Note it for v0.2.
 
 ---
@@ -1040,9 +1048,15 @@ The custom provider has no static catalog and no default model. The picker adopt
 ### Out of scope for v0.1
 
 - **Per-endpoint proxying.** Deliberately not built; see above.
-- **Keyless local endpoints.** The playgrounds gate on a saved key; a local server that needs none gets a placeholder. Removing the gate is a wider change than the value.
+- ~~**Keyless local endpoints.**~~ Built 2026-09-09 — see "Keyless endpoints" below.
 - **Streaming quirks of specific gateways.** The adapter expects OpenAI's SSE shape with `stream_options.include_usage`; gateways that ignore the option report zero usage and cost.
 - **The in-browser list.** WebLLM's models are the downloads we chose; there is no API to ask.
+
+---
+
+### Keyless endpoints (built 2026-09-09)
+
+A local LM Studio or Ollama wants no key, and the placeholder was a wart. The endpoint now carries a **keyless** flag, set by a checkbox on the Keys page — *No key — this is a local server* — which hides the key field and saves the URL alone. With it set: `providerNeedsKey("custom")` is false, so every playground's gate, missing-key banner, and run button treat the endpoint as set up; the adapter sends **no Authorization header** at all (a key-optional config, so a saved key still goes out as a bearer as before, and the other OpenAI-compatible providers still refuse to call without one); the model list is fetched with no header; the default-provider choice prefers a keyless endpoint over the in-browser model and never over a saved key; and the nav's "no key yet" state counts it as set up. Plain `http://` remains localhost-only. Removing the gate turned out to be a parameter on two functions and one checkbox, not the wider change the note above feared.
 
 ---
 

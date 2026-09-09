@@ -109,8 +109,12 @@ function CustomEndpointRow({
   const [value, setValue] = useState("");
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The checkbox follows what is saved until the user touches it.
+  const [keylessDraft, setKeylessDraft] = useState<boolean | null>(null);
+  const keyless = keylessDraft ?? !!endpoint?.keyless;
 
-  const stored = !!existing && !!endpoint;
+  // Set up means a URL plus either a key or the decision not to need one.
+  const stored = !!endpoint && (endpoint.keyless === true || !!existing);
 
   function handleSave() {
     const url = baseUrl.trim() || endpoint?.baseUrl || "";
@@ -119,16 +123,24 @@ function CustomEndpointRow({
       setError(urlCheck.reason);
       return;
     }
-    const key = value.trim() || existing || "";
-    if (!key) {
-      setError("Add a key. Local servers ignore it — type anything.");
-      return;
+    if (keyless) {
+      // A local server: no key stored, no Authorization header sent.
+      setError(null);
+      saveEndpoint(url, true);
+      if (existing) onClear();
+    } else {
+      const key = value.trim() || existing || "";
+      if (!key) {
+        setError("Add a key — or tick the box if this is a local server that wants none.");
+        return;
+      }
+      setError(null);
+      saveEndpoint(url, false);
+      onSave(key);
     }
-    setError(null);
-    saveEndpoint(url);
-    onSave(key);
     setBaseUrl("");
     setValue("");
+    setKeylessDraft(null);
     setEditing(false);
   }
 
@@ -141,10 +153,17 @@ function CustomEndpointRow({
           </h3>
           <p className="font-sans text-[14px] text-ink-muted mt-1 max-w-lg">
             {stored ? (
-              <>
-                {endpointLabel(endpoint!.baseUrl)} — key saved,{" "}
-                {hydrated ? maskKey(existing!) : "•••"}
-              </>
+              endpoint!.keyless ? (
+                <>
+                  {endpointLabel(endpoint!.baseUrl)} — no key, called directly from
+                  your browser
+                </>
+              ) : (
+                <>
+                  {endpointLabel(endpoint!.baseUrl)} — key saved,{" "}
+                  {hydrated && existing ? maskKey(existing) : "•••"}
+                </>
+              )
             ) : (
               <>
                 Any OpenAI-compatible base URL:{" "}
@@ -158,8 +177,8 @@ function CustomEndpointRow({
                 </a>
                 , Groq, Together, or a local LM Studio or Ollama. Called from
                 your browser, never through Shape&apos;s servers — the
-                endpoint has to allow browser requests. Local servers ignore
-                the key; type anything.
+                endpoint has to allow browser requests. A local server that
+                wants no key can say so below.
               </>
             )}
           </p>
@@ -189,24 +208,44 @@ function CustomEndpointRow({
               className="w-full bg-canvas border border-line rounded-[12px] px-4 py-3 font-mono text-[14px] text-ink placeholder:text-ink-quiet focus:border-ink focus:outline-none"
             />
           </div>
-          <div>
-            <label className="block font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet mb-2">
-              API key
-            </label>
+          <label className="flex items-start gap-3 font-sans text-[14px] text-ink">
             <input
-              type="password"
-              spellCheck={false}
-              autoComplete="off"
-              value={value}
+              type="checkbox"
+              checked={keyless}
               onChange={(e) => {
-                setValue(e.target.value);
+                setKeylessDraft(e.target.checked);
                 if (error) setError(null);
               }}
-              placeholder={existing ? "(unchanged)" : "sk-or-… or anything for a local server"}
-              aria-label="Custom endpoint API key"
-              className="w-full bg-canvas border border-line rounded-[12px] px-4 py-3 font-mono text-[14px] text-ink placeholder:text-ink-quiet focus:border-ink focus:outline-none"
+              className="mt-1 accent-ink"
             />
-          </div>
+            <span>
+              No key — this is a local server (LM Studio, Ollama)
+              <span className="block font-mono text-[11px] text-ink-quiet mt-0.5">
+                Calls go out with no Authorization header, and the playgrounds
+                stop asking for one.
+              </span>
+            </span>
+          </label>
+          {!keyless && (
+            <div>
+              <label className="block font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet mb-2">
+                API key
+              </label>
+              <input
+                type="password"
+                spellCheck={false}
+                autoComplete="off"
+                value={value}
+                onChange={(e) => {
+                  setValue(e.target.value);
+                  if (error) setError(null);
+                }}
+                placeholder={existing ? "(unchanged)" : "sk-or-…"}
+                aria-label="Custom endpoint API key"
+                className="w-full bg-canvas border border-line rounded-[12px] px-4 py-3 font-mono text-[14px] text-ink placeholder:text-ink-quiet focus:border-ink focus:outline-none"
+              />
+            </div>
+          )}
           {error && (
             <p className="font-sans text-[13px] text-danger">{error}</p>
           )}
@@ -226,6 +265,7 @@ function CustomEndpointRow({
                   setEditing(false);
                   setBaseUrl("");
                   setValue("");
+                  setKeylessDraft(null);
                   setError(null);
                 }}
                 className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
@@ -240,7 +280,7 @@ function CustomEndpointRow({
       {stored && !editing && (
         <>
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <TestButton providerId="custom" apiKey={existing!} />
+            <TestButton providerId="custom" apiKey={existing ?? ""} />
             <button
               type="button"
               onClick={() => setEditing(true)}

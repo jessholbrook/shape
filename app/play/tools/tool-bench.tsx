@@ -37,7 +37,9 @@ import {
   estimateRelayCost,
   newAgencyId,
   parseRelayDecision,
+  rawFromRelayTurn,
   rawFromTurns,
+  relayToolSpecs,
   relayStatus,
   stubFor,
   toolSpecs,
@@ -133,7 +135,9 @@ export function ToolBench() {
   const isRelay = mode === "relay";
   // Native tool calling needs a provider with a tool API; the in-browser
   // models fall back to the prompted mechanism rather than failing every run.
-  const isNative = mechanism === "native" && !isRelay && !isWebLLM;
+  // In relay mode the mechanism applies to both agents: their own tools and
+  // the handoff go through the API, the colleague directory stays in the prompt.
+  const isNative = mechanism === "native" && !isWebLLM;
 
   const systemPrompt = useMemo(
     () => composeSystemPrompt(role, tools, policy),
@@ -143,8 +147,15 @@ export function ToolBench() {
   /** One assembled prompt per agent, in AGENT_IDS order. */
   const relayPrompts = useMemo(
     () =>
-      AGENT_IDS.map((id) => composeRelaySystemPrompt(id, tools, policy, relay)),
-    [tools, policy, relay],
+      AGENT_IDS.map((id) =>
+        composeRelaySystemPrompt(id, tools, policy, relay, isNative ? "native" : "prompted"),
+      ),
+    [tools, policy, relay, isNative],
+  );
+  /** Each agent's tool list as the API receives it, in the native relay. */
+  const relaySpecs = useMemo(
+    () => AGENT_IDS.map((id) => relayToolSpecs(tools, id, relay)),
+    [tools, relay],
   );
 
   const report = useMemo(
@@ -293,6 +304,7 @@ export function ToolBench() {
             parseRelayDecision(prev.raw),
             agentById(relay, agentId),
             relay,
+            isNative ? "native" : "prompted",
           )
         : scenario.userMessage;
       const messages = buildAgentMessages(steps, agentId, incoming);
@@ -300,18 +312,43 @@ export function ToolBench() {
       steps.push(step);
       publish("running");
 
+      // In the native relay the reply arrives as text and tool calls; `raw`
+      // is kept in the prompted format so the status table, the grader, and
+      // the trace read both mechanisms the same way.
+      const turn: Extract<ToolTurn, { kind: "assistant" }> = {
+        kind: "assistant",
+        text: "",
+        calls: [],
+        status: "running",
+      };
+      const syncRaw = () => {
+        step.raw = isNative ? rawFromRelayTurn(turn, relay, agentId) : turn.text;
+      };
+
       try {
         const stream = runChat({
           provider,
           model,
-          system: composeRelaySystemPrompt(agentId, tools, policy, relay),
+          system: composeRelaySystemPrompt(
+            agentId,
+            tools,
+            policy,
+            relay,
+            isNative ? "native" : "prompted",
+          ),
           messages,
           temperature,
           apiKey,
+          ...(isNative ? { tools: relayToolSpecs(tools, agentId, relay) } : {}),
         });
         for await (const event of stream) {
           if (event.type === "text") {
-            step.raw += event.delta;
+            turn.text += event.delta;
+            syncRaw();
+            publish("running");
+          } else if (event.type === "tool_call") {
+            turn.calls.push(event.call);
+            syncRaw();
             publish("running");
           } else if (event.type === "done") {
             step.status = "done";
@@ -510,7 +547,7 @@ export function ToolBench() {
       runsPerScenario,
       results,
       relay: isRelay ? relay : undefined,
-      mechanism: isRelay ? undefined : mechanism,
+      mechanism,
       reflection: reflectionNote.trim() || undefined,
     });
     setDirty(false);
@@ -528,7 +565,16 @@ export function ToolBench() {
       <div className="bg-highlight-soft border border-highlight/40 rounded-[12px] p-4">
         <p className="font-sans text-[14px] leading-[1.5] text-ink">
           <strong>Nothing here is executed.</strong>{" "}
-          {isRelay ? (
+          {isRelay && isNative ? (
+            <>
+              Two agents, one policy, the tools split between them — and the
+              user talks to only one of them. Each agent&apos;s own tools and
+              the handoff go through the provider&apos;s tool API; what it
+              knows about its colleague&apos;s tools stays in its prompt, as a
+              directory. A run still ends at the first call — nothing is
+              executed, and the repair loop stays in solo mode.
+            </>
+          ) : isRelay ? (
             <>
               Two agents, one policy, the tools split between them — and the
               user talks to only one of them. Handoffs are prompted the same
@@ -580,16 +626,17 @@ export function ToolBench() {
             ? "Two agents in a room. Each is graded on its own, then the group is graded on what reached the user — and the gap between the two is the finding."
             : "One agent, one policy. Where does it draw the line between asking and acting?"}
         </p>
-        {!isRelay && (
-          <div className="basis-full flex flex-wrap items-center gap-3 border-t border-line pt-3">
+        <div className="basis-full flex flex-wrap items-center gap-3 border-t border-line pt-3">
             <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet inline-flex items-center gap-1.5">
               Mechanism
               <InfoTip>
                 Prompted: the tools are described in the prompt and the
                 decision is one line you can read. Native: the tools go
-                through the provider&apos;s tool API, the call gets a stub
-                result back, and the run continues — the mechanism for seeing
-                repair. Native needs a provider with a key.
+                through the provider&apos;s tool API — in solo mode the call
+                gets a stub result back and the run continues, the mechanism
+                for seeing repair; in relay mode the handoff is a tool too and
+                the run ends at the first call. Native needs a provider with
+                a key.
               </InfoTip>
             </span>
             <div className="inline-flex rounded-[10px] border border-line bg-canvas p-0.5">
@@ -612,11 +659,12 @@ export function ToolBench() {
               {isWebLLM
                 ? "Native tool calling needs a provider with a key."
                 : isNative
-                  ? `Results are fed back for up to ${NATIVE_MAX_TOOL_TURNS} rounds.`
+                  ? isRelay
+                    ? "Tools and the handoff go through the tool API; ASK and ANSWER stay as text."
+                    : `Results are fed back for up to ${NATIVE_MAX_TOOL_TURNS} rounds.`
                   : "The decision is one line in the reply."}
             </span>
           </div>
-        )}
       </div>
 
       <ProviderModelTempRow
@@ -763,7 +811,7 @@ export function ToolBench() {
               {systemPrompt}
             </pre>
           )}
-          {showPrompt && isNative && (
+          {showPrompt && isNative && !isRelay && (
             <div className="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
                 <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet">
@@ -793,6 +841,16 @@ export function ToolBench() {
                   <pre className="font-mono text-[11px] leading-[1.5] whitespace-pre-wrap break-words bg-canvas border border-line rounded-[8px] p-3 max-h-[320px] overflow-y-auto text-ink">
                     {relayPrompts[i]}
                   </pre>
+                  {isNative && (
+                    <>
+                      <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet mt-2">
+                        Tools — as the API receives them
+                      </span>
+                      <pre className="font-mono text-[11px] leading-[1.5] whitespace-pre-wrap break-words bg-canvas border border-line rounded-[8px] p-3 max-h-[240px] overflow-y-auto text-ink">
+                        {JSON.stringify(relaySpecs[i], null, 2)}
+                      </pre>
+                    </>
+                  )}
                 </div>
               ))}
             </div>

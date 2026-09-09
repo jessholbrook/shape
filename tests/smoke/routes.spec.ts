@@ -197,3 +197,24 @@ test("/play/roundtable reorders seats and toggles the protocol without a key", a
   await expect(page.getByRole("button", { name: /Run the table/ })).toBeDisabled();
   expect(errors).toEqual([]);
 });
+
+/**
+ * A local server that wants no key has to be a first-class provider: saved
+ * on the Keys page without a key, then picked up by the playgrounds as set
+ * up — no missing-key banner, the endpoint selected by default.
+ */
+test("/settings/keys saves a keyless local endpoint and the playgrounds stop asking for a key", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/settings/keys", { waitUntil: "networkidle" });
+  await page.getByLabel("Custom endpoint base URL").fill("http://localhost:11434/v1");
+  await page.getByLabel(/No key — this is a local server/).check();
+  await expect(page.getByLabel("Custom endpoint API key")).toHaveCount(0);
+  await page.getByRole("button", { name: "Save endpoint" }).click();
+  await expect(page.getByText(/localhost:11434 — no key, called directly/)).toBeVisible();
+
+  await page.goto("/play/tools", { waitUntil: "networkidle" });
+  await expect(page.locator("select").first()).toHaveValue("custom");
+  await expect(page.getByText(/You're missing a key/)).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
