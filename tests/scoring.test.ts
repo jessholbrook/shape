@@ -30,7 +30,15 @@ import {
   type SpreadRun,
 } from "../lib/spread";
 import {
+  DEFAULT_FILLER,
+  SEED_PAIRS,
+  buildLengthRow,
+  buildLengthReport,
   buildPairRow,
+  buildSelfReport,
+  buildSelfRow,
+  callsPerPair,
+  padShorter,
   parseWinnerPosition,
   positionToPick,
   type JudgeRun,
@@ -789,6 +797,90 @@ describe("eval lab design mode", () => {
     assert.equal(partial.fullyScored, false);
     assert.equal(partial.ranked[0].total, null);
     assert.equal(partial.tally.pairs, 0);
+  });
+});
+
+// --- Judge Lab: length and self-preference --------------------------------
+
+describe("judge lab bias passes", () => {
+  const pair = SEED_PAIRS[1]; // "Empty state": A is short and better.
+  const run = (order: "ab" | "ba", position: 1 | 2 | "tie", extra: Partial<JudgeRun> = {}): JudgeRun => ({
+    order, raw: `Reasoning… WINNER: ${position === "tie" ? "TIE" : position}`, status: "done", ...extra,
+  });
+  /** A judge that always picks candidate `pick`, regardless of order. */
+  const stable = (pick: "a" | "b", extra: Partial<JudgeRun> = {}): JudgeRun[] => [
+    run("ab", pick === "a" ? 1 : 2, extra),
+    run("ba", pick === "a" ? 2 : 1, extra),
+  ];
+
+  test("padding lengthens the shorter side to at least the other, cycling the filler", () => {
+    const padded = padShorter(pair);
+    assert.ok(padded);
+    assert.equal(padded.paddedSide, "a");
+    assert.equal(padded.from, pair.a.trim().length);
+    assert.ok(padded.to >= pair.b.trim().length);
+    assert.ok(padded.pair.a.startsWith(pair.a));
+    assert.equal(padded.pair.b, pair.b);
+    assert.match(padded.pair.a, /To restate the above/);
+    assert.equal(padShorter({ ...pair, a: "same", b: "same" }), null);
+    assert.equal(padShorter(pair, "   "), null);
+    const long = padShorter({ ...pair, a: "x", b: "y".repeat(2000) }, DEFAULT_FILLER)!;
+    assert.ok(long.to >= 2000);
+  });
+
+  test("length verdicts read the padded runs against the plain ones", () => {
+    const plainB = stable("b"); // plain judge prefers the long answer (B)
+    const plainA = stable("a");
+    const paddedA = stable("a", { variant: "padded" });
+    const paddedB = stable("b", { variant: "padded" });
+    assert.equal(buildLengthRow(pair, [...plainB, ...paddedA]).verdict, "moved-to-padded");
+    assert.equal(buildLengthRow(pair, [...plainA, ...paddedA]).verdict, "held");
+    assert.equal(buildLengthRow(pair, [...plainA, ...paddedB]).verdict, "moved-away");
+    assert.equal(buildLengthRow(pair, [...plainB, run("ab", 1, { variant: "padded" }), run("ba", 1, { variant: "padded" })]).verdict, "position-flipped");
+    assert.equal(buildLengthRow(pair, [...plainB]).verdict, "incomplete");
+    // A plain verdict that flipped on position can't say anything about length.
+    assert.equal(buildLengthRow(pair, [run("ab", 1), run("ba", 1), ...paddedA]).verdict, "not-applicable");
+    assert.equal(buildLengthRow({ ...pair, a: "same", b: "same" }, [...plainA, ...paddedA]).verdict, "not-applicable");
+  });
+
+  test("the length report counts what could be checked", () => {
+    const results = [
+      { pairId: SEED_PAIRS[0].id, runs: [...stable("b"), ...stable("a", { variant: "padded" })] },
+      { pairId: SEED_PAIRS[1].id, runs: [...stable("a"), ...stable("a", { variant: "padded" })] },
+      { pairId: SEED_PAIRS[2].id, runs: [...stable("a")] },
+    ];
+    const report = buildLengthReport(SEED_PAIRS, results);
+    assert.equal(report.checked, 2);
+    assert.equal(report.movedToPadded, 1);
+    assert.equal(report.movedAway, 0);
+    assert.equal(report.rows[2].verdict, "incomplete");
+  });
+
+  test("self-preference: each judge's stable pick, compared", () => {
+    const own = [...stable("a", { judge: "a" }), ...stable("b", { judge: "b" })];
+    assert.equal(buildSelfRow(pair, own).verdict, "each-own");
+    const other = [...stable("b", { judge: "a" }), ...stable("a", { judge: "b" })];
+    assert.equal(buildSelfRow(pair, other).verdict, "each-other");
+    const agreed = [...stable("a", { judge: "a" }), ...stable("a", { judge: "b" })];
+    assert.equal(buildSelfRow(pair, agreed).verdict, "agreed");
+    const flipped = [run("ab", 1, { judge: "a" }), run("ba", 1, { judge: "a" }), ...stable("b", { judge: "b" })];
+    assert.equal(buildSelfRow(pair, flipped).verdict, "flipped");
+    assert.equal(buildSelfRow(pair, stable("a", { judge: "a" })).verdict, "incomplete");
+    // Runs from the single-judge mode don't count as either judge.
+    assert.equal(buildSelfRow(pair, [...stable("a"), ...stable("b")]).verdict, "incomplete");
+  });
+
+  test("the self report counts, and the call budget is what the spec says", () => {
+    const report = buildSelfReport(SEED_PAIRS.slice(0, 2), [
+      { pairId: SEED_PAIRS[0].id, runs: [...stable("a", { judge: "a" }), ...stable("b", { judge: "b" })] },
+      { pairId: SEED_PAIRS[1].id, runs: [...stable("a", { judge: "a" }), ...stable("a", { judge: "b" })] },
+    ]);
+    assert.equal(report.scored, 2);
+    assert.equal(report.eachOwn, 1);
+    assert.equal(report.agreed, 1);
+    assert.equal(callsPerPair("pairs", false), 2);
+    assert.equal(callsPerPair("pairs", true), 4);
+    assert.equal(callsPerPair("self", false), 6);
   });
 });
 

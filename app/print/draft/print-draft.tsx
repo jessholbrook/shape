@@ -47,6 +47,10 @@ import {
   VERDICT_LABEL as JUDGE_VERDICT_LABEL,
   buildJudgeReport,
   composeJudgeSystem,
+  buildLengthReport,
+  buildSelfReport,
+  LENGTH_LABEL,
+  SELF_LABEL,
 } from "@/lib/judge";
 import {
   buildVerdict,
@@ -597,11 +601,52 @@ function SpreadBody({ draft }: { draft: SpreadDraft }) {
 
 function JudgeBody({ draft }: { draft: JudgeDraft }) {
   const report = buildJudgeReport(draft.pairs, draft.results);
+  const length = draft.lengthCheck
+    ? buildLengthReport(draft.pairs, draft.results, draft.filler)
+    : null;
+  const self = draft.mode === "self" ? buildSelfReport(draft.pairs, draft.results) : null;
   return (
     <>
       <Section label="What the judge was told to care about">
         <MonoBlock>{draft.criteria}</MonoBlock>
       </Section>
+      {self && draft.writers && (
+        <Section
+          label={`Self-preference — each preferred its own on ${self.eachOwn} of ${self.scored} pairs`}
+        >
+          <p className="font-mono text-[12px] text-ink">
+            Writer A: {draft.writers.a.model} · Writer B: {draft.writers.b.model}
+          </p>
+          <ul className="flex flex-col gap-1.5 mt-2">
+            {self.rows.map((row) => (
+              <li
+                key={row.pair.id}
+                className="font-mono text-[12px] text-ink flex justify-between gap-4"
+              >
+                <span>{row.pair.label}</span>
+                <span className="text-ink-muted">{SELF_LABEL[row.verdict]}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+      {length && length.checked > 0 && (
+        <Section
+          label={`Length — padding the shorter answer flipped ${length.movedToPadded} of ${length.checked} pairs toward it`}
+        >
+          <ul className="flex flex-col gap-1.5">
+            {length.rows.map((row) => (
+              <li
+                key={row.pair.id}
+                className="font-mono text-[12px] text-ink flex justify-between gap-4"
+              >
+                <span>{row.pair.label}</span>
+                <span className="text-ink-muted">{LENGTH_LABEL[row.verdict]}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
       <Section
         label={`Calibration — flipped on ${report.flipped} of ${report.scored} pairs when swapped`}
       >

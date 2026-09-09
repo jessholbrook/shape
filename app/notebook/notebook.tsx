@@ -22,7 +22,7 @@ import { buildVerdict, formatFactor, formatMs, totalMs } from "@/lib/race";
 import { buildPortabilityReport, modelLabel } from "@/lib/portability";
 import { buildContextReport } from "@/lib/context-lab";
 import { buildAgencyReport, buildRelayReport } from "@/lib/agency";
-import { buildJudgeReport } from "@/lib/judge";
+import { buildJudgeReport, buildLengthReport, buildSelfReport } from "@/lib/judge";
 import { ImportPanel } from "@/components/notebook/import-panel";
 import { KindPill } from "@/components/kind-pill";
 
@@ -587,6 +587,29 @@ function DraftSummary({ draft }: { draft: Draft }) {
       PROVIDERS[draft.provider].models.find((m) => m.id === draft.model)
         ?.name ?? draft.model;
     const report = buildJudgeReport(draft.pairs, draft.results);
+    if (draft.mode === "self") {
+      const self = buildSelfReport(draft.pairs, draft.results);
+      return (
+        <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
+          Self-preference · {draft.pairs.length} pairs
+          {self.scored > 0 ? (
+            <>
+              {" · "}
+              <span className={self.eachOwn > 0 ? "text-ink" : "text-ink-muted"}>
+                {self.eachOwn > 0
+                  ? `each preferred its own on ${self.eachOwn}/${self.scored}`
+                  : `judges agreed on ${self.agreed}/${self.scored}`}
+              </span>
+            </>
+          ) : (
+            <span className="text-ink-quiet"> · not run</span>
+          )}
+        </p>
+      );
+    }
+    const length = draft.lengthCheck
+      ? buildLengthReport(draft.pairs, draft.results, draft.filler)
+      : null;
     return (
       <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
         {modelName} · {draft.pairs.length} pairs
@@ -598,6 +621,14 @@ function DraftSummary({ draft }: { draft: Draft }) {
                 ? `flipped on ${report.flipped}/${report.scored}`
                 : `held on all ${report.scored}`}
             </span>
+            {length && length.checked > 0 && (
+              <span className={length.movedToPadded > 0 ? "text-ink" : "text-ink-muted"}>
+                {" · "}
+                {length.movedToPadded > 0
+                  ? `padding flipped ${length.movedToPadded}/${length.checked}`
+                  : `padding moved none of ${length.checked}`}
+              </span>
+            )}
           </>
         ) : (
           <span className="text-ink-quiet"> · not run</span>

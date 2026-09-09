@@ -15,12 +15,20 @@ export function PairEditor({
   onChange,
   onRemove,
   canRemove,
+  writerNames,
 }: {
   pair: Pair;
   onChange: (next: Pair) => void;
   onRemove: () => void;
   canRemove: boolean;
+  /**
+   * Self-preference mode: the answers are written by the two writers when
+   * the run starts, so the candidate fields and the human pick give way to
+   * the generated text, read-only.
+   */
+  writerNames?: { a: string; b: string };
 }) {
+  const generated = !!writerNames;
   return (
     <div className="bg-canvas border border-line rounded-[12px] p-4 flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -56,19 +64,41 @@ export function PairEditor({
         />
       </label>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <CandidateField
-          label="Answer A"
-          value={pair.a}
-          onChange={(a) => onChange({ ...pair, a })}
-        />
-        <CandidateField
-          label="Answer B"
-          value={pair.b}
-          onChange={(b) => onChange({ ...pair, b })}
-        />
-      </div>
+      {generated ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {(["a", "b"] as const).map((side) => (
+            <div key={side} className="flex flex-col gap-1.5">
+              <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet">
+                Answer {side.toUpperCase()} · written by {writerNames![side]}
+              </span>
+              <div className="min-h-[72px] bg-surface border border-line rounded-[8px] px-3 py-2 font-mono text-[12px] leading-[1.5] text-ink whitespace-pre-wrap break-words">
+                {pair[side] ? (
+                  pair[side]
+                ) : (
+                  <span className="text-ink-quiet italic">
+                    Written when you run.
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <CandidateField
+            label="Answer A"
+            value={pair.a}
+            onChange={(a) => onChange({ ...pair, a })}
+          />
+          <CandidateField
+            label="Answer B"
+            value={pair.b}
+            onChange={(b) => onChange({ ...pair, b })}
+          />
+        </div>
+      )}
 
+      {!generated && (
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet inline-flex items-center gap-1.5">
           Your pick
@@ -104,6 +134,7 @@ export function PairEditor({
           </span>
         )}
       </div>
+      )}
     </div>
   );
 }

@@ -13,7 +13,7 @@ import type {
   Source,
 } from "./context-lab";
 import type { Mechanism, RelayConfig, Scenario, ScenarioResult, Tool } from "./agency";
-import type { Pair, PairResult } from "./judge";
+import type { JudgeMode, Pair, PairResult, Writers } from "./judge";
 
 const DRAFTS_KEY = "shape:drafts:log";
 const MAX_DRAFTS = 100;
@@ -354,6 +354,14 @@ export type JudgeDraft = {
   criteria: string;
   pairs: Pair[];
   results: PairResult[];
+  /** Defaults to "pairs" when absent (pre-bias-pass drafts). */
+  mode?: JudgeMode;
+  /** Whether the padded pass ran alongside the plain one. */
+  lengthCheck?: boolean;
+  /** The filler used to pad the shorter answer, if it was edited. */
+  filler?: string;
+  /** Self-preference mode: the two writers, each of which also judged. */
+  writers?: Writers;
   /** The user's answer to the playground's reflection question, if they jotted one. */
   reflection?: string;
   createdAt: number;
@@ -699,6 +707,15 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     }
     if (typeof d.criteria !== "string") {
       return { ok: false, reason: "Judge draft is missing criteria." };
+    }
+    if (d.mode !== undefined && d.mode !== "pairs" && d.mode !== "self") {
+      return { ok: false, reason: "Judge draft has an unknown mode." };
+    }
+    if (d.writers !== undefined) {
+      const w = d.writers as { a?: { provider?: unknown; model?: unknown }; b?: { provider?: unknown; model?: unknown } } | null;
+      if (!isObject(w) || !isObject(w.a) || !isObject(w.b) || typeof w.a.model !== "string" || typeof w.b.model !== "string") {
+        return { ok: false, reason: "Judge draft's writers are malformed." };
+      }
     }
   }
   return { ok: true };
