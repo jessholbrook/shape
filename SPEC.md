@@ -1138,9 +1138,13 @@ The reveal shows, on each output, where a careful reader ranks it and **why** �
 
 Scores stay editable after the reveal and the report follows them, so the reader can move a criterion and watch the pair count change.
 
-### The trap in the seed
+### The sets, and their traps
 
-An expired card at checkout. The best reply names the cause and gives two exits in one line. The chirpy one is actionable, eventually, never says the card expired, and is cheerful about somebody's money. A *friendliness* criterion ranks it first, and the reveal says so. The seed's own rubric (the Part I criteria) separates them; the trap is the criterion the reader is invited to add.
+Two seeded sets, chosen from a picker on the set card. Each is four replies to one prompt; each carries the criterion the reader is invited to add, shown as a suggestion before the reveal, and a one-paragraph lesson shown with the report after it. Scores are kept per set, so switching sets loses nothing, and a draft records which set it was scored against.
+
+**Expired card at checkout** (2026-09-08). The best reply names the cause and gives two exits in one line. The chirpy one is actionable, eventually, never says the card expired, and is cheerful about somebody's money. A *friendliness* criterion ranks it first, and the reveal says so. The Part I criteria separate this set on their own; the trap is the criterion the reader is invited to add.
+
+**Delivery by Friday?** (2026-09-08). A support assistant that can see the order but has no delivery estimate, asked whether a birthday present will arrive in time. The best reply says what it knows, what it doesn't, where the real estimate lives, and what to do if it's bad. One reply answers "Yes!" with a made-up transit time, and it is ranked last: a confident promise the user acts on costs more than a policy paragraph that tells them nothing. The trap is *directness*. The second lesson is the one the first set can't teach: the Part I criteria have no criterion for truth, so scored honestly they order five of the six pairs and put the invented promise above the useless-but-honest reply — clarity ties it with the best, conciseness is flat. A criterion for saying only what it knows separates the outputs, but as one criterion in six it barely moves the total; the reader gets every pair only by also dropping the criteria that scored the lie as well as the truth. Which criteria to leave out is the skill.
 
 ### "A careful reader" is a position, not a fact
 
@@ -1152,7 +1156,7 @@ The ranking is ours, with its reasons attached. The panel says so and invites di
 
 ### Out of scope for v0.1
 
-- **More sets.** One seeded set; a second (a different domain, a different trap) is the obvious next addition and needs no new mechanics.
+- **More sets.** Two are seeded. A third is one more entry in the set registry — a different domain, a different trap — with no other change.
 - **Generated sets.** Asking a model for four replies at temperature 1 and letting the reader rank them first, then design the rubric — the ranking becomes the reader's own truth. A good second mode, and one that needs a key.
 - **A judge scoring the rubric.** Module 11's instrument; not here.
 

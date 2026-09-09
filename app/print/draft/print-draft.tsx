@@ -16,7 +16,7 @@ import {
   aggregateScore,
   caseScore,
   SCORE_MAX,
-  SEED_DESIGN_SET,
+  designSetById,
   buildDesignReport,
   CRITERION_VERDICT_LABEL,
 } from "@/lib/evals";
@@ -1127,8 +1127,8 @@ function ChoreographerBody({ draft }: { draft: ChoreographerDraft }) {
 
 /**
  * Design mode: the fixed set, the rubric as designed, the hand scores with
- * the truth beside them, and the pair count. The outputs are the seed set;
- * a draft only records which set it was.
+ * the truth beside them, and the pair count. The outputs are one of the
+ * seeded sets; a draft only records which set it was.
  */
 function EvalsDesignBody({
   draft,
@@ -1137,7 +1137,7 @@ function EvalsDesignBody({
   draft: EvalsDraft;
   design: NonNullable<EvalsDraft["design"]>;
 }) {
-  const set = SEED_DESIGN_SET;
+  const set = designSetById(design.setId);
   const report = buildDesignReport(draft.rubric, set, design.scores);
   return (
     <>
@@ -1166,11 +1166,14 @@ function EvalsDesignBody({
           ))}
         </ul>
         {design.revealed && report.fullyScored && (
-          <p className="font-mono text-[12px] text-ink mt-3">
-            Ordered {report.tally.concordant} of {report.tally.pairs} pairs the way a
-            careful reader does
-            {report.tally.ties > 0 ? `, ${report.tally.ties} tied` : ""}.
-          </p>
+          <>
+            <p className="font-mono text-[12px] text-ink mt-3">
+              Ordered {report.tally.concordant} of {report.tally.pairs} pairs the way a
+              careful reader does
+              {report.tally.ties > 0 ? `, ${report.tally.ties} tied` : ""}.
+            </p>
+            <p className="font-sans text-[12px] text-ink-muted mt-2">{set.lesson}</p>
+          </>
         )}
       </Section>
       {report.ranked.map((r) => (

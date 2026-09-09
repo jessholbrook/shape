@@ -193,13 +193,20 @@ export type DesignSet = {
   brief: string;
   /** The prompt every output answers. */
   userMessage: string;
+  /**
+   * The criterion the reader is invited to add — the set's trap. Shown
+   * before the reveal as a suggestion, never as a warning.
+   */
+  hint: string;
+  /** What the set is for, shown with the report once the truth is out. */
+  lesson: string;
   outputs: DesignOutput[];
 };
 
 /**
  * Four replies to one prompt, in an order that isn't the ranking. The trap
  * is deliberate: a "friendliness" criterion ranks the chirpy one first, and
- * the reveal says so.
+ * the reveal says so. The Part I rubric separates these on its own.
  */
 export const SEED_DESIGN_SET: DesignSet = {
   id: "expired-card",
@@ -208,6 +215,9 @@ export const SEED_DESIGN_SET: DesignSet = {
     "A checkout page for an online store. The card on file has expired and the payment did not go through.",
   userMessage:
     "Write the error message for a checkout when the credit card has expired.",
+  hint: "Friendliness",
+  lesson:
+    "The Part I rubric separates these on its own. The trap is the criterion you were invited to add: friendliness is right that the terse reply is bad and wrong that the chirpy one is best — and a criterion that crowns the wrong output drags the total with it.",
   outputs: [
     {
       id: "o1",
@@ -239,6 +249,63 @@ export const SEED_DESIGN_SET: DesignSet = {
     },
   ],
 };
+
+/**
+ * The second set's trap is confidence. The assistant cannot know the answer,
+ * and one reply gives it anyway — warmly, specifically, and wrong. The Part I
+ * rubric has no criterion for truth, so scored honestly it ranks the invented
+ * promise above the useless-but-honest policy paragraph. A "directness"
+ * criterion makes that worse; a criterion for saying only what it knows is
+ * the fix, and it only wins once the form criteria stop outvoting it.
+ */
+export const DELIVERY_DESIGN_SET: DesignSet = {
+  id: "delivery-by-friday",
+  title: "Delivery by Friday?",
+  brief:
+    "A support assistant inside a shopping app. It can see the order — shipped Tuesday, standard shipping, which the store quotes as 3–5 business days — but it has no carrier tracking and no delivery estimate of its own.",
+  userMessage: "Will my order get here by Friday? It's a birthday present.",
+  hint: "Directness",
+  lesson:
+    "The Part I rubric has no criterion for truth. Clarity and conciseness score the invented promise as well as the honest replies, so criteria about form outvote the one thing that matters here. Add a criterion for saying only what it knows — then ask which of the others are worth keeping.",
+  outputs: [
+    {
+      id: "o1",
+      label: "Output 1",
+      text: "I can't confirm a delivery date. Your order shipped Tuesday by standard shipping, which is 3–5 business days. The tracking link in your shipping confirmation email has the carrier's estimate.",
+      truthRank: 2,
+      why: "Every fact is right and it promises nothing it can't keep. But the user said why Friday matters, and this doesn't hear it — no next step if the estimate is bad, no offer. Honest, and finished with them.",
+    },
+    {
+      id: "o2",
+      label: "Output 2",
+      text: "Yes! Your order will arrive by Friday. Standard shipping takes 2–3 days and your package is already on its way, so it'll be there in time for the birthday. 🎁",
+      truthRank: 4,
+      why: "Confident, warm, specific, and invented. The assistant has no delivery estimate, and the store quotes 3–5 days, not 2–3. If the parcel comes Monday, the user skipped a backup because a bot said yes. A criterion that rewards a straight answer ranks this first — which is the trap.",
+    },
+    {
+      id: "o3",
+      label: "Output 3",
+      text: "I can't promise Friday. It shipped Tuesday by standard shipping, which is 3–5 business days, so Friday is possible but not certain. The tracking link in your confirmation email will show the carrier's estimate. If that says it'll miss, reply here and we'll look at options.",
+      truthRank: 1,
+      why: "Says what it knows, says what it doesn't, and gives the two things the user can act on: where the real estimate lives, and what to do if it's bad. It heard \"birthday\". Not the shortest reply, but every sentence carries something.",
+    },
+    {
+      id: "o4",
+      label: "Output 4",
+      text: "Delivery times vary depending on carrier, destination, and order volume. We are unable to guarantee delivery dates. Please refer to our shipping policy for further information.",
+      truthRank: 3,
+      why: "Nothing in it is false and nothing in it is usable. It ignores the order it can see, doesn't say where the estimate lives, and answers a person with a policy. Still above the confident promise: the user at least leaves knowing they don't know.",
+    },
+  ],
+};
+
+/** Every seeded set, in the order the picker shows them. The first is the default. */
+export const DESIGN_SETS: DesignSet[] = [SEED_DESIGN_SET, DELIVERY_DESIGN_SET];
+
+/** The set with that id, or the default when a draft names one that no longer exists. */
+export function designSetById(id: string | undefined): DesignSet {
+  return DESIGN_SETS.find((s) => s.id === id) ?? DESIGN_SETS[0];
+}
 
 /** Scores by output id, then by criterion id. */
 export type DesignScores = Record<string, Record<string, Score | null>>;

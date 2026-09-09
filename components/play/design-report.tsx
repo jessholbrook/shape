@@ -15,7 +15,14 @@ import {
  * pulling the wrong way. The last group is the lesson: a criterion that
  * sounds right and rewards the wrong output.
  */
-export function DesignReportPanel({ report }: { report: DesignReport }) {
+export function DesignReportPanel({
+  report,
+  lesson,
+}: {
+  report: DesignReport;
+  /** The set's own reading of its trap, shown once the truth is out. */
+  lesson?: string;
+}) {
   const { tally } = report;
   return (
     <div className="bg-surface border border-line rounded-[16px] p-5 md:p-6 flex flex-col gap-5">
@@ -65,6 +72,12 @@ export function DesignReportPanel({ report }: { report: DesignReport }) {
           </>
         )}
       </h2>
+
+      {lesson && report.fullyScored && tally.pairs > 0 && (
+        <p className="font-sans text-[14px] leading-[1.55] text-ink-muted border-l-2 border-highlight pl-3">
+          {lesson}
+        </p>
+      )}
 
       <div className="flex flex-col gap-2">
         <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">

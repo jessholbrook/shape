@@ -115,3 +115,37 @@ for (const route of LESSON_ROUTES) {
     ).toEqual([]);
   });
 }
+
+/**
+ * Design mode has more than one seeded set. Switching sets must keep the
+ * scores already given on each — twenty clicks is too much to lose to a
+ * mis-click — and a set's title, brief, and prompt must follow the picker.
+ */
+test("/play/evals design mode switches sets and keeps each set's scores", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/play/evals", { waitUntil: "networkidle" });
+
+  await page.getByRole("button", { name: "Design a rubric" }).click();
+  await expect(page.getByText("The set — Expired card at checkout")).toBeVisible();
+  const picker = page.getByRole("group", { name: "Set" });
+  await expect(picker.getByRole("button", { name: "Expired card at checkout" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  await picker.getByRole("button", { name: "Delivery by Friday?" }).click();
+  await expect(page.getByText("The set — Delivery by Friday?")).toBeVisible();
+  await expect(page.getByText("Will my order get here by Friday?")).toBeVisible();
+
+  // One score on the second set's first output, then away and back.
+  await page.getByRole("button", { name: "Clarity: Excels" }).first().click();
+  await expect(page.getByText("1/5 scored")).toBeVisible();
+  await picker.getByRole("button", { name: "Expired card at checkout" }).click();
+  await expect(page.getByText("The set — Expired card at checkout")).toBeVisible();
+  await expect(page.getByText("1/5 scored")).toHaveCount(0);
+  await picker.getByRole("button", { name: "Delivery by Friday?" }).click();
+  await expect(page.getByText("1/5 scored")).toBeVisible();
+
+  expect(errors).toEqual([]);
+});

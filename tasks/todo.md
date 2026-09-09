@@ -830,32 +830,33 @@ log; this section is the only part meant to be current.*
 
 Merged on 2026-09-08, in order: #146, #151, #150 (relay mode, §20), #152
 (Tone Dial reverse mode, §21), #153 (live model lists + custom endpoint,
-§22), #154 (native tool-calling + repair, §23), #147, #155, #156. Nothing
-is open. Issue #118 closed as built by #152.
+§22), #154 (native tool-calling + repair, §23), #147, #155, #156, #157
+(tidy-ups), #158 (Eval Lab design mode, §24), #159, #160 (Judge Lab length
+check + self-preference, §25). Issue #118 closed as built by #152. The
+second design-mode set ("Delivery by Friday?", §24) is in the branch that
+carries this refresh.
 
 **Needs a key — not something CI can do:**
 
-1. **A live-model pass.** Every Part II playground and all four September
+1. **A live-model pass.** Every Part II playground and all of September's
    builds have only ever seen scripted provider replies. One session with a
-   real key settles four questions at once: does the relay seed produce
+   real key settles five questions at once: does the relay seed produce
    "neither agent broke its policy" (§20); does a reverse-mode proposal
    reproduce its target when run forward (§21); what does a frontier model
    do with the native seed's failing search — report, retry, or gloss (§23);
    does the custom endpoint work against a real OpenRouter key with its
-   quoted prices (§22). The seeds are tuned to misbehave; a uniformly clean
-   run means a seed needs sharpening, not that all is well.
+   quoted prices (§22); does a real judge flip toward the padded answer, and
+   does a model prefer its own writing (§25). The seeds are tuned to
+   misbehave; a uniformly clean run means a seed needs sharpening, not that
+   all is well.
 
-**Build queue, in order** (Eval Lab design mode shipped in #158, 2026-09-08):
+**Build queue, in order:**
 
-2. **Judge Lab's two remaining bias passes** — self-preference is cheap now
-   that the roster and the custom endpoint make "two models generate, one
-   judges" easy; length-bias padding is a third call per pair. BACKLOG
-   "Judge Lab — the other two bias passes".
-3. **A second design-mode set** — the mechanics are done; a second domain
-   with a different trap needs only a seed. Half a day.
-4. **Generated sets for design mode** — a model writes four replies, the
+2. **Generated sets for design mode** — a model writes four replies, the
    reader ranks them first, then designs the rubric against their own
    ranking. Needs a key; pairs with item 1.
-5. **Module 12 article + Roundtable** — gated on item 1.
-6. **Native relay; keyless local endpoints** — both left out of the
+3. **Module 12 article + Roundtable** — gated on item 1.
+4. **Native relay; keyless local endpoints** — both left out of the
    September builds on purpose, both small once someone wants them.
+5. **A third design-mode set** — only if the second earns it. One more
+   entry in the registry, no other change.
