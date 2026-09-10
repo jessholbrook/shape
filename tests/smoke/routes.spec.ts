@@ -149,3 +149,24 @@ test("/play/evals design mode switches sets and keeps each set's scores", async 
 
   expect(errors).toEqual([]);
 });
+
+/**
+ * The reader's own set needs a key to write anything, but the panel that
+ * asks for the brief and the writer must render without one, with the
+ * write button held until a key is present.
+ */
+test("/play/evals design mode offers the reader's own set without a key", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/play/evals", { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Design a rubric" }).click();
+  await page.getByRole("group", { name: "Set" }).getByRole("button", { name: "Your own" }).click();
+  await expect(page.getByText("The set — your own")).toBeVisible();
+  await expect(page.getByLabel("The surface")).toBeVisible();
+  await expect(page.getByLabel("The request")).toBeVisible();
+  // The writer defaults to whatever needs no key; a keyed provider without a key holds the button.
+  await page.getByLabel("Writer provider").selectOption("anthropic");
+  await expect(page.getByText("No key", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Write 4 replies/ })).toBeDisabled();
+  expect(errors).toEqual([]);
+});

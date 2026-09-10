@@ -2,7 +2,7 @@ import type { ProviderId } from "./providers";
 import type { InferredTone, ToneMode, ToneValues } from "./tone";
 import type { PersonaValues } from "./persona";
 import type { Probe, ProbeResult } from "./refusal";
-import type { CaseResult, Criterion, DesignScores, EvalCase, EvalMode } from "./evals";
+import type { CaseResult, Criterion, DesignScores, EvalCase, EvalMode, GeneratedSet } from "./evals";
 import type { ChoreographedTurn } from "./choreographer";
 import type { Assertion, SpreadRun } from "./spread";
 import type { LaneId, RaceResult } from "./race";
@@ -210,10 +210,13 @@ export type EvalsDraft = {
    * hand scores, and whether the truth has been revealed.
    */
   design?: {
+    /** A seeded set's id, or `GENERATED_SET_ID` when `generated` is present. */
     setId: string;
     scores: DesignScores;
     notes?: Record<string, string>;
     revealed: boolean;
+    /** The reader's own set: brief, replies, what wrote them, and their ranking. */
+    generated?: GeneratedSet;
   };
   /** The user's answer to the playground's reflection question, if they jotted one. */
   reflection?: string;
@@ -608,9 +611,15 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
       return { ok: false, reason: "Eval draft has an unknown mode." };
     }
     if (d.design !== undefined) {
-      const design = d.design as { setId?: unknown; scores?: unknown } | null;
+      const design = d.design as { setId?: unknown; scores?: unknown; generated?: unknown } | null;
       if (!isObject(design) || typeof design.setId !== "string" || !isObject(design.scores)) {
         return { ok: false, reason: "Eval draft's design block is missing its set or scores." };
+      }
+      if (design.generated !== undefined) {
+        const g = design.generated as { outputs?: unknown; ranks?: unknown } | null;
+        if (!isObject(g) || !Array.isArray(g.outputs) || !isObject(g.ranks)) {
+          return { ok: false, reason: "Eval draft's generated set is missing its outputs or ranks." };
+        }
       }
     }
     if (

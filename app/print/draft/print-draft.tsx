@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useDrafts } from "@/lib/hooks/use-drafts";
 import { PROVIDERS } from "@/lib/providers";
+import { modelName } from "@/lib/live-models";
 import { ARTIFACT_KIND_LABEL } from "@/lib/kinds";
 import { composePersonaSections } from "@/lib/persona";
 import { TONE_DIMENSIONS, type ToneValues } from "@/lib/tone";
@@ -17,6 +18,7 @@ import {
   caseScore,
   SCORE_MAX,
   designSetById,
+  setFromGenerated,
   buildDesignReport,
   CRITERION_VERDICT_LABEL,
 } from "@/lib/evals";
@@ -1137,11 +1139,19 @@ function EvalsDesignBody({
   draft: EvalsDraft;
   design: NonNullable<EvalsDraft["design"]>;
 }) {
-  const set = designSetById(design.setId);
+  const own = design.generated;
+  const set = own ? setFromGenerated(own, design.notes) : designSetById(design.setId);
   const report = buildDesignReport(draft.rubric, set, design.scores);
+  const truth = own ? "you ranked it" : "a careful reader ranks it";
   return (
     <>
-      <Section label={`The set — ${set.title}`}>
+      <Section
+        label={
+          own
+            ? `The set — your own, written by ${modelName(own.provider, own.model)}`
+            : `The set — ${set.title}`
+        }
+      >
         <Prose>{set.brief}</Prose>
         <div className="mt-2">
           <Exchange who="Prompt">{set.userMessage}</Exchange>
@@ -1168,8 +1178,8 @@ function EvalsDesignBody({
         {design.revealed && report.fullyScored && (
           <>
             <p className="font-mono text-[12px] text-ink mt-3">
-              Ordered {report.tally.concordant} of {report.tally.pairs} pairs the way a
-              careful reader does
+              Ordered {report.tally.concordant} of {report.tally.pairs} pairs the way{" "}
+              {own ? "you did" : "a careful reader does"}
               {report.tally.ties > 0 ? `, ${report.tally.ties} tied` : ""}.
             </p>
             <p className="font-sans text-[12px] text-ink-muted mt-2">{set.lesson}</p>
@@ -1184,7 +1194,7 @@ function EvalsDesignBody({
             {design.revealed && (
               <span className="text-ink-muted">
                 {" "}
-                · a careful reader ranks it {r.output.truthRank} of {set.outputs.length}
+                · {truth} {r.output.truthRank} of {set.outputs.length}
               </span>
             )}
           </p>

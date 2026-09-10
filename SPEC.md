@@ -1146,6 +1146,16 @@ Two seeded sets, chosen from a picker on the set card. Each is four replies to o
 
 **Delivery by Friday?** (2026-09-08). A support assistant that can see the order but has no delivery estimate, asked whether a birthday present will arrive in time. The best reply says what it knows, what it doesn't, where the real estimate lives, and what to do if it's bad. One reply answers "Yes!" with a made-up transit time, and it is ranked last: a confident promise the user acts on costs more than a policy paragraph that tells them nothing. The trap is *directness*. The second lesson is the one the first set can't teach: the Part I criteria have no criterion for truth, so scored honestly they order five of the six pairs and put the invented promise above the useless-but-honest reply — clarity ties it with the best, conciseness is flat. A criterion for saying only what it knows separates the outputs, but as one criterion in six it barely moves the total; the reader gets every pair only by also dropping the criteria that scored the lie as well as the truth. Which criteria to leave out is the skill.
 
+### Your own set — generated replies, your ranking (2026-09-09)
+
+The third option in the set picker. The reader writes the surface and the request (defaults: a banking app, a transfer that failed on the daily limit), picks a writer, and the model writes four independent replies at temperature 1 — the model's spread, not its best attempt. The writer's system prompt carries the surface and says nothing about quality or variety: four honest samples are the point.
+
+**Rank first.** Scoring is locked until every written reply has a distinct rank, and the ranks lock the moment a score is given — the same rule as the seeded sets, pointed the other way. The reader's ranking is the truth the rubric is checked against, the reader's note on each reply stands in for the seeded sets' "why", and the report speaks in the second person: "ordered 5 of 6 pairs the way you did", "your ranking: 2nd".
+
+**What it can and can't say.** The report can't say whether the ranking was right; it can only say whether the rubric measures what the reader used when they made it. Criteria that come out flat are the ones they didn't actually use. If nothing separates the four, they may simply be the same quality — a finding, and a warning about totals that pretend otherwise. The set's lesson paragraph says exactly this.
+
+**Record.** The draft's design block carries the generated set — brief, request, writer, replies, ranks — under the set id `generated`. Notebook and PDF rebuild the set from it; the PDF names the writer. A reply that errored is shown with its error and left out of the set; the other three can still be ranked and scored.
+
 ### "A careful reader" is a position, not a fact
 
 The ranking is ours, with its reasons attached. The panel says so and invites disagreement — that is the conversation a real rubric review is made of. What it does not concede is the arithmetic: a total only means something if the criteria under it separate the outputs on purpose.
@@ -1157,7 +1167,7 @@ The ranking is ours, with its reasons attached. The panel says so and invites di
 ### Out of scope for v0.1
 
 - **More sets.** Two are seeded. A third is one more entry in the set registry — a different domain, a different trap — with no other change.
-- **Generated sets.** Asking a model for four replies at temperature 1 and letting the reader rank them first, then design the rubric — the ranking becomes the reader's own truth. A good second mode, and one that needs a key.
+- ~~**Generated sets.**~~ Built 2026-09-09 as "Your own" in the set picker; see above.
 - **A judge scoring the rubric.** Module 11's instrument; not here.
 
 ---

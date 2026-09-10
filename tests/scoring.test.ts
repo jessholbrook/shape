@@ -47,17 +47,25 @@ import {
 import {
   DELIVERY_DESIGN_SET,
   DESIGN_SETS,
+  GENERATED_LESSON,
+  GENERATED_SET_ID,
   SEED_CRITERIA,
   SEED_DESIGN_SET,
   buildDesignReport,
+  composeGenerationSystem,
   designSetById,
   designTotal,
   diagnoseCriterion,
   emptyDesignScores,
+  emptyGeneratedSet,
+  rankingComplete,
+  rankingProblem,
+  setFromGenerated,
   tallyPairs,
   type Criterion,
   type DesignScores,
   type DesignSet,
+  type GeneratedSet,
   type Score,
 } from "../lib/evals";
 import {
@@ -899,6 +907,74 @@ describe("eval lab design sets", () => {
     const report = buildDesignReport(four, set, score(four));
     assert.deepEqual(report.tally, { concordant: 6, discordant: 0, ties: 0, pairs: 6 });
     assert.deepEqual(report.ranked.map((r) => r.output.truthRank), [1, 2, 3, 4]);
+  });
+});
+
+// --- Eval Lab generated sets ------------------------------------------------
+
+describe("eval lab generated sets", () => {
+  const written = (texts: string[]): GeneratedSet => {
+    const g = emptyGeneratedSet("anthropic", "claude-haiku-4-5");
+    return {
+      ...g,
+      outputs: g.outputs.map((o, i) =>
+        i < texts.length ? { ...o, text: texts[i], status: "done" as const } : o,
+      ),
+    };
+  };
+  const four = written(["Reply one.", "Reply two.", "Reply three.", "Reply four."]);
+
+  test("the writer's prompt carries the surface and asks for the copy alone", () => {
+    const system = composeGenerationSystem("A banking app; a transfer failed.");
+    assert.match(system, /The surface: A banking app; a transfer failed\./);
+    assert.match(system, /nothing else/);
+    assert.doesNotMatch(system, /vary|different|good|bad/i);
+    assert.match(composeGenerationSystem("   "), /The surface: a product screen/);
+  });
+
+  test("the ranking has to be complete and every rank used once", () => {
+    assert.equal(rankingProblem(emptyGeneratedSet("anthropic", "m")), "Write the replies first.");
+    assert.equal(rankingProblem(four), "Rank every output first.");
+    assert.equal(rankingProblem({ ...four, ranks: { g1: 1, g2: 2 } }), "Rank 2 more outputs first.");
+    assert.equal(rankingProblem({ ...four, ranks: { g1: 1, g2: 2, g3: 3 } }), "Rank 1 more output first.");
+    assert.equal(
+      rankingProblem({ ...four, ranks: { g1: 1, g2: 2, g3: 2, g4: 4 } }),
+      "Two outputs are both 2nd — every rank once.",
+    );
+    // A shared rank is named as soon as it happens, not after the rest are filled in.
+    assert.equal(
+      rankingProblem({ ...four, ranks: { g2: 1, g4: 1 } }),
+      "Two outputs are both 1st — every rank once.",
+    );
+    const done = { ...four, ranks: { g1: 3, g2: 1, g3: 4, g4: 2 } };
+    assert.equal(rankingProblem(done), null);
+    assert.equal(rankingComplete(done), true);
+    // A reply that errored isn't ranked and isn't waited for.
+    const three = written(["a", "b", "c"]);
+    assert.equal(rankingProblem({ ...three, ranks: { g1: 1, g2: 2, g3: 3 } }), null);
+  });
+
+  test("the generated replies become a design set whose truth is the reader's ranking and whose why is their note", () => {
+    const g = { ...four, ranks: { g1: 3, g2: 1, g3: 4, g4: 2 } };
+    const set = setFromGenerated(g, { g2: "Says what happened and what to do.", g4: "   " });
+    assert.equal(set.id, GENERATED_SET_ID);
+    assert.equal(set.lesson, GENERATED_LESSON);
+    assert.deepEqual(set.outputs.map((o) => [o.id, o.truthRank, o.why]), [
+      ["g1", 3, ""],
+      ["g2", 1, "Says what happened and what to do."],
+      ["g3", 4, ""],
+      ["g4", 2, ""],
+    ]);
+    // Only written replies are in the set; an unranked one carries rank 0.
+    const partial = setFromGenerated({ ...written(["a", "b"]), ranks: { g1: 1 } });
+    assert.deepEqual(partial.outputs.map((o) => [o.id, o.truthRank]), [["g1", 1], ["g2", 0]]);
+    // The rubric is then checked against the reader's own order like any other set.
+    const [clarity] = SEED_CRITERIA;
+    const scores = emptyDesignScores(set);
+    const byRank: Record<number, Score> = { 1: 5, 2: 4, 3: 2, 4: 1 };
+    for (const o of set.outputs) scores[o.id][clarity.id] = byRank[o.truthRank];
+    const report = buildDesignReport([clarity], set, scores);
+    assert.deepEqual(report.tally, { concordant: 6, discordant: 0, ties: 0, pairs: 6 });
   });
 });
 

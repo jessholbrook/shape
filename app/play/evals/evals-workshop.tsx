@@ -13,19 +13,28 @@ import {
   DEFAULT_EVAL_SYSTEM_PROMPT,
   EMPTY_CASE_RESULT,
   DESIGN_SETS,
+  GENERATED_SET_ID,
+  GENERATION_TEMPERATURE,
   SEED_CASES,
   SEED_CRITERIA,
   SCORE_MAX,
   aggregateScore,
   buildDesignReport,
+  composeGenerationSystem,
   designSetById,
   emptyDesignScores,
+  emptyGeneratedOutputs,
+  emptyGeneratedSet,
+  rankingComplete,
+  rankingProblem,
+  setFromGenerated,
   type CaseResult,
   type Criterion,
   type DesignScores,
   type DesignSet,
   type EvalCase,
   type EvalMode,
+  type GeneratedSet,
   type Score,
 } from "@/lib/evals";
 import { suggestTitle, type EvalsDraft } from "@/lib/drafts";
@@ -35,7 +44,8 @@ import { SystemPromptTip } from "@/components/play/config-help";
 import { RubricEditor } from "@/components/play/rubric-editor";
 import { EvalCaseRow } from "@/components/play/eval-case-row";
 import { DesignOutputCard } from "@/components/play/design-output-card";
-import { DesignReportPanel } from "@/components/play/design-report";
+import { CAREFUL_READER, DesignReportPanel, YOUR_RANKING } from "@/components/play/design-report";
+import { GeneratorPanel } from "@/components/play/generator-panel";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { ReflectionCard } from "@/components/play/reflection-card";
@@ -76,6 +86,10 @@ export function EvalsWorkshop() {
   const [mode, setMode] = useState<EvalMode>("apply");
   const [designSetId, setDesignSetId] = useState<string>(DESIGN_SETS[0].id);
   const [designBySet, setDesignBySet] = useState<Record<string, DesignState>>({});
+  const [generated, setGenerated] = useState<GeneratedSet>(() =>
+    emptyGeneratedSet("webllm", PROVIDERS.webllm.defaultModel),
+  );
+  const [generating, setGenerating] = useState(false);
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [reflectionDismissed, setReflectionDismissed] = useState(false);
@@ -101,8 +115,11 @@ export function EvalsWorkshop() {
     setResults(filled);
     setMode(draft.mode ?? "apply");
     if (draft.design) {
-      // A draft that names a set we no longer ship lands on the default one.
-      const set = designSetById(draft.design.setId);
+      // The reader's own set travels with the draft; a draft that names a
+      // seeded set we no longer ship lands on the default one.
+      const own = draft.design.generated;
+      const set = own ? setFromGenerated(own, draft.design.notes) : designSetById(draft.design.setId);
+      if (own) setGenerated(own);
       setDesignSetId(set.id);
       setDesignBySet({
         [set.id]: {
@@ -125,6 +142,10 @@ export function EvalsWorkshop() {
     onResolve: useCallback((p: ProviderId, m: string) => {
       setProvider(p);
       setModel(m);
+      // The writer for a generated set follows the default until something is written.
+      setGenerated((g) =>
+        g.outputs.every((o) => o.status === "idle") ? { ...g, provider: p, model: m } : g,
+      );
     }, []),
   });
 
@@ -140,12 +161,26 @@ export function EvalsWorkshop() {
     [cases, results],
   );
   const isDesign = mode === "design";
-  const designSet = designSetById(designSetId);
+  const isGenerated = designSetId === GENERATED_SET_ID;
+  const designSet = useMemo(
+    () =>
+      isGenerated
+        ? setFromGenerated(generated, designBySet[GENERATED_SET_ID]?.notes)
+        : designSetById(designSetId),
+    [isGenerated, generated, designBySet, designSetId],
+  );
   const designState = useMemo(
     () => designBySet[designSet.id] ?? emptyDesignState(designSet),
     [designBySet, designSet],
   );
   const { scores: designScores, notes: designNotes, revealed } = designState;
+  const rankingDone = !isGenerated || rankingComplete(generated);
+  const anyScore = Object.values(designScores).some((forOutput) =>
+    Object.values(forOutput ?? {}).some((v) => typeof v === "number"),
+  );
+  const writtenCount = generated.outputs.filter((o) => o.status === "done").length;
+  const generatedHasKey =
+    hydrated && (!providerNeedsKey(generated.provider) || !!keys[generated.provider]);
   const designReport = useMemo(
     () => buildDesignReport(rubric, designSet, designScores),
     [rubric, designSet, designScores],
@@ -195,7 +230,78 @@ export function EvalsWorkshop() {
 
   function resetDesign() {
     updateDesign(() => emptyDesignState(designSet));
+    if (isGenerated) setGenerated((g) => ({ ...g, ranks: {} }));
     setReflectionDismissed(false);
+  }
+
+  function setRank(outputId: string, rank: number | null) {
+    setDirty(true);
+    setGenerated((g) => {
+      const ranks = { ...g.ranks };
+      if (rank === null) delete ranks[outputId];
+      else ranks[outputId] = rank;
+      return { ...g, ranks };
+    });
+  }
+
+  function updateGeneratedOutput(
+    id: string,
+    updater: (prev: GeneratedSet["outputs"][number]) => GeneratedSet["outputs"][number],
+  ) {
+    setGenerated((g) => ({
+      ...g,
+      outputs: g.outputs.map((o) => (o.id === id ? updater(o) : o)),
+    }));
+  }
+
+  /** Four independent replies at temperature 1. Everything the reader had done on the old four is cleared. */
+  async function generateSet() {
+    const apiKey = keys[generated.provider];
+    if (providerNeedsKey(generated.provider) && !apiKey) return;
+    setGenerating(true);
+    setDirty(true);
+    setDesignBySet((prev) => {
+      const next = { ...prev };
+      delete next[GENERATED_SET_ID];
+      return next;
+    });
+    setReflectionDismissed(false);
+    const fresh = emptyGeneratedOutputs().map((o) => ({ ...o, status: "running" as const }));
+    setGenerated((g) => ({ ...g, ranks: {}, outputs: fresh }));
+    const system = composeGenerationSystem(generated.brief);
+    await Promise.all(
+      fresh.map(async (o) => {
+        try {
+          const stream = runChat({
+            provider: generated.provider,
+            model: generated.model,
+            system,
+            messages: [{ role: "user", content: generated.userMessage }],
+            temperature: GENERATION_TEMPERATURE,
+            apiKey,
+          });
+          for await (const event of stream) {
+            if (event.type === "text") {
+              updateGeneratedOutput(o.id, (prev) => ({ ...prev, text: prev.text + event.delta }));
+            } else if (event.type === "done") {
+              updateGeneratedOutput(o.id, (prev) => ({ ...prev, status: "done" }));
+              recordUsage({
+                provider: generated.provider,
+                model: generated.model,
+                inputTokens: event.usage.inputTokens,
+                outputTokens: event.usage.outputTokens,
+              });
+            } else if (event.type === "error") {
+              updateGeneratedOutput(o.id, (prev) => ({ ...prev, status: "error", error: event.message }));
+            }
+          }
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          updateGeneratedOutput(o.id, (prev) => ({ ...prev, status: "error", error: message }));
+        }
+      }),
+    );
+    setGenerating(false);
   }
 
   function updateResult(id: string, updater: (prev: CaseResult) => CaseResult) {
@@ -312,7 +418,7 @@ export function EvalsWorkshop() {
       title:
         title.trim() ||
         (isDesign
-          ? `Rubric design — ${designSet.title}`
+          ? `Rubric design — ${isGenerated ? "your own set" : designSet.title}`
           : suggestTitle(
               systemPrompt.split("\n")[0] ?? "",
               "Untitled eval workshop",
@@ -326,7 +432,13 @@ export function EvalsWorkshop() {
       results,
       mode,
       design: isDesign
-        ? { setId: designSet.id, scores: designScores, notes: designNotes, revealed }
+        ? {
+            setId: designSet.id,
+            scores: designScores,
+            notes: designNotes,
+            revealed,
+            generated: isGenerated ? generated : undefined,
+          }
         : undefined,
       reflection: reflectionNote.trim() || undefined,
     });
@@ -384,12 +496,23 @@ export function EvalsWorkshop() {
         <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet inline-flex items-center gap-1.5">
-              The set — {designSet.title}
+              The set — {isGenerated ? "your own" : designSet.title}
               <InfoTip>
-                Four replies to one prompt, in no particular order. A careful
-                reader ranks them; you&apos;ll see that ranking, and the reasons,
-                after you&apos;ve scored. Try adding a criterion like
-                &ldquo;{designSet.hint}&rdquo; and watch which output it rewards.
+                {isGenerated ? (
+                  <>
+                    A model writes four replies to your brief at temperature 1.
+                    Rank them before you write a criterion — your ranking is
+                    the truth the rubric is checked against, so the report can
+                    only tell you whether the rubric measures what you used.
+                  </>
+                ) : (
+                  <>
+                    Four replies to one prompt, in no particular order. A careful
+                    reader ranks them; you&apos;ll see that ranking, and the reasons,
+                    after you&apos;ve scored. Try adding a criterion like
+                    &ldquo;{designSet.hint}&rdquo; and watch which output it rewards.
+                  </>
+                )}
               </InfoTip>
             </span>
             <div
@@ -400,20 +523,51 @@ export function EvalsWorkshop() {
               {DESIGN_SETS.map((s) => (
                 <ModeButton
                   key={s.id}
-                  active={s.id === designSet.id}
+                  active={s.id === designSetId}
+                  disabled={generating}
                   onClick={() => switchSet(s.id)}
                 >
                   {s.title}
                 </ModeButton>
               ))}
+              <ModeButton
+                active={isGenerated}
+                disabled={generating}
+                onClick={() => switchSet(GENERATED_SET_ID)}
+              >
+                Your own
+              </ModeButton>
             </div>
           </div>
-          <p className="font-sans text-[14px] leading-[1.55] text-ink-muted">
-            {designSet.brief}
-          </p>
-          <p className="font-sans text-[14px] leading-[1.55] text-ink italic">
-            &ldquo;{designSet.userMessage}&rdquo;
-          </p>
+          {isGenerated ? (
+            <>
+              <MissingKeyBanner
+                show={hydrated && !generatedHasKey}
+                providerName={PROVIDERS[generated.provider].name}
+                action="write the replies"
+              />
+              <WebLLMUnsupportedBanner show={generated.provider === "webllm"} />
+              <GeneratorPanel
+                set={generated}
+                onChange={(next) => {
+                  setGenerated(next);
+                  setDirty(true);
+                }}
+                hasKey={generatedHasKey}
+                running={generating}
+                onGenerate={generateSet}
+              />
+            </>
+          ) : (
+            <>
+              <p className="font-sans text-[14px] leading-[1.55] text-ink-muted">
+                {designSet.brief}
+              </p>
+              <p className="font-sans text-[14px] leading-[1.55] text-ink italic">
+                &ldquo;{designSet.userMessage}&rdquo;
+              </p>
+            </>
+          )}
         </div>
       )}
 
@@ -440,11 +594,15 @@ export function EvalsWorkshop() {
       {/* Rubric editor */}
       <RubricEditor criteria={rubric} onChange={setRubric} />
 
-      {isDesign && (
+      {isDesign && (isGenerated ? writtenCount > 0 || generating : true) && (
         <>
           <div className="flex flex-col gap-3">
             <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
-              Outputs — {designSet.outputs.length} fixed × {rubric.length} criteria
+              Outputs — {isGenerated ? `${writtenCount} written` : `${designSet.outputs.length} fixed`} ×{" "}
+              {rubric.length} criteria
+              {isGenerated && !rankingDone && writtenCount > 0 && (
+                <span className="ml-2 text-highlight-ink">· rank them first</span>
+              )}
             </p>
             {designSet.outputs.map((o) => (
               <DesignOutputCard
@@ -456,8 +614,45 @@ export function EvalsWorkshop() {
                 revealed={revealed}
                 onScore={(criterionId, score) => setDesignScore(o.id, criterionId, score)}
                 onNoteChange={(note) => setDesignNote(o.id, note)}
+                rank={
+                  isGenerated
+                    ? {
+                        value: generated.ranks[o.id] ?? null,
+                        count: writtenCount,
+                        locked: anyScore,
+                        onChange: (rank) => setRank(o.id, rank),
+                      }
+                    : undefined
+                }
+                truthLabel={isGenerated ? YOUR_RANKING.label : CAREFUL_READER.label}
+                scoringLocked={
+                  isGenerated && !rankingDone ? (rankingProblem(generated) ?? undefined) : undefined
+                }
+                notePlaceholder={
+                  isGenerated
+                    ? "Why you ranked it here — shown as the reason once you check."
+                    : undefined
+                }
               />
             ))}
+            {isGenerated &&
+              generated.outputs
+                .filter((o) => o.status === "running" || o.status === "error")
+                .map((o) => (
+                  <div
+                    key={o.id}
+                    className="bg-surface border border-line rounded-[14px] p-4 md:p-5 flex flex-col gap-2"
+                  >
+                    <span className="font-display text-[16px] leading-[1.2] text-ink">{o.label}</span>
+                    {o.status === "error" ? (
+                      <p className="font-mono text-[12px] text-danger break-words">{o.error}</p>
+                    ) : (
+                      <p className="font-mono text-[13px] leading-[1.55] text-ink-muted whitespace-pre-wrap break-words">
+                        {o.text || "Writing…"}
+                      </p>
+                    )}
+                  </div>
+                ))}
           </div>
 
           <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-wrap items-center justify-between gap-4">
@@ -465,7 +660,9 @@ export function EvalsWorkshop() {
               <button
                 type="button"
                 onClick={reveal}
-                disabled={!designReport.fullyScored || revealed}
+                disabled={
+                  !designReport.fullyScored || revealed || !rankingDone || designSet.outputs.length < 2
+                }
                 className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ink/90 transition-colors"
               >
                 {revealed ? "Revealed" : "Check the rubric"}
@@ -480,15 +677,23 @@ export function EvalsWorkshop() {
               </button>
             </div>
             <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
-              {designReport.fullyScored
-                ? revealed
-                  ? "Scores stay editable — the report follows them."
-                  : "Every output scored. Check when you're ready."
-                : "Score every output on every criterion first."}
+              {!rankingDone
+                ? rankingProblem(generated)
+                : designReport.fullyScored
+                  ? revealed
+                    ? "Scores stay editable — the report follows them."
+                    : "Every output scored. Check when you're ready."
+                  : "Score every output on every criterion first."}
             </span>
           </div>
 
-          {revealed && <DesignReportPanel report={designReport} lesson={designSet.lesson} />}
+          {revealed && (
+            <DesignReportPanel
+              report={designReport}
+              lesson={designSet.lesson}
+              truth={isGenerated ? YOUR_RANKING : CAREFUL_READER}
+            />
+          )}
         </>
       )}
 
