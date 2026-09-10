@@ -19,7 +19,10 @@ const store = createLocalStore<CustomEndpoint | null>({
 export function useCustomEndpoint() {
   const endpoint = store.useValue();
   const hydrated = useHydrated();
-  const save = useCallback((baseUrl: string) => setCustomEndpoint(baseUrl), []);
+  const save = useCallback(
+    (baseUrl: string, keyless = false) => setCustomEndpoint(baseUrl, { keyless }),
+    [],
+  );
   const clear = useCallback(() => clearCustomEndpoint(), []);
   return { endpoint, hydrated, save, clear };
 }

@@ -597,8 +597,12 @@ function composeColleagueBlock(
   other: Agent,
   theirs: Tool[],
   showDescriptions: boolean,
+  mechanism: Mechanism = "prompted",
 ): string {
-  const handoff = "To hand a request to them, use HANDOFF.";
+  const handoff =
+    mechanism === "native"
+      ? `To hand a request to them, call the ${HANDOFF_TOOL} tool.`
+      : "To hand a request to them, use HANDOFF.";
   if (theirs.length === 0) {
     return `You work alongside ${other.name}, who has no tools. ${handoff}`;
   }
@@ -630,26 +634,40 @@ function composeChannelBlock(
     : `You cannot reach the user. Requests reach you from ${entry.name}, and anything you ASK or ANSWER goes back to ${entry.name}, not to the user.`;
 }
 
+/**
+ * Native relay: the agent's own tools travel through the provider's tool API
+ * and HANDOFF becomes a tool too, so the prompt carries only the role, the
+ * colleague directory, the channel, the policy, and the two text keywords
+ * that remain — ASK and ANSWER still route by channel, exactly as before.
+ */
+export const NATIVE_RELAY_DECISION_INSTRUCTIONS = `To act, call one of your tools. To hand the request to your colleague, call ${"handoff"} with what you need them to do. If you should check before acting, reply with one line starting "ASK:" and call no tool. If no tool is needed, reply with one line starting "ANSWER:".`;
+
 export function composeRelaySystemPrompt(
   agentId: AgentId,
   tools: Tool[],
   policy: string,
   config: RelayConfig,
+  mechanism: Mechanism = "prompted",
 ): string {
   const me = agentById(config, agentId);
   const other = otherAgent(config, agentId);
-  const parts = [
-    me.role.trim(),
-    composeToolBlock(agentTools(tools, agentId)),
+  const native = mechanism === "native";
+  const parts = [me.role.trim()];
+  // The API carries an agent's own tools in the native mechanism; the
+  // colleague's stay in the prompt either way — a directory is all a
+  // coordinator ever sees of them.
+  if (!native) parts.push(composeToolBlock(agentTools(tools, agentId)));
+  parts.push(
     composeColleagueBlock(
       other,
       agentTools(tools, other.id),
       config.showOtherDescriptions,
+      mechanism,
     ),
     composeChannelBlock(me, other, config),
-  ];
+  );
   if (policy.trim()) parts.push(`Policy:\n${policy.trim()}`);
-  parts.push(RELAY_DECISION_INSTRUCTIONS);
+  parts.push(native ? NATIVE_RELAY_DECISION_INSTRUCTIONS : RELAY_DECISION_INSTRUCTIONS);
   return parts.join("\n\n");
 }
 
@@ -666,6 +684,7 @@ export function composeIncoming(
   decision: Decision,
   to: Agent,
   config: RelayConfig,
+  mechanism: Mechanism = "prompted",
 ): string {
   const kindWord =
     decision.kind === "ask"
@@ -673,6 +692,7 @@ export function composeIncoming(
       : decision.kind === "answer"
         ? "Reply"
         : "Message";
+  const handoff = mechanism === "native" ? `call ${HANDOFF_TOOL}` : "use HANDOFF";
   const lines = [
     `${kindWord} from ${from.name} (a colleague, not the user):`,
     decision.text.trim() || "(empty)",
@@ -680,11 +700,11 @@ export function composeIncoming(
   ];
   if (canReachUser(config, to.id)) {
     lines.push(
-      `To reply to ${from.name}, use HANDOFF. To put this to the user, use ASK. ANSWER goes to the user.`,
+      `To reply to ${from.name}, ${handoff}. To put this to the user, use ASK. ANSWER goes to the user.`,
     );
   } else {
     lines.push(
-      `To ask ${from.name} something before acting, use ASK. To reply without acting, use ANSWER. To hand the request back, use HANDOFF. All three go to ${from.name} — you cannot reach the user.`,
+      `To ask ${from.name} something before acting, use ASK. To reply without acting, use ANSWER. To hand the request back, ${handoff}. All three go to ${from.name} — you cannot reach the user.`,
     );
   }
   return lines.join("\n");
@@ -1240,6 +1260,58 @@ export function rawFromTurns(turns: ToolTurn[]): string {
   if (!first || first.kind !== "assistant") return "";
   const call = first.calls[0];
   return call ? `ACT: ${call.name}(${call.args})` : first.text;
+}
+
+// --- Native relay ----------------------------------------------------------------
+
+/** The one tool every relay agent gets on top of its own: the handoff. */
+export const HANDOFF_TOOL = "handoff";
+
+/**
+ * An agent's tool list for the native relay: its own tools, as the API
+ * receives them, plus `handoff`. The colleague is named in the description
+ * because a two-agent relay has exactly one place a handoff can go.
+ */
+export function relayToolSpecs(tools: Tool[], agentId: AgentId, config: RelayConfig): ToolSpec[] {
+  const other = otherAgent(config, agentId);
+  return [
+    ...toolSpecs(agentTools(tools, agentId)),
+    {
+      name: HANDOFF_TOOL,
+      description: `Hand this request to ${other.name}, with what you need them to do. They will see your message labelled as coming from you, not from the user.`,
+      parameters: {
+        type: "object",
+        properties: { message: { type: "string" } },
+        required: ["message"],
+      },
+    },
+  ];
+}
+
+/**
+ * A native relay turn as the prompted format, so the relay's status table,
+ * grader, and trace read it unchanged: a handoff call becomes a HANDOFF
+ * line, any other call an ACT line, and text stays text for ASK and ANSWER.
+ */
+export function rawFromRelayTurn(
+  turn: Extract<ToolTurn, { kind: "assistant" }>,
+  config: RelayConfig,
+  agentId: AgentId,
+): string {
+  const call = turn.calls[0];
+  if (!call) return turn.text;
+  if (call.name.toLowerCase() === HANDOFF_TOOL) {
+    const other = otherAgent(config, agentId);
+    let message = call.args;
+    try {
+      const parsed = JSON.parse(call.args) as { message?: unknown };
+      if (typeof parsed?.message === "string") message = parsed.message;
+    } catch {
+      // Not JSON; hand the raw arguments over.
+    }
+    return `HANDOFF: ${other.name}: ${message.trim()}`;
+  }
+  return `ACT: ${call.name}(${call.args})`;
 }
 
 // --- Repair grading ------------------------------------------------------------

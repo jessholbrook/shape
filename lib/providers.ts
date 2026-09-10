@@ -1,3 +1,4 @@
+import { getCustomEndpoint, type CustomEndpoint } from "./custom-endpoint";
 export type ProviderId =
   | "webllm"
   | "anthropic"
@@ -262,8 +263,15 @@ export function getModel(providerId: ProviderId, modelId: string): ModelMeta | u
  * Whether this provider requires the user to bring their own API key. WebLLM
  * runs entirely in the browser; everything else needs auth.
  */
-export function providerNeedsKey(provider: ProviderId): boolean {
-  return provider !== "webllm";
+export function providerNeedsKey(
+  provider: ProviderId,
+  endpoint: CustomEndpoint | null = getCustomEndpoint(),
+): boolean {
+  if (provider === "webllm") return false;
+  // A custom endpoint marked keyless — a local LM Studio or Ollama — is the
+  // other provider that runs with nothing saved.
+  if (provider === "custom") return !endpoint?.keyless;
+  return true;
 }
 
 /**
@@ -274,9 +282,12 @@ export function providerNeedsKey(provider: ProviderId): boolean {
  */
 export function preferredProvider(
   keys: Partial<Record<ProviderId, string>>,
+  endpoint: CustomEndpoint | null = getCustomEndpoint(),
 ): ProviderId {
   for (const p of BYOK_PROVIDERS) {
     if (keys[p.id]) return p.id;
   }
+  // A keyless local endpoint is set up without a key; it still beats the in-browser model.
+  if (endpoint?.keyless) return "custom";
   return "webllm";
 }

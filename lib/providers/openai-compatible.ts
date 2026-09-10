@@ -19,11 +19,25 @@ export type OpenAiCompatConfig = {
   keyHeader: string;
   /** Send the key as `Bearer <key>` (direct endpoints) rather than raw (our proxies). */
   bearer?: boolean;
+  /** The endpoint may be called with no key at all — a keyless local server. */
+  keyOptional?: boolean;
   label: string;
 };
 
 function keyValue(cfg: OpenAiCompatConfig, apiKey: string): string {
   return cfg.bearer ? `Bearer ${apiKey}` : apiKey;
+}
+
+/**
+ * The auth header for a call, or none: a key-optional endpoint called with no
+ * key gets no header at all, which is what a local server expects.
+ */
+export function authHeaders(cfg: OpenAiCompatConfig, apiKey: string | undefined): Record<string, string> {
+  if (!apiKey) {
+    if (cfg.keyOptional) return {};
+    throw new Error(`${cfg.label} provider requires an API key.`);
+  }
+  return { [cfg.keyHeader]: keyValue(cfg, apiKey) };
 }
 
 type OpenAiMessage =
@@ -70,14 +84,12 @@ export async function* openAiCompatibleChat(
   call: ChatCall,
   cfg: OpenAiCompatConfig,
 ): AsyncIterable<ChatEvent> {
-  if (!call.apiKey) {
-    throw new Error(`${cfg.label} provider requires an API key.`);
-  }
+  const auth = authHeaders(cfg, call.apiKey);
   const res = await fetch(cfg.proxyUrl, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      [cfg.keyHeader]: keyValue(cfg, call.apiKey),
+      ...auth,
     },
     body: JSON.stringify({
       model: call.model,
@@ -174,7 +186,7 @@ export async function pingOpenAiCompatible(
     method: "POST",
     headers: {
       "content-type": "application/json",
-      [cfg.keyHeader]: keyValue(cfg, apiKey),
+      ...authHeaders(cfg, apiKey),
     },
     body: JSON.stringify({
       model,

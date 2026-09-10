@@ -45,17 +45,20 @@ export function useLiveModels(provider: ProviderId, current?: string) {
   const { endpoint } = useCustomEndpoint();
 
   const apiKey = keys[provider];
+  // A keyless local endpoint is configured with nothing saved, and its model
+  // list is fetched with no header — that is the whole point of it.
+  const keyless = provider === "custom" && !!endpoint?.keyless;
   const configured =
-    !providerNeedsKey(provider) ||
+    !providerNeedsKey(provider, endpoint) ||
     (!!apiKey && (provider !== "custom" || !!endpoint));
   const cached = cache[provider];
   const fetchStatus = statuses[provider] ?? { state: "idle" as const };
-  const canFetch = supportsLiveModels(provider) && configured && !!apiKey;
+  const canFetch = supportsLiveModels(provider) && configured && (!!apiKey || keyless);
 
   const refresh = useCallback(() => {
-    if (!canFetch || !apiKey) return;
+    if (!canFetch) return;
     // Failures are recorded in the store's status; nothing to do here.
-    refreshLiveModels(provider, apiKey).catch(() => {});
+    refreshLiveModels(provider, apiKey ?? "").catch(() => {});
   }, [canFetch, apiKey, provider]);
 
   // One automatic fetch per provider per session. A stale cache refetches;

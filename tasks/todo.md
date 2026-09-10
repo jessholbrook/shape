@@ -851,11 +851,11 @@ carries this refresh.
    all is well.
 
 **Build queue, in order** (shipped 2026-09-09, each verified with scripted
-replies only: generated design sets §24; Module 12 article + Roundtable §26
-— the live pass above should include writing one real set and seating three
-real models at the table to watch Noor):
+replies only: generated design sets §24; Module 12 article + Roundtable §26;
+native relay §20 and keyless local endpoints §22 — the live pass above
+should include writing one real set, seating three real models at the table
+to watch Noor, running the relay seed natively, and pointing the custom
+endpoint at a real local server with the keyless box ticked):
 
-2. **Native relay; keyless local endpoints** — both left out of the
-   September builds on purpose, both small once someone wants them.
-3. **A third design-mode set** — one more entry in the registry, no other
+2. **A third design-mode set** — one more entry in the registry, no other
    change.

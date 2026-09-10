@@ -16,6 +16,11 @@ export const CUSTOM_ENDPOINT_EVENT = "shape:custom-endpoint-changed";
 export type CustomEndpoint = {
   /** Base URL up to and including the version segment, e.g. https://openrouter.ai/api/v1 */
   baseUrl: string;
+  /**
+   * A local server that wants no key — LM Studio, Ollama. Calls go out with
+   * no Authorization header, and the playgrounds stop asking for one.
+   */
+  keyless?: boolean;
 };
 
 export function getCustomEndpoint(): CustomEndpoint | null {
@@ -25,17 +30,17 @@ export function getCustomEndpoint(): CustomEndpoint | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<CustomEndpoint>;
     if (typeof parsed?.baseUrl !== "string" || !parsed.baseUrl) return null;
-    return { baseUrl: parsed.baseUrl };
+    return { baseUrl: parsed.baseUrl, keyless: parsed.keyless === true };
   } catch {
     return null;
   }
 }
 
-export function setCustomEndpoint(baseUrl: string): void {
+export function setCustomEndpoint(baseUrl: string, options: { keyless?: boolean } = {}): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(
     STORAGE_KEY,
-    JSON.stringify({ baseUrl: normalizeBaseUrl(baseUrl) }),
+    JSON.stringify({ baseUrl: normalizeBaseUrl(baseUrl), keyless: options.keyless === true }),
   );
   window.dispatchEvent(new CustomEvent(CUSTOM_ENDPOINT_EVENT));
 }

@@ -145,6 +145,11 @@ where the endpoint quotes it (OpenRouter) and "—" where it doesn't. Called
 straight from the browser — no per-endpoint proxy, on purpose: a relay to a
 user-supplied URL is an open relay. Plain http only for localhost.
 
+**Keyless (2026-09-09):** a local server that wants no key is now a
+first-class provider — a checkbox on the Keys page, no Authorization header
+on the wire, the playgrounds treat it as set up, and it becomes the default
+provider when nothing else is saved. `SPEC.md` §22.
+
 ## Part II — advanced curriculum (modules 08–11 + three demos)
 
 **From:** design conversation, 2026-08-10 — "what would next-level lessons and
@@ -558,3 +563,9 @@ failing result is graded (reported, asked, retried, switched, glossed over,
 kept going). Prompted stays the default for the reasons above; the
 descriptions are still shown in native mode, as the API receives them. The
 in-browser models fall back to prompted rather than failing.
+
+**Native relay (2026-09-09):** the mechanism toggle now applies in relay
+mode. Each agent's own tools and the handoff go through the tool API; the
+colleague directory stays in the prompt; every turn is read back into the
+prompted format so the grader and the trace don't know the difference. The
+run still ends at the first call — the repair loop stays solo. `SPEC.md` §20.
