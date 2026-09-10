@@ -3,6 +3,7 @@ import type { InferredTone, ToneMode, ToneValues } from "./tone";
 import type { PersonaValues } from "./persona";
 import type { Probe, ProbeResult } from "./refusal";
 import type { CaseResult, Criterion, DesignScores, EvalCase, EvalMode, GeneratedSet } from "./evals";
+import type { Protocol, Seat, StopReason, Task, Turn } from "./roundtable";
 import type { ChoreographedTurn } from "./choreographer";
 import type { Assertion, SpreadRun } from "./spread";
 import type { LaneId, RaceResult } from "./race";
@@ -30,7 +31,8 @@ export type DraftKind =
   | "portability"
   | "context"
   | "agency"
-  | "judge";
+  | "judge"
+  | "protocol";
 
 export type DiffDraftConfig = {
   provider: ProviderId;
@@ -383,7 +385,31 @@ export type Draft =
   | PortabilityDraft
   | ContextDraft
   | AgencyDraft
-  | JudgeDraft;
+  | JudgeDraft
+  | ProtocolDraft;
+
+/**
+ * Roundtable — Module 12. The group-level Agency Policy: who sits at the
+ * table, what they decide, how the table is run, and what happened. The
+ * header meta reads the first seat's model; every seat carries its own.
+ */
+export type ProtocolDraft = {
+  id: string;
+  kind: "protocol";
+  title: string;
+  provider: ProviderId;
+  model: string;
+  temperature: number;
+  seats: Seat[];
+  task: Task;
+  protocol: Protocol;
+  turns: Turn[];
+  stopReason?: StopReason;
+  /** The user's answer to the playground's reflection question, if they jotted one. */
+  reflection?: string;
+  createdAt: number;
+  updatedAt: number;
+};
 
 const KNOWN_KINDS: DraftKind[] = [
   "diff",
@@ -398,6 +424,7 @@ const KNOWN_KINDS: DraftKind[] = [
   "context",
   "agency",
   "judge",
+  "protocol",
 ];
 
 function read(): Draft[] {
@@ -458,7 +485,8 @@ export type DraftInput =
     })
   | (Omit<ContextDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
   | (Omit<AgencyDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
-  | (Omit<JudgeDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
+  | (Omit<JudgeDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
+  | (Omit<ProtocolDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
 
 /**
  * Save a draft. If `data.id` matches an existing draft, it's updated in place;
@@ -568,7 +596,8 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     kind !== "portability" &&
     kind !== "context" &&
     kind !== "agency" &&
-    kind !== "judge"
+    kind !== "judge" &&
+    kind !== "protocol"
   ) {
     return { ok: false, reason: `Unknown draft kind: ${String(kind)}` };
   }
@@ -638,6 +667,18 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
         ok: false,
         reason: "Choreographer draft is missing turns or systemPrompt.",
       };
+    }
+  } else if (kind === "protocol") {
+    const task = d.task as { proposal?: unknown; brief?: unknown } | null;
+    const protocol = d.protocol as { rounds?: unknown } | null;
+    if (!Array.isArray(d.seats) || d.seats.length < 2) {
+      return { ok: false, reason: "Protocol draft needs at least two seats." };
+    }
+    if (!isObject(task) || typeof task.proposal !== "string" || typeof task.brief !== "string") {
+      return { ok: false, reason: "Protocol draft is missing its proposal or brief." };
+    }
+    if (!isObject(protocol) || typeof protocol.rounds !== "number" || !Array.isArray(d.turns)) {
+      return { ok: false, reason: "Protocol draft is missing its protocol or turns." };
     }
   } else if (kind === "spread") {
     if (!Array.isArray(d.runs) || !Array.isArray(d.assertions)) {
@@ -797,6 +838,8 @@ export function draftEditorHref(draft: Draft): string {
       return `/play/refusal?draft=${draft.id}`;
     case "evals":
       return `/play/evals?draft=${draft.id}`;
+    case "protocol":
+      return `/play/roundtable?draft=${draft.id}`;
     case "choreographer":
       return `/play/choreographer?draft=${draft.id}`;
     case "spread":

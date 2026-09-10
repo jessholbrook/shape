@@ -775,9 +775,9 @@ The last `WINNER:` mention wins, because judges commonly reason through both can
 
 ---
 
-## 20. Relay mode + Roundtable — v0.1 spec (relay mode built; Roundtable proposed)
+## 20. Relay mode + Roundtable — v0.1 spec (both built)
 
-*Coda to the Part II arc. Pairs with proposed Module 12, "Groups, not agents." The reasoning is in `BACKLOG.md`; this section is the build brief. Relay mode shipped inside Tool Bench as a Solo / Relay toggle; Roundtable and the article remain proposed.*
+*Coda to the Part II arc. Pairs with Module 12, "Groups, not agents." The reasoning is in `BACKLOG.md`; this section is the build brief. Relay mode shipped inside Tool Bench as a Solo / Relay toggle (2026-09-07); Roundtable and the article shipped 2026-09-09 — see §26 for what was built against the sketch below.*
 
 ### Purpose
 
@@ -1222,3 +1222,66 @@ The swap runs inside both passes. A judge that flips on position is never read f
 - **A third, neutral judge** in self-preference mode. Having each writer judge is the experiment; a referee is a different one.
 - **Padding both ways.** Padding the longer answer too would test whether *any* padding moves the verdict; the shorter-only version is the sharper question.
 - **Length-matched generation** — asking the writers for the same length — which would make the self-preference pairs cleaner and is a good follow-up.
+
+---
+
+## 26. Module 12 article + Roundtable — v0.1 spec (built)
+
+*The second build of §20, and the article that makes it a module. Built 2026-09-09. BACKLOG "Module 12 — Groups, not agents".*
+
+### The article — `/learn/groups-not-agents`
+
+Module 12, the last of Part II, in the house structure. It opens on what the reader already knows (community guidelines, posting rights, who speaks first in a workshop: group design they have done without calling it that), then the one durable claim — **constraints written per agent don't compose** — worked through the §20 policy sentence given to two agents. The example block is the relay seed's designed trace, both topologies, presented as *the run the seed is built to produce; yours may not, and that is the playground* — no live result is claimed. Then the four phenomena with their non-prompt levers (policy laundering / topology, consensus collapse / composition and order, trust decay / provenance, running on / stopping rules), the Module 10 ladder with its new top rung (**prefer structure to instruction**), the failure that hides (it looks like compliance — every log reads clean), and the playground section, which sends the reader to Tool Bench's relay mode first and Roundtable second.
+
+The article was written so that it stays true without a live run, as the backlog required. Nothing in it depends on any news story, and nothing in it reports a measurement the project hasn't made.
+
+### Roundtable — `/play/roundtable`
+
+**Three or four seats**, each a private role prompt, one proposal, a shared transcript. The phenomena under study are the ones the article names: consensus collapse, role drift, anchoring. The designer edits the **protocol** and never the prompts:
+
+| Lever | Control | What it does |
+|---|---|---|
+| **Order** | ↑ ↓ on each seat | Who speaks first in every round. The first confident voice anchors the room; move the dissenter to the top and see whether it still does. |
+| **Rounds** | 1–4 | The budget. |
+| **First round** | Open / Blind | Blind: everyone states a position before hearing anyone; from round two the table is visible. The Delphi move. |
+| **Stop** | After rounds / At consensus | Consensus: the table stops the moment a round ends with every seat on the same FOR or AGAINST. |
+| **Composition** | Provider + model per seat | Three copies of one model versus three families. The §16 roster, one picker per seat. |
+| **Plant** | Not planted / for / against | What a seat is there to hold. The check is whether it did. |
+| **Temperature** | 0–1 | Shared by every seat. |
+
+**The channel rule holds.** A seat's system prompt is its own role, the *names only* of the others, and the turn format; the transcript, speaker-labelled and grouped by round, is rendered into the user turn. Shared content lives in the user channel because that is where it lives in a product (§17). Roles are private by construction: no seat ever sees another's prompt.
+
+**The format.** Every turn ends with one line — `STANCE: FOR`, `STANCE: AGAINST`, or `STANCE: UNDECIDED` — and is asked to stay under 120 words. The last STANCE line in a turn is the one read. A turn without one is *No stance*, shown as such and never guessed; if any seat ends the run without a readable stance, the headline says so instead of reading the room.
+
+**Runs are sequential by nature.** Every turn reads the table so far, so nothing fans out: seats × rounds calls, one at a time, each streaming into the transcript as it arrives. An in-browser seat caps the table at three seats and two rounds — applied where the protocol is read, never written back to the setting. An errored turn stops the run and the report says it didn't finish.
+
+**Checks stay local**, Spread-style, read entirely off the STANCE lines:
+
+| Check | Held when |
+|---|---|
+| *Planted seat held its position* | The planted seat's final stance is the planted one. |
+| *Someone still disagreed when the table stopped* | No consensus at the end. |
+| *The outcome was not simply the first speaker's opening* | Consensus, and it differs from the first speaker's round-one stance. n/a without consensus. |
+| *Every turn ended with a stance line* | No turn without one. |
+
+**The headline** names the phenomenon: *Noor was planted to hold against and gave way in round 3. The table settled on Priya's opening position* (role drift, then collapse onto the anchor); *Noor still holds against after 3 rounds — the table did not collapse*; *Consensus in round 1 — nobody disagreed with anyone*; *Consensus in round 2, against the first speaker's opening*; *No consensus after 3 rounds: 2 for, 1 against*. Under it, each seat's stance round by round with when it moved, then the checks.
+
+**The seed.** A B2B onboarding redesign to ship Friday for Monday's conference demo; last week's test had 3 of 5 participants fail step 2. Priya (PM, speaks first, wants to ship), Sam (engineer, no strong view, goes along with the room once it seems settled), Noor (researcher, planted *against*: do not agree until step 2 is fixed or the proposal changes). Three rounds, open, stop after rounds. The seed is built to collapse; if Noor holds, the table did better than most rooms do. The experiments are in the order the article gives them: Noor first, blind first round, stop at consensus, mix the models.
+
+**Persona Cards take a seat.** Each seat has a picker over the Notebook's Persona Cards; choosing one sets the seat's name and its role to the composed persona prompt. Part I's artifact feeds Part II's last playground directly.
+
+### Artifact — Protocol
+
+A new `DraftKind`, `protocol`: seats (with models and plants), the decision, the protocol, the temperature, every turn with its usage, and why the table stopped. The header meta reads the first seat's model. Notebook section "Protocols", summary line *Roundtable · Priya, Sam, Noor · 3 rounds · Noor gave way in round 3*. PDF: the decision, the protocol with the seating order, what the room did with each seat's trajectory and the checks, every seat's role prompt as the model saw it, and the transcript round by round. Import validation needs two seats, a proposal and brief, a protocol, and a turns array. Reflection: *"Who changed their mind, and in which round — and which part of the protocol, rather than which prompt, would you change to stop it?"* Tool Bench's relay reflection now points at this module.
+
+### Registries
+
+Module 12 in the curriculum (`groups-not-agents`, playground Roundtable, artifact Protocol); playground 13 (`/play/roundtable`); README and `/learn` counts to twelve lessons and thirteen playgrounds, tables updated. The content-consistency tests enforce all of it.
+
+### Out of scope for v0.1
+
+- **A judge reading the transcript.** §19's instrument could score persuasion or sycophancy; the checks here are deliberately arithmetic.
+- **Private side-channels** (A whispers to B). The table is fully shared or blind-then-shared; pairwise visibility is a later lever.
+- **Injected handoffs.** Still the relay's v0.2 experiment.
+- **Abort mid-run.** The run button disables until the table finishes or a turn errors.
+- **A live run.** Like everything this month, verified against scripted seats only. The live pass should seat three real models and watch Noor.

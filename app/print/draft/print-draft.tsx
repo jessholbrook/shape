@@ -5,6 +5,14 @@ import { useSearchParams } from "next/navigation";
 import { useDrafts } from "@/lib/hooks/use-drafts";
 import { PROVIDERS } from "@/lib/providers";
 import { modelName } from "@/lib/live-models";
+import {
+  STANCE_LABEL,
+  buildRoundtableReport,
+  composeSeatSystem,
+  parseStance,
+  seatName,
+  stripStance,
+} from "@/lib/roundtable";
 import { ARTIFACT_KIND_LABEL } from "@/lib/kinds";
 import { composePersonaSections } from "@/lib/persona";
 import { TONE_DIMENSIONS, type ToneValues } from "@/lib/tone";
@@ -77,6 +85,7 @@ import type {
   RaceDraft,
   SpreadDraft,
   ToneDraft,
+  ProtocolDraft,
 } from "@/lib/drafts";
 
 export function PrintDraft() {
@@ -219,6 +228,8 @@ function KindBody({ draft }: { draft: Draft }) {
       return <AgencyBody draft={draft} />;
     case "judge":
       return <JudgeBody draft={draft} />;
+    case "protocol":
+      return <ProtocolBody draft={draft} />;
   }
 }
 
@@ -1206,6 +1217,86 @@ function EvalsDesignBody({
               Note: {design.notes[r.output.id]}
             </p>
           )}
+        </Section>
+      ))}
+    </>
+  );
+}
+
+/**
+ * Roundtable: the seats with their private role prompts as the model saw
+ * them, the decision, the protocol, what the room did, and the transcript
+ * round by round with each turn's stance.
+ */
+function ProtocolBody({ draft }: { draft: ProtocolDraft }) {
+  const report = buildRoundtableReport(draft.seats, draft.protocol, draft.turns, draft.stopReason ?? null);
+  const rounds = [...new Set(draft.turns.map((t) => t.round))].sort((a, b) => a - b);
+  return (
+    <>
+      <Section label="The decision">
+        <Prose>{draft.task.proposal}</Prose>
+        <p className="font-sans text-[12px] text-ink-muted mt-2">{draft.task.brief}</p>
+      </Section>
+      <Section
+        label={`The protocol — ${draft.protocol.rounds} ${draft.protocol.rounds === 1 ? "round" : "rounds"}, first round ${draft.protocol.firstRound}, stop ${
+          draft.protocol.stopRule === "consensus" ? "at consensus" : "after the rounds"
+        }, temperature ${draft.temperature.toFixed(1)}`}
+      >
+        <ul className="flex flex-col gap-1">
+          {draft.seats.map((s, i) => (
+            <li key={s.id} className="font-mono text-[12px] text-ink">
+              {i + 1}. {s.name} — {modelName(s.provider, s.model)}
+              {s.plant ? ` · planted ${STANCE_LABEL[s.plant].toLowerCase()}` : ""}
+            </li>
+          ))}
+        </ul>
+      </Section>
+      {draft.turns.length > 0 && (
+        <Section label={`What the room did — ${report.headline}`}>
+          <ul className="flex flex-col gap-1.5">
+            {report.rows.map((r) => (
+              <li key={r.seat.id} className="font-mono text-[12px] text-ink flex justify-between gap-4">
+                <span>{r.seat.name}</span>
+                <span className="text-ink-muted">
+                  {r.trajectory.map((st) => (st ? STANCE_LABEL[st] : "—")).join(" → ")}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <ul className="flex flex-col gap-1 mt-3">
+            {report.checks.map((c) => (
+              <li key={c.id} className="font-mono text-[11px] text-ink-muted">
+                {c.result === "held" ? "✓" : c.result === "failed" ? "✗" : "–"} {c.label} — {c.detail}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+      {draft.seats.map((s) => (
+        <Section key={s.id} label={`${s.name} — role prompt, as the model saw it`}>
+          <MonoBlock>{composeSeatSystem(s, draft.seats)}</MonoBlock>
+        </Section>
+      ))}
+      {rounds.map((r) => (
+        <Section key={r} label={`Round ${r}`}>
+          <ul className="flex flex-col gap-3">
+            {draft.turns
+              .filter((t) => t.round === r)
+              .map((t, i) => {
+                const stance = t.status === "done" ? parseStance(t.text) : null;
+                return (
+                  <li key={`${t.seatId}-${i}`}>
+                    <p className="font-mono text-[12px] text-ink">
+                      {seatName(draft.seats, t.seatId)}{" "}
+                      <span className="text-ink-muted">· {stance ? STANCE_LABEL[stance] : t.status === "error" ? "errored" : "no stance"}</span>
+                    </p>
+                    <p className="font-sans text-[12px] text-ink-muted mt-1 whitespace-pre-wrap">
+                      {t.status === "error" ? t.error : stripStance(t.text)}
+                    </p>
+                  </li>
+                );
+              })}
+          </ul>
         </Section>
       ))}
     </>
