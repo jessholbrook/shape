@@ -47,6 +47,7 @@ import {
 import {
   DELIVERY_DESIGN_SET,
   DESIGN_SETS,
+  RESET_DESIGN_SET,
   GENERATED_LESSON,
   GENERATED_SET_ID,
   SEED_CRITERIA,
@@ -907,6 +908,64 @@ describe("eval lab design sets", () => {
     const report = buildDesignReport(four, set, score(four));
     assert.deepEqual(report.tally, { concordant: 6, discordant: 0, ties: 0, pairs: 6 });
     assert.deepEqual(report.ranked.map((r) => r.output.truthRank), [1, 2, 3, 4]);
+  });
+});
+
+// --- Eval Lab third set: the trap is already in the rubric ---------------------
+
+describe("eval lab factory-reset set", () => {
+  const set = RESET_DESIGN_SET;
+  const [clarity, tone, completeness, actionability, conciseness] = SEED_CRITERIA;
+  const brevity: Criterion = { id: "brevity", name: "Brevity", description: "Says it in as few words as possible." };
+  const stakes: Criterion = { id: "stakes", name: "Names the consequence", description: "Says what the user stands to lose before they act." };
+  /** Honest scores per criterion id, keyed by truth rank. */
+  const honest: Record<string, Record<number, Score>> = {
+    clarity: { 1: 5, 2: 5, 3: 2, 4: 5 },
+    tone: { 1: 4, 2: 4, 3: 1, 4: 3 },
+    completeness: { 1: 5, 2: 4, 3: 4, 4: 1 },
+    actionability: { 1: 5, 2: 3, 3: 2, 4: 3 },
+    conciseness: { 1: 3, 2: 4, 3: 1, 4: 5 },
+    brevity: { 1: 3, 2: 4, 3: 1, 4: 5 },
+    stakes: { 1: 5, 2: 5, 3: 4, 4: 1 },
+  };
+  const score = (criteria: Criterion[]): DesignScores => {
+    const scores = emptyDesignScores(set);
+    for (const o of set.outputs) for (const c of criteria) scores[o.id][c.id] = honest[c.id][o.truthRank];
+    return scores;
+  };
+
+  test("the shortest reply is ranked last, and the display order hides that", () => {
+    assert.deepEqual(set.outputs.map((o) => o.truthRank), [3, 1, 4, 2]);
+    assert.equal(set.outputs.find((o) => o.truthRank === 4)!.text, "Reset this device?");
+    assert.equal(set.hint, brevity.name);
+  });
+
+  test("the Part I rubric's own conciseness criterion pulls the wrong way here", () => {
+    const report = buildDesignReport(SEED_CRITERIA, set, score(SEED_CRITERIA));
+    assert.deepEqual(report.tally, { concordant: 5, discordant: 1, ties: 0, pairs: 6 });
+    // The terse confirm lands above the legalistic one.
+    assert.deepEqual(report.ranked.map((r) => r.output.truthRank), [1, 2, 4, 3]);
+    const verdictOf = (c: Criterion) => report.criteria.find((d) => d.criterion.id === c.id)!.verdict;
+    assert.equal(verdictOf(conciseness), "inverted");
+    assert.equal(verdictOf(clarity), "mixed");
+    assert.equal(verdictOf(completeness), "separating");
+    // Tone ranks the legalistic reply below the terse one — right about the top, wrong about the bottom.
+    assert.equal(verdictOf(tone), "mixed");
+    assert.equal(verdictOf(actionability), "mixed");
+    assert.equal(report.wrongWay, 1);
+  });
+
+  test("a second length criterion doubles the damage; naming the consequence fixes it", () => {
+    assert.equal(diagnoseCriterion(brevity, set.outputs, score([brevity])).verdict, "inverted");
+    const six = [...SEED_CRITERIA, brevity];
+    const worse = buildDesignReport(six, set, score(six));
+    assert.equal(worse.wrongWay, 2);
+    assert.equal(worse.tally.discordant, 1);
+    assert.equal(diagnoseCriterion(stakes, set.outputs, score([stakes])).verdict, "separating");
+    const four = [stakes, completeness, actionability, tone];
+    const fixed = buildDesignReport(four, set, score(four));
+    assert.deepEqual(fixed.tally, { concordant: 6, discordant: 0, ties: 0, pairs: 6 });
+    assert.deepEqual(fixed.ranked.map((r) => r.output.truthRank), [1, 2, 3, 4]);
   });
 });
 
