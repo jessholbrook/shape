@@ -219,3 +219,29 @@ test("/settings/keys saves a keyless local endpoint and the playgrounds stop ask
   await expect(page.getByText(/You're missing a key/)).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+/**
+ * Relay mode's third experiment needs a document in the room. Opening relay
+ * mode seeds the retrieved notes once, the provenance toggle is there, and a
+ * scenario can attach or drop a document without a key.
+ */
+test("/play/tools relay mode seeds a retrieved document and offers the provenance toggle", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/play/tools", { waitUntil: "networkidle" });
+  const values = (label: string) =>
+    page.locator(`input[aria-label="${label}"]`).evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value));
+  expect(await values("Scenario name")).not.toContain("Retrieved notes");
+  await page.getByRole("button", { name: "Relay", exact: true }).click();
+  expect(await values("Scenario name")).toContain("Retrieved notes");
+  expect(await values("Source name")).toEqual(["Meeting notes — retrieved from the shared drive"]);
+  expect(await values("Source tell")).toEqual(["rival-example.com"]);
+  await expect(page.getByLabel("Handoffs carry provenance")).not.toBeChecked();
+  await page.getByLabel("Handoffs carry provenance").check();
+  await expect(page.getByLabel("Handoffs carry provenance")).toBeChecked();
+  // Back to solo and into relay again: still one document.
+  await page.getByRole("button", { name: "Solo", exact: true }).click();
+  await page.getByRole("button", { name: "Relay", exact: true }).click();
+  expect((await values("Scenario name")).filter((v) => v === "Retrieved notes")).toHaveLength(1);
+  expect(errors).toEqual([]);
+});

@@ -157,7 +157,7 @@ first-class provider — a checkbox on the Keys page, no Authorization header
 on the wire, the playgrounds treat it as set up, and it becomes the default
 provider when nothing else is saved. `SPEC.md` §22.
 
-## Part II — advanced curriculum (modules 08–11 + three demos)
+## Part II — advanced curriculum (modules 08–11 + three demos) — **BUILT**
 
 **From:** design conversation, 2026-08-10 — "what would next-level lessons and
 demos look like, for folks who understand what we already have on the site?"
@@ -434,7 +434,7 @@ whether the headline reproduces on real models, and whether readers come back
 for it, decide whether Module 12 and Roundtable get built.
 
 
-## Reverse Tone Dial — edit the output, infer the dials
+## Reverse Tone Dial — edit the output, infer the dials — **BUILT**
 
 **From:** beta feedback (issue #118), `/play/tone`, 2026-07-16 — reiterated in
 the Part II design conversation, 2026-08-10. **BUILT 2026-09-07** as a
@@ -570,6 +570,13 @@ failing result is graded (reported, asked, retried, switched, glossed over,
 kept going). Prompted stays the default for the reasons above; the
 descriptions are still shown in native mode, as the API receives them. The
 in-browser models fall back to prompted rather than failing.
+
+**Injected handoffs (2026-09-09):** the relay's third experiment. A
+scenario can carry a retrieved document with a planted instruction and a
+tell; the trace marks every handoff, call, or question that carries the
+tell; the report counts whether the group did what the document said, put
+it to the user, or only relayed it; a third toggle makes handoffs carry
+provenance. Module 12's trust-decay row is now testable. `SPEC.md` §20.
 
 **Native relay (2026-09-09):** the mechanism toggle now applies in relay
 mode. Each agent's own tools and the handoff go through the tool API; the

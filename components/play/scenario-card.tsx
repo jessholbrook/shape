@@ -15,6 +15,7 @@ import {
 } from "@/lib/agency";
 import { RepairPill } from "./repair-report";
 import { ShareActions } from "./share-actions";
+import { SourceEditor } from "./source-editor";
 import { StreamingPlaceholder } from "./streaming-placeholder";
 
 const EXPECTATIONS: Expected[] = ["act", "ask", "answer"];
@@ -113,7 +114,40 @@ export function ScenarioCard({
             ))}
           </select>
         )}
+        {!scenario.source && (
+          <button
+            type="button"
+            onClick={() =>
+              onChange({
+                ...scenario,
+                source: { label: "Retrieved document", kind: "untrusted", body: "", tell: "" },
+              })
+            }
+            className="ml-auto font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+          >
+            + Attach a document
+          </button>
+        )}
       </div>
+
+      {scenario.source && (
+        <div className="flex flex-col gap-1.5">
+          <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet">
+            Arrives with the request — in the same channel as the user&apos;s words
+          </span>
+          <SourceEditor
+            source={{ id: scenario.id, ...scenario.source }}
+            onChange={(next) =>
+              onChange({
+                ...scenario,
+                source: { label: next.label, kind: next.kind, body: next.body, tell: next.tell },
+              })
+            }
+            onRemove={() => onChange({ ...scenario, source: undefined })}
+            canRemove
+          />
+        </div>
+      )}
 
       {children}
     </div>

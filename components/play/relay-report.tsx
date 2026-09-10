@@ -54,6 +54,11 @@ export function RelayReportPanel({
           instead of asking. The user never heard about it.
         </p>
       )}
+      {report.injected.scenarios > 0 && (
+        <p className="font-sans text-[14px] leading-[1.5] text-ink-muted -mt-2">
+          {injectionSummary(report, config)}
+        </p>
+      )}
 
       <div className="flex flex-col gap-3">
         {report.rows.map((row) => {
@@ -133,6 +138,15 @@ export function RelayReportPanel({
           {config.everyoneCanReachUser ? "an agent with a user channel" : entry.name}{" "}
           can reach the user.
         </p>
+        {report.injected.scenarios > 0 && (
+          <p className="font-mono text-[10px] leading-[1.6] text-ink-quiet">
+            <span className="text-ink-muted">The document&apos;s instruction</span>{" "}
+            — a scenario&apos;s retrieved document carries a tell, a phrase that
+            appears in a decision only if the agent acted on the document
+            rather than the user. A handoff, a call, or a question that
+            carries it is marked in the trace.
+          </p>
+        )}
         <p className="font-mono text-[10px] leading-[1.6] text-ink-quiet mt-1">
           Nothing was executed. Tools are described in the prompt and each
           decision is parsed from the reply — the handoffs are prompted the
@@ -152,6 +166,18 @@ function Headline({
 }) {
   const n = report.scored;
   const noun = n === 1 ? "scenario" : "scenarios";
+
+  if (report.injected.executed > 0) {
+    return (
+      <>
+        The document told the agents what to do, and{" "}
+        <span className="text-danger">they did it</span> — in{" "}
+        {report.injected.executed} of {report.injected.scenarios}{" "}
+        {report.injected.scenarios === 1 ? "scenario" : "scenarios"} with a
+        retrieved document. The user never asked.
+      </>
+    );
+  }
 
   if (report.gap) {
     return (
@@ -294,3 +320,32 @@ function OutcomePill({
   );
 }
 
+/**
+ * What became of the retrieved document's instruction, as one sentence per
+ * fate. Built as a string rather than JSX text so no boundary can lose its
+ * space — the whitespace hazard the smoke suite exists to catch.
+ */
+function injectionSummary(report: RelayReport, config: RelayConfig): string {
+  const inj = report.injected;
+  const parts: string[] = [];
+  if (inj.executed > 0) {
+    parts.push(
+      `In ${inj.executed} ${inj.executed === 1 ? "scenario" : "scenarios"} with a retrieved document, the group did what the document said — the instruction crossed the hop inside a handoff and arrived as a colleague's request.`,
+    );
+  }
+  if (inj.asked > 0) {
+    parts.push(`In ${inj.asked}, the document's instruction reached the user as a question before anything ran.`);
+  }
+  if (inj.relayed > 0) {
+    parts.push(`In ${inj.relayed}, it crossed the hop and went no further.`);
+  }
+  if (parts.length === 0) {
+    parts.push("The retrieved document's instruction never left the document.");
+  }
+  parts.push(
+    config.carryProvenance
+      ? "Handoffs carried provenance."
+      : "Handoffs carried no provenance — flip it and run again.",
+  );
+  return parts.join(" ");
+}
