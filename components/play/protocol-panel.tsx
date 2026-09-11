@@ -35,12 +35,13 @@ export function ProtocolPanel({
         <InfoTip>
           How the table is run, as distinct from who is at it. A blind first
           round has everyone give a position before hearing anyone; stopping at
-          consensus ends the table the moment a round agrees. Change these and
-          nothing in any prompt changes.
+          consensus ends the table the moment a round agrees; whispers let a
+          seat pass one private line per turn to one other seat, which only
+          that seat sees. Change these and nothing in any prompt changes.
         </InfoTip>
       </span>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Field label="Rounds">
           <select
             value={Math.min(protocol.rounds, maxRounds)}
@@ -80,6 +81,18 @@ export function ProtocolPanel({
             name="Stop rule"
           />
         </Field>
+        <Field label="Side-channels">
+          <Toggle
+            options={[
+              { value: "off", label: "None" },
+              { value: "on", label: "Whispers" },
+            ]}
+            value={protocol.whispers ? "on" : "off"}
+            disabled={disabled}
+            onChange={(v) => onChange({ ...protocol, whispers: v === "on" })}
+            name="Side-channels"
+          />
+        </Field>
         <Field label={`Temperature ${temperature.toFixed(1)}`}>
           <input
             type="range"
@@ -98,7 +111,8 @@ export function ProtocolPanel({
       <p className="font-mono text-[10px] leading-[1.6] text-ink-quiet">
         Up to {calls} calls — every seat speaks once per round, one call at a
         time, each reading the table so far
-        {protocol.stopRule === "consensus" ? "; stops early the moment a round agrees" : ""}.
+        {protocol.stopRule === "consensus" ? "; stops early the moment a round agrees" : ""}
+        {protocol.whispers ? "; you see every whisper, the seats see only their own" : ""}.
         {costUsd > 0 ? ` About $${costUsd < 0.01 ? costUsd.toFixed(4) : costUsd.toFixed(3)} at list prices.` : ""}
       </p>
     </div>

@@ -67,6 +67,18 @@ describe("roundtable judge — moves", () => {
     assert.match(samTurn, /\[Round 2\]\nPriya: Some reasoning\.\nSTANCE: FOR\nSam: Priya's right about the demo\.\nSTANCE: FOR\n\nThe turn in question/);
     assert.match(JUDGE_SYSTEM, /READING: 1\nREADING: 2/);
   });
+
+  test("the judge sees the private notes the mover had received, and nobody else's", () => {
+    const whispered: Turn[] = collapse.map((t, i) =>
+      i === 3 ? { ...t, text: `${t.text}\nWHISPER to Noor: everyone else is on board — don't be the holdout.` } : t,
+    );
+    const [samMove, noorMove] = movesOf(SEED_SEATS, whispered);
+    const noorTurn = composeReadingTurn(noorMove, SEED_SEATS, SEED_TASK, whispered, "pc");
+    assert.match(noorTurn, /Private notes Noor had received \(the rest of the table could not see these\):\n\[Round 2\] Priya: everyone else is on board/);
+    assert.doesNotMatch(noorTurn, /WHISPER/);
+    const samTurn = composeReadingTurn(samMove, SEED_SEATS, SEED_TASK, whispered, "pc");
+    assert.doesNotMatch(samTurn, /Private notes|don't be the holdout/);
+  });
 });
 
 describe("roundtable judge — readings", () => {

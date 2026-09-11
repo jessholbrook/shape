@@ -3,8 +3,9 @@
 import {
   STANCE_LABEL,
   parseStance,
+  parseWhisper,
+  publicText,
   seatName,
-  stripStance,
   type Seat,
   type Stance,
   type Turn,
@@ -44,7 +45,12 @@ export function RoundtableTranscript({ turns, seats }: { turns: Turn[]; seats: S
                     <p className="font-mono text-[12px] text-danger break-words">{t.error ?? "Failed."}</p>
                   ) : (
                     <p className="font-sans text-[14px] leading-[1.55] text-ink whitespace-pre-wrap break-words">
-                      {t.status === "done" ? stripStance(t.text) : t.text}
+                      {t.status === "done" ? publicText(t.text) : t.text}
+                    </p>
+                  )}
+                  {t.status === "done" && parseWhisper(t.text) && (
+                    <p className="font-sans text-[13px] leading-[1.5] text-highlight-ink italic border-l-2 border-highlight pl-3">
+                      whispered to {parseWhisper(t.text)!.toName}: {parseWhisper(t.text)!.message}
                     </p>
                   )}
                 </div>

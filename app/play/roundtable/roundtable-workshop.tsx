@@ -245,7 +245,7 @@ export function RoundtableWorkshop() {
           const stream = runChat({
             provider: seat.provider,
             model: seat.model,
-            system: composeSeatSystem(seat, seats),
+            system: composeSeatSystem(seat, seats, live),
             messages: [
               {
                 role: "user",
