@@ -13,6 +13,7 @@ import {
   seatName,
   stripStance,
 } from "@/lib/roundtable";
+import { MOVE_VERDICT_LABEL, buildReadingReport, readingSummary } from "@/lib/roundtable-judge";
 import { ARTIFACT_KIND_LABEL } from "@/lib/kinds";
 import { composePersonaSections } from "@/lib/persona";
 import { TONE_DIMENSIONS, type ToneValues } from "@/lib/tone";
@@ -1280,6 +1281,26 @@ function ProtocolBody({ draft }: { draft: ProtocolDraft }) {
               </li>
             ))}
           </ul>
+        </Section>
+      )}
+      {draft.judge && draft.judge.runs.length > 0 && (
+        <Section
+          label={`What the judge read — ${readingSummary(buildReadingReport(draft.seats, draft.turns, draft.judge.runs))} (${modelName(draft.judge.judge.provider, draft.judge.judge.model)})`}
+        >
+          <ul className="flex flex-col gap-1.5">
+            {buildReadingReport(draft.seats, draft.turns, draft.judge.runs).rows.map((r) => (
+              <li key={`${r.move.seatId}:${r.move.round}`} className="font-mono text-[12px] text-ink flex justify-between gap-4">
+                <span>
+                  {seatName(draft.seats, r.move.seatId)} · round {r.move.round} ·{" "}
+                  {STANCE_LABEL[r.move.from].toLowerCase()} → {STANCE_LABEL[r.move.to].toLowerCase()}
+                </span>
+                <span className="text-ink-muted">{MOVE_VERDICT_LABEL[r.verdict]}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="font-sans text-[12px] text-ink-muted mt-2">
+            Each move was read twice with the two options in swapped order; a reading counts only when it held both ways.
+          </p>
         </Section>
       )}
       {draft.seats.map((s) => (

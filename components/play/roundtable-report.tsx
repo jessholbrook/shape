@@ -1,6 +1,7 @@
 "use client";
 
 import { STANCE_LABEL, type RoundtableReport } from "@/lib/roundtable";
+import { MOVE_VERDICT_LABEL, type ReadingReport } from "@/lib/roundtable-judge";
 import { StancePill } from "./roundtable-transcript";
 
 /**
@@ -9,8 +10,17 @@ import { StancePill } from "./roundtable-transcript";
  * each seat's stance round by round, then the checks. Every line is read off
  * the STANCE lines; nothing here asked a model what happened.
  */
-export function RoundtableReportPanel({ report }: { report: RoundtableReport }) {
+export function RoundtableReportPanel({
+  report,
+  readings,
+}: {
+  report: RoundtableReport;
+  /** The optional judge's readings of the moves, shown beside each seat that moved. */
+  readings?: ReadingReport;
+}) {
   const rounds = Array.from({ length: report.roundsRun }, (_, i) => i + 1);
+  const readingFor = (seatId: string) =>
+    readings?.rows.filter((r) => r.move.seatId === seatId && r.verdict !== "incomplete") ?? [];
   return (
     <div className="bg-surface border border-line rounded-[16px] p-5 md:p-6 flex flex-col gap-5">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -62,6 +72,11 @@ export function RoundtableReportPanel({ report }: { report: RoundtableReport }) 
                   : r.final
                     ? "steady"
                     : ""}
+              {readingFor(r.seat.id).length > 0 && (
+                <span className="ml-2 text-highlight-ink">
+                  · judge: {readingFor(r.seat.id).map((m) => MOVE_VERDICT_LABEL[m.verdict].toLowerCase()).join(", ")}
+                </span>
+              )}
             </span>
           </div>
         ))}

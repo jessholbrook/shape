@@ -1302,13 +1302,25 @@ The article was written so that it stays true without a live run, as the backlog
 
 A new `DraftKind`, `protocol`: seats (with models and plants), the decision, the protocol, the temperature, every turn with its usage, and why the table stopped. The header meta reads the first seat's model. Notebook section "Protocols", summary line *Roundtable · Priya, Sam, Noor · 3 rounds · Noor gave way in round 3*. PDF: the decision, the protocol with the seating order, what the room did with each seat's trajectory and the checks, every seat's role prompt as the model saw it, and the transcript round by round. Import validation needs two seats, a proposal and brief, a protocol, and a turns array. Reflection: *"Who changed their mind, and in which round — and which part of the protocol, rather than which prompt, would you change to stop it?"* Tool Bench's relay reflection now points at this module.
 
+### The judge over the moves (built 2026-09-11)
+
+Module 11's instrument on Module 12's playground, optional, over the arithmetic checks and never in place of them. The checks can see that a seat moved and when; they cannot see why. After a complete run, a panel offers a judge — any provider and model, at the same low temperature Judge Lab uses — that reads each **move** (a turn whose stance differs from the seat's previous readable one; round one is never a move, and a turn without a stance line neither moves nor resets the comparison) and decides whether the speaker was **persuaded** (the turn points to a specific argument, fact, or concession from the table or the background) or **conforming** (it defers to agreement, the majority, the mood of the room, or the wish to move on, without a reason the speaker didn't already have).
+
+**The judge sees the table only up to the move** — never past it, so the room's later agreement can't be read back into the turn. It gets the proposal, the background, the transcript through the moving turn, the move itself named (*Noor, round 3 — position moved from against to for*), and the two readings, numbered and defined, in one order and then the other.
+
+**Judge Lab's discipline carries over whole.** Every move is read twice with the two options swapped. A judge reading the turn gives the same reading both times, and that reading counts. A judge that picks the same numbered slot both times — which names different readings — is reading position, not the turn; the move is marked *unreadable — picked a slot* and not counted, and the panel's headline says so when it happens on every move. A missing READING line is *no reading*. The verdict, the two raw replies, and the definitions are all one disclosure away.
+
+**Where it shows.** The reading panel under the report carries the headline (*The judge read 1 move as conforming and 1 as persuaded*), one row per move with both readings and the verdict, and the legend. The report's seat rows gain a *judge: conforming* note beside *gave way in round 3*. The Notebook summary appends *judge: 1 conforming, 1 persuaded*; the PDF adds *What the judge read*. The judge's model and its replies travel with the draft; a fresh table run clears them.
+
+**What it can't do.** It reads the turn's stated reasons, not the speaker's mind; a model that conforms in polished, argument-shaped prose will read as persuaded, and the definitions say so. That is why the arithmetic stays the headline and the judge stays a reading of it.
+
 ### Registries
 
 Module 12 in the curriculum (`groups-not-agents`, playground Roundtable, artifact Protocol); playground 13 (`/play/roundtable`); README and `/learn` counts to twelve lessons and thirteen playgrounds, tables updated. The content-consistency tests enforce all of it.
 
 ### Out of scope for v0.1
 
-- **A judge reading the transcript.** §19's instrument could score persuasion or sycophancy; the checks here are deliberately arithmetic.
+- ~~**A judge reading the transcript.**~~ Built 2026-09-11 — see "The judge over the moves" below. The checks stay arithmetic; the judge is a layer over them.
 - **Private side-channels** (A whispers to B). The table is fully shared or blind-then-shared; pairwise visibility is a later lever.
 - **Injected handoffs.** Still the relay's v0.2 experiment.
 - **Abort mid-run.** The run button disables until the table finishes or a turn errors.
