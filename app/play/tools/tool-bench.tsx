@@ -32,6 +32,7 @@ import {
   composeIncoming,
   composeNativeSystemPrompt,
   composeRelaySystemPrompt,
+  composeScenarioIncoming,
   composeSystemPrompt,
   estimateAgencyCost,
   estimateRelayCost,
@@ -43,6 +44,7 @@ import {
   relayStatus,
   stubFor,
   toolSpecs,
+  withInjectedScenario,
   withSeedStubs,
   type Mechanism,
   type RelayConfig,
@@ -222,7 +224,7 @@ export function ToolBench() {
         provider,
         model,
         system: systemPrompt,
-        messages: [{ role: "user", content: scenario.userMessage }],
+        messages: [{ role: "user", content: composeScenarioIncoming(scenario) }],
         temperature,
         apiKey,
       });
@@ -305,8 +307,9 @@ export function ToolBench() {
             agentById(relay, agentId),
             relay,
             isNative ? "native" : "prompted",
+            scenario,
           )
-        : scenario.userMessage;
+        : composeScenarioIncoming(scenario);
       const messages = buildAgentMessages(steps, agentId, incoming);
       const step: RelayStep = { agentId, incoming, raw: "", status: "running" };
       steps.push(step);
@@ -395,7 +398,7 @@ export function ToolBench() {
   async function runNativeScenario(scenario: Scenario, index: number) {
     const apiKey = keys[provider];
     const turns: ToolTurn[] = [];
-    const messages: ChatMessage[] = [{ role: "user", content: scenario.userMessage }];
+    const messages: ChatMessage[] = [{ role: "user", content: composeScenarioIncoming(scenario) }];
     const publish = (status: ScenarioRun["status"], error?: string) => {
       const done = turns.filter(
         (t): t is Extract<ToolTurn, { kind: "assistant" }> =>
@@ -524,6 +527,9 @@ export function ToolBench() {
   function switchMode(next: "solo" | "relay") {
     if (next === mode || running) return;
     setMode(next);
+    // Relay's third experiment needs a document in the room; the seed's
+    // retrieved notes join the scenarios the first time relay is opened.
+    if (next === "relay") setScenarios((prev) => withInjectedScenario(prev));
     // Solo replies have no trace and relay traces aren't solo replies —
     // a report built from the other mode's results would be a fiction.
     setResults([]);

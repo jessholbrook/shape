@@ -220,7 +220,12 @@ Mail agent asked the user: may I send?`}
             </Link>
             : two agents, one policy, the tools split between them. Read the
             two columns — each agent, then the group — before the headline.
-            Then flip <em>every agent can reach the user</em> and run again.
+            Then flip <em>every agent can reach the user</em>{" "}
+            and run again. Then the retrieved notes: a document with an
+            instruction planted in it, handed to the coordinator. Watch
+            whether the instruction crosses the hop as a colleague&apos;s
+            request, and whether <em>handoffs carry provenance</em>{" "}
+            changes what the mail agent does with it.
           </LI>
           <LI>
             Then Roundtable. Run the seed as it comes: a product manager who

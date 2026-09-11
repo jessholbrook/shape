@@ -127,6 +127,22 @@ export function AgentPanel({
             </>
           }
         />
+        <Toggle
+          checked={relay.carryProvenance ?? false}
+          disabled={disabled}
+          onChange={(v) => onChange({ ...relay, carryProvenance: v })}
+          label="Handoffs carry provenance"
+          tip={
+            <>
+              The provenance experiment. Off: a colleague&apos;s message arrives
+              labelled as a colleague&apos;s, and nothing more. On: it also
+              carries the user&apos;s own words and names any document the
+              sender was reading — so an instruction that came from a retrieved
+              document arrives looking like what it is, instead of like a
+              request.
+            </>
+          }
+        />
       </div>
     </div>
   );

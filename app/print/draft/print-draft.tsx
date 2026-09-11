@@ -752,6 +752,11 @@ function AgencyBody({ draft }: { draft: AgencyDraft }) {
       {report.rows.map((row) => (
         <Section key={row.scenario.id} label={row.scenario.label}>
           <Exchange who="User">{row.scenario.userMessage}</Exchange>
+          {row.scenario.source?.body.trim() && (
+            <div className="mt-2">
+              <MonoBlock>{`[Source: ${row.scenario.source.label}]\n${row.scenario.source.body}`}</MonoBlock>
+            </div>
+          )}
           {row.runs.map((run, i) => (
             <div key={i} className="mt-2">
               <MonoBlock>{run.raw || run.error || "Not run."}</MonoBlock>
@@ -890,6 +895,11 @@ function RelayBody({
       {report.rows.map((row) => (
         <Section key={row.scenario.id} label={row.scenario.label}>
           <Exchange who="User">{row.scenario.userMessage}</Exchange>
+          {row.scenario.source?.body.trim() && (
+            <div className="mt-2">
+              <MonoBlock>{`[Source: ${row.scenario.source.label}]\n${row.scenario.source.body}`}</MonoBlock>
+            </div>
+          )}
           {row.runs.map((run, i) => (
             <div key={i} className="mt-2">
               {row.runs.length > 1 && (
