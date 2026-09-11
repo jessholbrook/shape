@@ -842,7 +842,9 @@ PR's base is the one before it.
 
 **The build queue is empty.** What remains needs a key:
 
-1. **A live-model pass.** Everything built since 2026-09-07 has only ever
+1. **A live-model pass.** The runbook is `tasks/live-pass.md` — setup,
+   ten sections, the headline each seed is designed to produce, and a table
+   to fill in. Everything built since 2026-09-07 has only ever
    seen scripted provider replies. One session with a real key settles, in
    one sitting: the relay seed's headline, prompted and native (§20); a
    reverse-mode proposal run forward (§21); the custom endpoint against real
