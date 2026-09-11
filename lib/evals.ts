@@ -349,8 +349,56 @@ export const RESET_DESIGN_SET: DesignSet = {
   ],
 };
 
+/**
+ * The fourth set's trap is a criterion nobody argues with. A security notice
+ * that keeps the user calm by telling them there is nothing to do is the one
+ * reply that can cost them the account; a "reassurance" criterion crowns it.
+ * It wins on every criterion about how a notice sounds and loses on every one
+ * about what it says — the reader's job is to notice which kind they have.
+ */
+export const SIGNIN_DESIGN_SET: DesignSet = {
+  id: "new-sign-in",
+  title: "New sign-in",
+  brief:
+    "A consumer email app. An hour ago someone signed in to the user's account from a device it has never seen, in Lisbon, and the user has not been asked about it.",
+  userMessage: "Write the notification the user sees about the new sign-in.",
+  hint: "Reassurance",
+  lesson:
+    "The calm reply keeps the user calm by telling them there is nothing to do, which is the one thing they must not be told. Reassurance measures how the product feels, not what the user can do with what they're told — it wins on every criterion about how a notice sounds and loses on every one about what it says. Add a criterion for telling the user what happened and what to do, and drop the ones the calm reply wins on.",
+  outputs: [
+    {
+      id: "o1",
+      label: "Output 1",
+      text: "Good news — we're keeping an eye on your account! We noticed a sign-in from a new device, which is usually just you on a new phone. No action needed unless something looks off. 😊",
+      truthRank: 4,
+      why: "Warm, calm, and wrong about the one thing that matters: it tells the user to do nothing about a sign-in it can't vouch for. If that wasn't them, the account is gone while they feel looked after. A reassurance criterion ranks this first — which is the trap.",
+    },
+    {
+      id: "o2",
+      label: "Output 2",
+      text: "We detected a sign-in to your account on 11 September at 14:02 UTC from an unrecognised device with an IP address located in Lisbon, Portugal. If you do not recognise this activity, we recommend that you update your password and review the active sessions listed in your security settings.",
+      truthRank: 2,
+      why: "Everything the user needs is here — what, when, where, and the two steps — at twice the length, with the action at the end of a sentence that begins with a recommendation.",
+    },
+    {
+      id: "o3",
+      label: "Output 3",
+      text: "New sign-in from a device in Lisbon, an hour ago. If that was you, nothing to do. If not, secure your account now: change your password and sign out that device.",
+      truthRank: 1,
+      why: "Says what happened, where, and when; gives the harmless case and the urgent one in the order the user needs them; names the two actions. Nothing to soothe, nothing to alarm.",
+    },
+    {
+      id: "o4",
+      label: "Output 4",
+      text: "SECURITY ALERT: your account may have been COMPROMISED. Unauthorised access has been detected. Secure your account immediately or your data may be at risk.",
+      truthRank: 3,
+      why: "Frightening and vague — no where, no when, no way to tell whether it was them — but at least a frightened user acts. Above the calm reply for that reason alone.",
+    },
+  ],
+};
+
 /** Every seeded set, in the order the picker shows them. The first is the default. */
-export const DESIGN_SETS: DesignSet[] = [SEED_DESIGN_SET, DELIVERY_DESIGN_SET, RESET_DESIGN_SET];
+export const DESIGN_SETS: DesignSet[] = [SEED_DESIGN_SET, DELIVERY_DESIGN_SET, RESET_DESIGN_SET, SIGNIN_DESIGN_SET];
 
 /** The set with that id, or the default when a draft names one that no longer exists. */
 export function designSetById(id: string | undefined): DesignSet {

@@ -855,9 +855,11 @@ PR's base is the one before it.
    seed needs sharpening, not that all is well.
 
 **If the live pass turns something up**, the seeds are the first place to
-look; the mechanics are covered by 160 unit tests and a 50-test smoke suite.
-Otherwise the next candidate is a fourth design set. Injected handoffs
-(§20's third experiment) shipped 2026-09-09; the judge over the Roundtable's
-moves (§26) and side-channels at the table (§26) shipped 2026-09-11 — the
-live pass should include reading a real table's moves with a real judge, and
-a table run with whispers on to see whether the seeded PM lines up a vote.
+look; the mechanics are covered by 163 unit tests and a 50-test smoke suite.
+Otherwise the specs have nothing parked. Injected handoffs (§20's third
+experiment) shipped 2026-09-09; the judge over the Roundtable's moves (§26),
+side-channels at the table (§26), and the fourth design set (§24) shipped
+2026-09-11 — the live pass should include reading a real table's moves with
+a real judge, and a table run with whispers on to see whether the seeded PM
+lines up a vote. After that, new work should come from the live pass or
+from readers, not from the parked list, which is empty.

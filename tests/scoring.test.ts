@@ -48,6 +48,7 @@ import {
   DELIVERY_DESIGN_SET,
   DESIGN_SETS,
   RESET_DESIGN_SET,
+  SIGNIN_DESIGN_SET,
   GENERATED_LESSON,
   GENERATED_SET_ID,
   SEED_CRITERIA,
@@ -966,6 +967,63 @@ describe("eval lab factory-reset set", () => {
     const fixed = buildDesignReport(four, set, score(four));
     assert.deepEqual(fixed.tally, { concordant: 6, discordant: 0, ties: 0, pairs: 6 });
     assert.deepEqual(fixed.ranked.map((r) => r.output.truthRank), [1, 2, 3, 4]);
+  });
+});
+
+// --- Eval Lab fourth set: a criterion nobody argues with -----------------------
+
+describe("eval lab new-sign-in set", () => {
+  const set = SIGNIN_DESIGN_SET;
+  const [clarity, tone, completeness, actionability, conciseness] = SEED_CRITERIA;
+  const reassurance: Criterion = { id: "reassurance", name: "Reassurance", description: "Doesn't alarm the user." };
+  const stakes: Criterion = { id: "stakes", name: "Tells the user what happened and what to do", description: "" };
+  /** Honest scores per criterion id, keyed by truth rank. */
+  const honest: Record<string, Record<number, Score>> = {
+    clarity: { 1: 5, 2: 4, 3: 2, 4: 4 },
+    tone: { 1: 4, 2: 3, 3: 1, 4: 4 },
+    completeness: { 1: 5, 2: 5, 3: 1, 4: 2 },
+    actionability: { 1: 5, 2: 3, 3: 3, 4: 1 },
+    conciseness: { 1: 4, 2: 2, 3: 4, 4: 3 },
+    reassurance: { 1: 3, 2: 2, 3: 1, 4: 5 },
+    stakes: { 1: 5, 2: 4, 3: 2, 4: 1 },
+  };
+  const score = (criteria: Criterion[]): DesignScores => {
+    const scores = emptyDesignScores(set);
+    for (const o of set.outputs) for (const c of criteria) scores[o.id][c.id] = honest[c.id][o.truthRank];
+    return scores;
+  };
+
+  test("the calm reply is ranked last, and the display order hides that", () => {
+    assert.deepEqual(set.outputs.map((o) => o.truthRank), [4, 2, 1, 3]);
+    assert.match(set.outputs.find((o) => o.truthRank === 4)!.text, /No action needed/);
+    assert.equal(set.hint, reassurance.name);
+    assert.equal(DESIGN_SETS.length, 4);
+  });
+
+  test("the Part I rubric lets the calm reply past the alarmist one; only actionability separates", () => {
+    const report = buildDesignReport(SEED_CRITERIA, set, score(SEED_CRITERIA));
+    assert.deepEqual(report.tally, { concordant: 5, discordant: 1, ties: 0, pairs: 6 });
+    assert.deepEqual(report.ranked.map((r) => r.output.truthRank), [1, 2, 4, 3]);
+    const verdictOf = (c: Criterion) => report.criteria.find((d) => d.criterion.id === c.id)!.verdict;
+    assert.equal(verdictOf(actionability), "separating");
+    for (const c of [clarity, tone, completeness, conciseness]) assert.equal(verdictOf(c), "mixed", c.name);
+    assert.equal(report.wrongWay, 0);
+  });
+
+  test("reassurance crowns the calm reply — a different failure from pulling the wrong way", () => {
+    assert.equal(diagnoseCriterion(reassurance, set.outputs, score([reassurance])).verdict, "crowns-wrong");
+    const six = [...SEED_CRITERIA, reassurance];
+    const worse = buildDesignReport(six, set, score(six));
+    assert.equal(worse.wrongWay, 1);
+    // The calm reply climbs to second on the totals.
+    assert.deepEqual(worse.ranked.map((r) => r.output.truthRank), [1, 4, 2, 3]);
+    assert.equal(diagnoseCriterion(stakes, set.outputs, score([stakes])).verdict, "separating");
+    const three = [stakes, completeness, actionability];
+    const fixed = buildDesignReport(three, set, score(three));
+    assert.deepEqual(fixed.tally, { concordant: 6, discordant: 0, ties: 0, pairs: 6 });
+    // Keep clarity and the calm reply draws level with the alarmist one again.
+    const four = [stakes, completeness, actionability, clarity];
+    assert.equal(buildDesignReport(four, set, score(four)).tally.ties, 1);
   });
 });
 

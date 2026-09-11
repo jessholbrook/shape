@@ -63,6 +63,13 @@ hinted addition, brevity, doubles the damage; a criterion for naming the
 consequence fixes it. Three traps across three sets: a criterion you'd add,
 one you'd think you need, one you already have. `SPEC.md` §24.
 
+**Fourth set (2026-09-11):** "New sign-in" — the trap is a criterion nobody
+argues with. Reassurance crowns the security notice that keeps the user calm
+by telling them to do nothing; it wins on every criterion about how a notice
+sounds and loses on every one about what it says. Four traps across four
+sets: a criterion you'd add, one you'd think you need, one you already have,
+one nobody argues with. `SPEC.md` §24.
+
 **Generated sets (2026-09-09):** "Your own" in the set picker. The reader
 writes the surface and the request, a model writes four independent replies
 at temperature 1, and the reader ranks them before a criterion can be scored
