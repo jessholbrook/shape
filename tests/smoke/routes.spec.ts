@@ -134,6 +134,7 @@ test("/play/evals design mode switches sets and keeps each set's scores", async 
     "true",
   );
   await expect(picker.getByRole("button", { name: "Factory reset" })).toBeVisible();
+  await expect(picker.getByRole("button", { name: "New sign-in" })).toBeVisible();
 
   await picker.getByRole("button", { name: "Delivery by Friday?" }).click();
   await expect(page.getByText("The set — Delivery by Friday?")).toBeVisible();
