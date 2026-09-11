@@ -4,6 +4,7 @@ import type { PersonaValues } from "./persona";
 import type { Probe, ProbeResult } from "./refusal";
 import type { CaseResult, Criterion, DesignScores, EvalCase, EvalMode, GeneratedSet } from "./evals";
 import type { Protocol, Seat, StopReason, Task, Turn } from "./roundtable";
+import type { JudgeState } from "./roundtable-judge";
 import type { ChoreographedTurn } from "./choreographer";
 import type { Assertion, SpreadRun } from "./spread";
 import type { LaneId, RaceResult } from "./race";
@@ -405,6 +406,8 @@ export type ProtocolDraft = {
   protocol: Protocol;
   turns: Turn[];
   stopReason?: StopReason;
+  /** The optional judge over the moves: which model read them, and its replies. */
+  judge?: JudgeState;
   /** The user's answer to the playground's reflection question, if they jotted one. */
   reflection?: string;
   createdAt: number;
@@ -679,6 +682,12 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     }
     if (!isObject(protocol) || typeof protocol.rounds !== "number" || !Array.isArray(d.turns)) {
       return { ok: false, reason: "Protocol draft is missing its protocol or turns." };
+    }
+    if (d.judge !== undefined) {
+      const judge = d.judge as { judge?: unknown; runs?: unknown } | null;
+      if (!isObject(judge) || !isObject(judge.judge) || !Array.isArray(judge.runs)) {
+        return { ok: false, reason: "Protocol draft's judge block is missing its model or runs." };
+      }
     }
   } else if (kind === "spread") {
     if (!Array.isArray(d.runs) || !Array.isArray(d.assertions)) {

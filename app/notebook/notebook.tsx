@@ -18,6 +18,7 @@ import { TONE_DIMENSIONS } from "@/lib/tone";
 import { evaluateMatch } from "@/lib/refusal";
 import { aggregateScore, SCORE_MAX, buildDesignReport, designSetById, setFromGenerated } from "@/lib/evals";
 import { buildRoundtableReport, roundtableSummary } from "@/lib/roundtable";
+import { buildReadingReport, readingSummary } from "@/lib/roundtable-judge";
 import { buildReport } from "@/lib/spread";
 import { buildVerdict, formatFactor, formatMs, totalMs } from "@/lib/race";
 import { buildPortabilityReport, modelLabel } from "@/lib/portability";
@@ -793,9 +794,13 @@ function DraftSummary({ draft }: { draft: Draft }) {
 
   if (draft.kind === "protocol") {
     const report = buildRoundtableReport(draft.seats, draft.protocol, draft.turns, draft.stopReason ?? null);
+    const judged = draft.judge?.runs.length
+      ? readingSummary(buildReadingReport(draft.seats, draft.turns, draft.judge.runs))
+      : null;
     return (
       <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
         Roundtable · {roundtableSummary(draft.seats, report)}
+        {judged && <> · judge: {judged}</>}
       </p>
     );
   }

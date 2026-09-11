@@ -28,12 +28,25 @@ import {
   type Turn,
 } from "@/lib/roundtable";
 import { suggestTitle, type ProtocolDraft } from "@/lib/drafts";
+import type { Writer } from "@/lib/judge";
+import {
+  JUDGE_SYSTEM,
+  JUDGE_TEMPERATURE,
+  READING_ORDERS,
+  buildReadingReport,
+  composeReadingTurn,
+  estimateReadingCost,
+  movesOf,
+  readingCalls,
+  type ReadingRun,
+} from "@/lib/roundtable-judge";
 import { REFLECTION } from "@/lib/reflection-questions";
 import { InfoTip } from "@/components/info-tip";
 import { SeatPanel } from "@/components/play/seat-panel";
 import { ProtocolPanel } from "@/components/play/protocol-panel";
 import { RoundtableTranscript } from "@/components/play/roundtable-transcript";
 import { RoundtableReportPanel } from "@/components/play/roundtable-report";
+import { ReadingPanel } from "@/components/play/reading-panel";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { ReflectionCard } from "@/components/play/reflection-card";
@@ -50,6 +63,9 @@ export function RoundtableWorkshop() {
   const [temperature, setTemperature] = useState(DEFAULT_TEMPERATURE);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [stopReason, setStopReason] = useState<StopReason | null>(null);
+  const [judge, setJudge] = useState<Writer>({ provider: "anthropic", model: PROVIDERS.anthropic.defaultModel });
+  const [readings, setReadings] = useState<ReadingRun[]>([]);
+  const [judging, setJudging] = useState(false);
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [reflectionDismissed, setReflectionDismissed] = useState(false);
@@ -64,6 +80,12 @@ export function RoundtableWorkshop() {
     setTemperature(draft.temperature);
     setTurns(draft.turns);
     setStopReason(draft.stopReason ?? null);
+    if (draft.judge) {
+      setJudge(draft.judge.judge);
+      setReadings(draft.judge.runs);
+    } else {
+      setReadings([]);
+    }
     setReflectionNote(draft.reflection ?? "");
   }, []);
   const { draftId, title, setTitle, saveStatus, save } = useDraftEditing({
@@ -78,6 +100,7 @@ export function RoundtableWorkshop() {
     enabled: !initialDraftId,
     onResolve: useCallback((p: ProviderId, m: string) => {
       setSeats((prev) => prev.map((s) => ({ ...s, provider: p, model: m })));
+      setJudge({ provider: p, model: m });
     }, []),
   });
 
@@ -109,10 +132,90 @@ export function RoundtableWorkshop() {
   );
   const showReflection = report.complete && !running && !reflectionDismissed;
 
+  const moves = useMemo(() => movesOf(seats, turns), [seats, turns]);
+  const readingReport = useMemo(
+    () => buildReadingReport(seats, turns, readings),
+    [seats, turns, readings],
+  );
+  const readingCost = useMemo(
+    () => estimateReadingCost(judge, moves, seats, task, turns),
+    [judge, moves, seats, task, turns],
+  );
+  const judgeHasKey = keyFor(judge.provider);
+
   function resetRun() {
     setTurns([]);
     setStopReason(null);
+    setReadings([]);
     setReflectionDismissed(false);
+  }
+
+  /**
+   * Every move read twice, once per option order. The calls are independent
+   * — each carries the table only up to its move — so they fan out, except
+   * on the in-browser engine, which takes one call at a time.
+   */
+  async function judgeMoves() {
+    if (!judgeHasKey || judging || moves.length === 0) return;
+    setJudging(true);
+    setDirty(true);
+    const apiKey = keys[judge.provider];
+    const local: ReadingRun[] = moves.flatMap((m) =>
+      READING_ORDERS.map((order) => ({
+        seatId: m.seatId,
+        round: m.round,
+        order,
+        raw: "",
+        status: "running" as const,
+      })),
+    );
+    const publish = () => setReadings(local.map((r) => ({ ...r })));
+    publish();
+    const jobs = local.map((r) => async () => {
+      const move = moves.find((m) => m.seatId === r.seatId && m.round === r.round)!;
+      try {
+        const stream = runChat({
+          provider: judge.provider,
+          model: judge.model,
+          system: JUDGE_SYSTEM,
+          messages: [{ role: "user", content: composeReadingTurn(move, seats, task, turns, r.order) }],
+          temperature: JUDGE_TEMPERATURE,
+          apiKey,
+        });
+        for await (const event of stream) {
+          if (event.type === "text") {
+            r.raw += event.delta;
+            publish();
+          } else if (event.type === "done") {
+            r.status = "done";
+            r.inputTokens = event.usage.inputTokens;
+            r.outputTokens = event.usage.outputTokens;
+            r.costUsd = calcCost(judge.provider, judge.model, event.usage.inputTokens, event.usage.outputTokens);
+            recordUsage({
+              provider: judge.provider,
+              model: judge.model,
+              inputTokens: event.usage.inputTokens,
+              outputTokens: event.usage.outputTokens,
+            });
+            publish();
+          } else if (event.type === "error") {
+            r.status = "error";
+            r.error = event.message;
+            publish();
+          }
+        }
+      } catch (err) {
+        r.status = "error";
+        r.error = err instanceof Error ? err.message : String(err);
+        publish();
+      }
+    });
+    if (judge.provider === "webllm") {
+      for (const job of jobs) await job();
+    } else {
+      await Promise.all(jobs.map((job) => job()));
+    }
+    setJudging(false);
   }
 
   /**
@@ -126,6 +229,7 @@ export function RoundtableWorkshop() {
     setDirty(true);
     setReflectionDismissed(false);
     setStopReason(null);
+    setReadings([]);
     const local: Turn[] = [];
     const publish = () => setTurns([...local]);
     let reason: StopReason | null = null;
@@ -202,6 +306,7 @@ export function RoundtableWorkshop() {
       protocol: live,
       turns,
       stopReason: stopReason ?? undefined,
+      judge: readings.length > 0 ? { judge, runs: readings } : undefined,
       reflection: reflectionNote.trim() || undefined,
     });
     setDirty(false);
@@ -320,7 +425,24 @@ export function RoundtableWorkshop() {
         </span>
       </div>
 
-      {turns.length > 0 && <RoundtableReportPanel report={report} />}
+      {turns.length > 0 && <RoundtableReportPanel report={report} readings={readingReport} />}
+      {report.complete && !running && (
+        <ReadingPanel
+          seats={seats}
+          report={readingReport}
+          judge={judge}
+          onJudgeChange={(next) => {
+            setJudge(next);
+            setDirty(true);
+          }}
+          hasKey={judgeHasKey}
+          calls={readingCalls(moves.length)}
+          costUsd={readingCost}
+          judging={judging}
+          disabled={running}
+          onJudge={judgeMoves}
+        />
+      )}
       <RoundtableTranscript turns={turns} seats={seats} />
 
       {showReflection && (

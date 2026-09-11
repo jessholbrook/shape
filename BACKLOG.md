@@ -369,6 +369,12 @@ Artifact: Protocol. The "only if relay reproduces" gate was waived on
 2026-09-09 by the instruction to work the queue to the end; the live pass
 now has a third table to watch.
 
+**The judge over the moves (2026-09-11):** Module 11's instrument on the
+table, optional. A judge reads each move — with the transcript only up to
+that turn — and calls it persuaded or conforming, twice with the options
+swapped; a judge that picks the same slot both ways is marked unreadable.
+The arithmetic stays the headline. `SPEC.md` §26.
+
 **As originally sketched — Roundtable.** Its own playground: three or four agents with
 role prompts (Persona Cards import directly), a shared transcript, a rounds
 budget, one task with a planted dissenter. The designer edits the protocol —
