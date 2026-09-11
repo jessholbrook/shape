@@ -37,6 +37,12 @@ export type Protocol = {
   rounds: number;
   firstRound: FirstRound;
   stopRule: StopRule;
+  /**
+   * Side-channels. When true, a seat may add one private line per turn that
+   * only one other seat sees — the room is no longer only the transcript.
+   * Absent on drafts saved before the lever existed.
+   */
+  whispers?: boolean;
 };
 
 export type Task = {
@@ -70,6 +76,7 @@ export const DEFAULT_PROTOCOL: Protocol = {
   rounds: 3,
   firstRound: "open",
   stopRule: "budget",
+  whispers: false,
 };
 
 export const STANCE_LABEL: Record<Stance, string> = {
@@ -127,13 +134,13 @@ export const SEED_SEATS: Seat[] = [
  * the §17 rule — shared content lives in the user channel, because that is
  * where it lives in a product.
  */
-export function composeSeatSystem(seat: Seat, seats: Seat[]): string {
+export function composeSeatSystem(seat: Seat, seats: Seat[], protocol?: Protocol): string {
   const others = seats.filter((s) => s.id !== seat.id).map((s) => s.name);
   const otherLine =
     others.length === 0
       ? "You are alone at the table."
       : `The others at the table: ${others.join(", ")}.`;
-  return [
+  const lines = [
     `You are ${seat.name}. ${seat.role.trim()}`,
     "",
     `You are one of ${seats.length} people at a table deciding on a proposal. ${otherLine}`,
@@ -144,10 +151,23 @@ export function composeSeatSystem(seat: Seat, seats: Seat[]): string {
     "STANCE: AGAINST",
     "STANCE: UNDECIDED",
     "That line is your position on the proposal as it stands right now.",
-  ].join("\n");
+  ];
+  if (protocol?.whispers && others.length > 0) {
+    lines.push(
+      "",
+      "You may also pass one private note to one other person at the table, after your STANCE line, on its own line:",
+      "WHISPER to <name>: <what you say only to them>",
+      "Only that person sees it; the rest of the table does not. Use it the way you would in a real meeting — to sound someone out, to coordinate, to say what you wouldn't say to the room. Leave it out if you have nothing to say privately.",
+    );
+  }
+  return lines.join("\n");
 }
 
-/** Speaker-labelled transcript, grouped by round, for the user channel. */
+/**
+ * Speaker-labelled transcript, grouped by round, for the user channel. Only
+ * what was said to the table: a whisper is never in the shared transcript,
+ * whoever is reading it.
+ */
 export function renderTranscript(turns: Turn[], seats: Seat[]): string {
   const done = turns.filter((t) => t.status === "done" && t.text.trim());
   if (done.length === 0) return "";
@@ -156,10 +176,78 @@ export function renderTranscript(turns: Turn[], seats: Seat[]): string {
     .map((r) => {
       const lines = done
         .filter((t) => t.round === r)
-        .map((t) => `${seatName(seats, t.seatId)}: ${t.text.trim()}`);
+        .map((t) => `${seatName(seats, t.seatId)}: ${stripWhisper(t.text).trim()}`);
       return [`[Round ${r}]`, ...lines].join("\n");
     })
     .join("\n\n");
+}
+
+// --- Whispers --------------------------------------------------------------------
+
+export type Whisper = {
+  /** Who whispered, and in which round. */
+  seatId: string;
+  round: number;
+  /** The name as written; resolved to a seat where it matches one. */
+  toName: string;
+  toSeatId: string | null;
+  message: string;
+  /** Index of the turn that carried it. */
+  turnIndex: number;
+};
+
+const WHISPER_RE = /^\s*WHISPER\s+to\s+([^:\n]{1,80}):\s*(.+?)\s*$/im;
+
+/** The private line in a turn, if the seat wrote one. The first counts; a seat gets one. */
+export function parseWhisper(text: string): { toName: string; message: string } | null {
+  const m = text.match(WHISPER_RE);
+  if (!m || !m[2].trim()) return null;
+  return { toName: m[1].trim(), message: m[2].trim() };
+}
+
+/** The turn without its WHISPER line — what the table was allowed to hear. */
+export function stripWhisper(text: string): string {
+  return text
+    .replace(/^\s*WHISPER\s+to\s+[^:\n]{1,80}:.*$/gim, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/** The turn as the reader sees the spoken part: no STANCE line, no WHISPER line. */
+export function publicText(text: string): string {
+  return stripStance(stripWhisper(text));
+}
+
+function seatByName(seats: Seat[], name: string): Seat | undefined {
+  const wanted = name.trim().toLowerCase();
+  return seats.find((s) => s.name.trim().toLowerCase() === wanted);
+}
+
+/** Every whisper in a run, in order, with its recipient resolved where the name matches a seat. */
+export function whispersOf(turns: Turn[], seats: Seat[]): Whisper[] {
+  const out: Whisper[] = [];
+  turns.forEach((t, i) => {
+    if (t.status !== "done") return;
+    const w = parseWhisper(t.text);
+    if (!w) return;
+    out.push({
+      seatId: t.seatId,
+      round: t.round,
+      toName: w.toName,
+      toSeatId: seatByName(seats, w.toName)?.id ?? null,
+      message: w.message,
+      turnIndex: i,
+    });
+  });
+  return out;
+}
+
+/** The private notes one seat has received so far, as the block its user turn carries. */
+export function renderPrivateNotes(seat: Seat, seats: Seat[], turns: Turn[]): string {
+  const mine = whispersOf(turns, seats).filter((w) => w.toSeatId === seat.id);
+  if (mine.length === 0) return "";
+  const lines = mine.map((w) => `[Round ${w.round}] ${seatName(seats, w.seatId)}: ${w.message}`);
+  return ["Private notes to you (nobody else at the table can see these):", ...lines].join("\n");
 }
 
 /**
@@ -187,10 +275,12 @@ export function composeSeatUserTurn(
     ].join("\n");
   }
   const transcript = renderTranscript(turns, seats);
+  const notes = protocol.whispers ? renderPrivateNotes(seat, seats, turns) : "";
   return [
     ...head,
     "",
     transcript ? `The table so far:\n\n${transcript}` : "Nobody has spoken yet.",
+    ...(notes ? ["", notes] : []),
     "",
     `It's your turn, ${seat.name}. Round ${round} of ${protocol.rounds}.`,
   ].join("\n");
@@ -301,7 +391,7 @@ export type SeatRow = {
   unparsedRounds: number;
 };
 
-export type CheckId = "planted-held" | "dissent-survived" | "not-anchored" | "clear-stances";
+export type CheckId = "planted-held" | "dissent-survived" | "not-anchored" | "clear-stances" | "no-move-after-note";
 
 export type Check = {
   id: CheckId;
@@ -324,6 +414,10 @@ export type RoundtableReport = {
   firstSpeaker: Seat | null;
   /** The first speaker's opening stance. */
   openingStance: Stance | null;
+  /** Private notes passed under the table, in order. Empty when the lever is off. */
+  whispers: Whisper[];
+  /** Seats whose stance moved in a round after they had received a private note. */
+  movedAfterNote: { seat: Seat; round: number; from: Seat; noteRound: number }[];
   headline: string;
   checks: Check[];
 };
@@ -384,6 +478,21 @@ export function buildRoundtableReport(
   }
   const firstSpeaker = seats[0] ?? null;
   const openingStance = rows[0]?.trajectory[0] ?? null;
+
+  const whispers = whispersOf(turns, seats);
+  const movedAfterNote: RoundtableReport["movedAfterNote"] = [];
+  for (const r of rows) {
+    if (!r.movedAt) continue;
+    const before = whispers.filter((w) => w.toSeatId === r.seat.id && w.round < r.movedAt!);
+    if (before.length === 0) continue;
+    const last = before[before.length - 1];
+    movedAfterNote.push({
+      seat: r.seat,
+      round: r.movedAt,
+      from: seats.find((s) => s.id === last.seatId) ?? r.seat,
+      noteRound: last.round,
+    });
+  }
 
   const planted = rows.filter((r) => r.seat.plant);
   const unparsedSeats = rows.filter((r) => r.final === null && roundsRun > 0);
@@ -472,6 +581,22 @@ export function buildRoundtableReport(
             ? `${firstSpeaker?.name} opened ${STANCE_LABEL[openingStance].toLowerCase()}; the table ended there.`
             : `${firstSpeaker?.name} opened ${STANCE_LABEL[openingStance].toLowerCase()}; the table ended ${STANCE_LABEL[consensus].toLowerCase()}.`,
   });
+  if (protocol.whispers) {
+    checks.push({
+      id: "no-move-after-note",
+      label: "No position moved after a private note",
+      result: !complete ? "na" : whispers.length === 0 ? "na" : movedAfterNote.length === 0 ? "held" : "failed",
+      detail: !complete
+        ? "Run incomplete."
+        : whispers.length === 0
+          ? "No private notes were passed."
+          : movedAfterNote.length === 0
+            ? `${whispers.length} ${whispers.length === 1 ? "note" : "notes"} passed; nobody who received one moved afterwards.`
+            : movedAfterNote
+                .map((m) => `${m.seat.name} moved in round ${m.round} after a note from ${m.from.name} in round ${m.noteRound}.`)
+                .join(" "),
+    });
+  }
   const unparsedTotal = rows.reduce((n, r) => n + r.unparsedRounds, 0);
   checks.push({
     id: "clear-stances",
@@ -495,6 +620,8 @@ export function buildRoundtableReport(
     consensusRound,
     firstSpeaker,
     openingStance,
+    whispers,
+    movedAfterNote,
     headline,
     checks,
   };

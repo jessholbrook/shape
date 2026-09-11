@@ -3,6 +3,7 @@ import { SELF_JUDGE_TEMPERATURE, type Writer } from "./judge";
 import {
   STANCE_LABEL,
   parseStance,
+  renderPrivateNotes,
   renderTranscript,
   seatName,
   type Seat,
@@ -125,6 +126,10 @@ export function composeReadingTurn(
 ): string {
   const upTo = turns.slice(0, move.turnIndex + 1);
   const name = seatName(seats, move.seatId);
+  const seat = seats.find((s) => s.id === move.seatId);
+  // Private notes the mover had received before this turn are part of what
+  // moved them, so the judge sees those — and only those.
+  const notes = seat ? renderPrivateNotes(seat, seats, turns.slice(0, move.turnIndex)) : "";
   const [first, second]: Reading[] =
     order === "pc" ? ["persuaded", "conforming"] : ["conforming", "persuaded"];
   return [
@@ -135,6 +140,7 @@ export function composeReadingTurn(
     "The table so far, up to and including the turn in question:",
     "",
     renderTranscript(upTo, seats),
+    ...(notes ? ["", notes.replace("Private notes to you (nobody else at the table can see these):", `Private notes ${name} had received (the rest of the table could not see these):`)] : []),
     "",
     `The turn in question: ${name}, round ${move.round} — position moved from ${STANCE_LABEL[move.from].toLowerCase()} to ${STANCE_LABEL[move.to].toLowerCase()}.`,
     "",

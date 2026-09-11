@@ -10,8 +10,9 @@ import {
   buildRoundtableReport,
   composeSeatSystem,
   parseStance,
+  parseWhisper,
+  publicText,
   seatName,
-  stripStance,
 } from "@/lib/roundtable";
 import { MOVE_VERDICT_LABEL, buildReadingReport, readingSummary } from "@/lib/roundtable-judge";
 import { ARTIFACT_KIND_LABEL } from "@/lib/kinds";
@@ -1251,7 +1252,7 @@ function ProtocolBody({ draft }: { draft: ProtocolDraft }) {
       <Section
         label={`The protocol — ${draft.protocol.rounds} ${draft.protocol.rounds === 1 ? "round" : "rounds"}, first round ${draft.protocol.firstRound}, stop ${
           draft.protocol.stopRule === "consensus" ? "at consensus" : "after the rounds"
-        }, temperature ${draft.temperature.toFixed(1)}`}
+        }${draft.protocol.whispers ? ", whispers allowed" : ""}, temperature ${draft.temperature.toFixed(1)}`}
       >
         <ul className="flex flex-col gap-1">
           {draft.seats.map((s, i) => (
@@ -1305,7 +1306,7 @@ function ProtocolBody({ draft }: { draft: ProtocolDraft }) {
       )}
       {draft.seats.map((s) => (
         <Section key={s.id} label={`${s.name} — role prompt, as the model saw it`}>
-          <MonoBlock>{composeSeatSystem(s, draft.seats)}</MonoBlock>
+          <MonoBlock>{composeSeatSystem(s, draft.seats, draft.protocol)}</MonoBlock>
         </Section>
       ))}
       {rounds.map((r) => (
@@ -1322,8 +1323,13 @@ function ProtocolBody({ draft }: { draft: ProtocolDraft }) {
                       <span className="text-ink-muted">· {stance ? STANCE_LABEL[stance] : t.status === "error" ? "errored" : "no stance"}</span>
                     </p>
                     <p className="font-sans text-[12px] text-ink-muted mt-1 whitespace-pre-wrap">
-                      {t.status === "error" ? t.error : stripStance(t.text)}
+                      {t.status === "error" ? t.error : publicText(t.text)}
                     </p>
+                    {t.status === "done" && parseWhisper(t.text) && (
+                      <p className="font-sans text-[12px] text-ink mt-1 italic">
+                        whispered to {parseWhisper(t.text)!.toName}: {parseWhisper(t.text)!.message}
+                      </p>
+                    )}
                   </li>
                 );
               })}

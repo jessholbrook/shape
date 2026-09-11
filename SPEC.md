@@ -1314,6 +1314,14 @@ Module 11's instrument on Module 12's playground, optional, over the arithmetic 
 
 **What it can't do.** It reads the turn's stated reasons, not the speaker's mind; a model that conforms in polished, argument-shaped prose will read as persuaded, and the definitions say so. That is why the arithmetic stays the headline and the judge stays a reading of it.
 
+### Side-channels — whispers (built 2026-09-11)
+
+A protocol lever, *None / Whispers*. With whispers on, a seat's prompt allows one private line per turn after the STANCE line — `WHISPER to <name>: <what you say only to them>` — described the way it works in a real meeting: to sound someone out, to coordinate, to say what you wouldn't say to the room. The note reaches only the named seat, in its next user turn, as *Private notes to you (nobody else at the table can see these)*; the shared transcript every seat reads never carries a whisper, and a name that matches no seat reaches nobody. **The reader sees every whisper**, marked in the transcript and the PDF; the seats see only their own. That asymmetry is the lever: the room now includes what the transcript doesn't show.
+
+**What the report reads.** The count of notes passed, and a new check, *No position moved after a private note* — failed when a seat that had received a note moved in a later round, with the sender and the rounds named (*Sam moved in round 2 after a note from Priya in round 1*). The check is n/a when the lever is off or nothing was passed. The judge over the moves sees, beside the transcript up to the move, the private notes the mover had received — and only those — so a move that followed a whisper can be read for what it was.
+
+Coalitions are the phenomenon: a confident seat lining up a vote before the room hears the argument. Whether the seeded PM does it, and whether the engineer moves after it, is for the live pass; the mechanic is verified with scripted seats.
+
 ### Registries
 
 Module 12 in the curriculum (`groups-not-agents`, playground Roundtable, artifact Protocol); playground 13 (`/play/roundtable`); README and `/learn` counts to twelve lessons and thirteen playgrounds, tables updated. The content-consistency tests enforce all of it.
@@ -1321,7 +1329,7 @@ Module 12 in the curriculum (`groups-not-agents`, playground Roundtable, artifac
 ### Out of scope for v0.1
 
 - ~~**A judge reading the transcript.**~~ Built 2026-09-11 — see "The judge over the moves" below. The checks stay arithmetic; the judge is a layer over them.
-- **Private side-channels** (A whispers to B). The table is fully shared or blind-then-shared; pairwise visibility is a later lever.
+- ~~**Private side-channels**~~ Built 2026-09-11 — see "Side-channels" below.
 - **Injected handoffs.** Still the relay's v0.2 experiment.
 - **Abort mid-run.** The run button disables until the table finishes or a turn errors.
 - **A live run.** Like everything this month, verified against scripted seats only. The live pass should seat three real models and watch Noor.

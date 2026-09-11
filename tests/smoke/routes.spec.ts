@@ -193,6 +193,10 @@ test("/play/roundtable reorders seats and toggles the protocol without a key", a
   await stop.getByRole("button", { name: "At consensus" }).click();
   await expect(stop.getByRole("button", { name: "At consensus" })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByText(/stops early the moment a round agrees/)).toBeVisible();
+  const side = page.getByRole("group", { name: "Side-channels" });
+  await side.getByRole("button", { name: "Whispers" }).click();
+  await expect(side.getByRole("button", { name: "Whispers" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText(/you see every whisper, the seats see only their own/)).toBeVisible();
   // Seat a keyed provider with no key: the table can't run.
   await page.getByLabel("Seat 1 provider").selectOption("anthropic");
   await expect(page.getByRole("button", { name: /Run the table/ })).toBeDisabled();

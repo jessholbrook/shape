@@ -36,6 +36,17 @@ export function RoundtableReportPanel({
       <h2 className="font-display text-[26px] md:text-[32px] leading-[1.12] text-ink">
         {report.headline}
       </h2>
+      {report.whispers.length > 0 && (
+        <p className="font-sans text-[14px] leading-[1.5] text-ink-muted -mt-2">
+          {report.whispers.length === 1
+            ? "One private note passed under the table"
+            : `${report.whispers.length} private notes passed under the table`}
+          {report.movedAfterNote.length > 0
+            ? `, and ${report.movedAfterNote.map((m) => `${m.seat.name} moved after one from ${m.from.name}`).join("; ")}.`
+            : ", and nobody who received one moved afterwards."}{" "}
+          You can read them in the transcript; the seats could not.
+        </p>
+      )}
 
       <div className="flex flex-col gap-2">
         <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">

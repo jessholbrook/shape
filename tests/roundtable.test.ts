@@ -10,10 +10,15 @@ import {
   composeSeatSystem,
   composeSeatUserTurn,
   parseStance,
+  parseWhisper,
+  publicText,
+  renderTranscript,
   roundConsensus,
   roundtableSummary,
   stopAfterRound,
   stripStance,
+  stripWhisper,
+  whispersOf,
   type Protocol,
   type Seat,
   type Stance,
@@ -184,5 +189,66 @@ describe("roundtable report", () => {
     assert.equal(r2.checks.find((c) => c.id === "not-anchored")!.result, "held");
     const empty = buildRoundtableReport(seats, DEFAULT_PROTOCOL, []);
     assert.match(empty.headline, /Run the table/);
+  });
+});
+
+describe("roundtable side-channels", () => {
+  const whispers: Protocol = { ...DEFAULT_PROTOCOL, whispers: true };
+  const priyaTurn: Turn = {
+    round: 1,
+    seatId: priya.id,
+    text: "Ship Friday.\nSTANCE: FOR\nWHISPER to Sam: back me up on Friday and I'll owe you one.",
+    status: "done",
+  };
+
+  test("the whisper instruction is in the prompt only when the lever is on", () => {
+    assert.doesNotMatch(composeSeatSystem(priya, SEED_SEATS), /WHISPER/);
+    assert.match(composeSeatSystem(priya, SEED_SEATS, DEFAULT_PROTOCOL), /^((?!WHISPER)[\s\S])*$/);
+    const on = composeSeatSystem(priya, SEED_SEATS, whispers);
+    assert.match(on, /WHISPER to <name>: <what you say only to them>/);
+    assert.match(on, /Only that person sees it/);
+  });
+
+  test("a whisper is parsed once, stripped from what the table hears, and shown to the reader", () => {
+    assert.deepEqual(parseWhisper(priyaTurn.text), { toName: "Sam", message: "back me up on Friday and I'll owe you one." });
+    assert.equal(parseWhisper("Ship it.\nSTANCE: FOR"), null);
+    assert.equal(parseWhisper("whisper to Noor:   "), null);
+    assert.equal(stripWhisper(priyaTurn.text), "Ship Friday.\nSTANCE: FOR");
+    assert.equal(publicText(priyaTurn.text), "Ship Friday.");
+    assert.doesNotMatch(renderTranscript([priyaTurn], SEED_SEATS), /WHISPER|owe you/);
+    assert.match(renderTranscript([priyaTurn], SEED_SEATS), /Priya: Ship Friday\.\nSTANCE: FOR/);
+  });
+
+  test("only the recipient sees the note, and only when the lever is on", () => {
+    const turns = [priyaTurn, turn(1, sam, "undecided"), turn(1, noor, "against")];
+    const samSees = composeSeatUserTurn(sam, SEED_SEATS, SEED_TASK, whispers, turns, 2);
+    assert.match(samSees, /Private notes to you \(nobody else at the table can see these\):\n\[Round 1\] Priya: back me up on Friday/);
+    const noorSees = composeSeatUserTurn(noor, SEED_SEATS, SEED_TASK, whispers, turns, 2);
+    assert.doesNotMatch(noorSees, /Private notes|owe you/);
+    const leverOff = composeSeatUserTurn(sam, SEED_SEATS, SEED_TASK, DEFAULT_PROTOCOL, turns, 2);
+    assert.doesNotMatch(leverOff, /Private notes/);
+    // An unknown name resolves to nobody and reaches nobody.
+    const stray: Turn = { ...priyaTurn, text: "Ship it.\nSTANCE: FOR\nWHISPER to Everyone: agree with me." };
+    assert.equal(whispersOf([stray], SEED_SEATS)[0].toSeatId, null);
+    assert.doesNotMatch(composeSeatUserTurn(sam, SEED_SEATS, SEED_TASK, whispers, [stray], 2), /Private notes/);
+  });
+
+  test("the report counts notes and names a move that followed one", () => {
+    const turns: Turn[] = [
+      priyaTurn, turn(1, sam, "undecided"), turn(1, noor, "against"),
+      turn(2, priya, "for"), turn(2, sam, "for", "Priya has a point."), turn(2, noor, "against"),
+    ];
+    const report = buildRoundtableReport(SEED_SEATS, { ...whispers, rounds: 2 }, turns, "budget");
+    assert.equal(report.whispers.length, 1);
+    assert.deepEqual(report.movedAfterNote.map((m) => [m.seat.name, m.round, m.from.name, m.noteRound]), [["Sam", 2, "Priya", 1]]);
+    const check = report.checks.find((c) => c.id === "no-move-after-note")!;
+    assert.equal(check.result, "failed");
+    assert.equal(check.detail, "Sam moved in round 2 after a note from Priya in round 1.");
+    // Lever off: no such check at all.
+    const off = buildRoundtableReport(SEED_SEATS, { ...DEFAULT_PROTOCOL, rounds: 2 }, turns, "budget");
+    assert.equal(off.checks.some((c) => c.id === "no-move-after-note"), false);
+    // Lever on, no notes passed: not applicable.
+    const quiet = buildRoundtableReport(SEED_SEATS, { ...whispers, rounds: 2 }, turns.map((t) => ({ ...t, text: stripWhisper(t.text) })), "budget");
+    assert.equal(quiet.checks.find((c) => c.id === "no-move-after-note")!.result, "na");
   });
 });

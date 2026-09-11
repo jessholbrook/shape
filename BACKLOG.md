@@ -375,6 +375,12 @@ that turn — and calls it persuaded or conforming, twice with the options
 swapped; a judge that picks the same slot both ways is marked unreadable.
 The arithmetic stays the headline. `SPEC.md` §26.
 
+**Side-channels (2026-09-11):** a protocol lever. A seat may pass one
+private note per turn to one other seat; only that seat sees it, the reader
+sees all of them, and the report checks whether any position moved after a
+note. The judge over the moves sees the notes the mover had received.
+`SPEC.md` §26.
+
 **As originally sketched — Roundtable.** Its own playground: three or four agents with
 role prompts (Persona Cards import directly), a shared transcript, a rounds
 budget, one task with a planted dissenter. The designer edits the protocol —
