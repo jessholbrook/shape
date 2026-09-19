@@ -197,11 +197,11 @@ export const MODULES: CurriculumModule[] = [
   {
     num: "12",
     slug: "groups-not-agents",
-    title: "Groups,",
-    italic: "not agents",
+    title: "Groups",
+    italic: "of agents",
     kicker: "Concept",
     blurb:
-      "One agent obeys its policy. Two agents route around it. Group behavior is designed in the room — who can reach whom, who speaks first — not in anyone's prompt.",
+      "One agent obeys its policy while two other agents route around it. Group behavior is designed by policies as much as prompts.",
     playground: { label: "Roundtable", href: "/play/roundtable" },
     artifact: "Protocol",
     href: "/learn/groups-not-agents",

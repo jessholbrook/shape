@@ -172,6 +172,6 @@ export const PLAYGROUNDS: Playground[] = [
       "Three seats, one decision, a planted dissenter. Edit the protocol — who speaks first, whether the first round is blind, when it stops — and watch the room decide, not the prompts.",
     artifact: "Protocol",
     status: "ready",
-    concept: { href: "/learn/groups-not-agents", label: "Groups, not agents" },
+    concept: { href: "/learn/groups-not-agents", label: "Groups of agents" },
   },
 ];

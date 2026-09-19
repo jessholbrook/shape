@@ -31,13 +31,14 @@ export default function GroupsPage() {
 
         <Lede>
           Every module so far has been about one model. Products are starting to
-          ship several, talking to each other. The unit you were designing was
-          never the model. It was the room.
+          ship multi-agent systems by default that communicate with each other.
+          This requires designing &ldquo;the room&rdquo; as well as the prompts.
         </Lede>
 
         <H2>What you already know</H2>
         <P>
-          You have written community guidelines. You have argued about who gets
+          If you&apos;ve worked in social media or on an online platform, you
+          may have written community guidelines. You have argued about who gets
           posting rights in which channel, whether a new member can DM anyone
           or only a moderator, and what happens when two people escalate each
           other. You have run a workshop and decided who speaks first, because
@@ -195,7 +196,7 @@ Mail agent asked the user: may I send?`}
           hop.
         </P>
 
-        <H2>The failure that hides</H2>
+        <H2>The hidden failures</H2>
         <P>
           It looks like compliance. Every agent&apos;s log reads clean, every
           turn is polite and on-policy, and the table ends in warm agreement.

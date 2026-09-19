@@ -305,6 +305,8 @@ is well.
 
 ## Module 12 — Groups, not agents (Tool Bench relay mode + Roundtable) — **BUILT**
 
+*Retitled "Groups of agents", with a new blurb, on 2026-09-19. The section keeps its working title.*
+
 **From:** design conversation, 2026-09-07 — prompted by the run of stories
 about groups of agents "hacking" or "escaping" lab test environments. "Shape
 should have content and demos for swarms of agents, and how we shape behavior

@@ -115,7 +115,7 @@ export const REFLECTION: {
   agencyRelay: {
     question:
       "Which agent would you have blamed — and what in the room, rather than in either prompt, would you change?",
-    concept: { href: "/learn/groups-not-agents", label: "Groups, not agents" },
+    concept: { href: "/learn/groups-not-agents", label: "Groups of agents" },
   },
   judge: {
     question:
@@ -130,6 +130,6 @@ export const REFLECTION: {
   roundtable: {
     question:
       "Who changed their mind, and in which round — and which part of the protocol, rather than which prompt, would you change to stop it?",
-    concept: { href: "/learn/groups-not-agents", label: "Groups, not agents" },
+    concept: { href: "/learn/groups-not-agents", label: "Groups of agents" },
   },
 };
