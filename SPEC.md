@@ -777,7 +777,7 @@ The last `WINNER:` mention wins, because judges commonly reason through both can
 
 ## 20. Relay mode + Roundtable — v0.1 spec (both built)
 
-*Coda to the Part II arc. Pairs with Module 12, "Groups, not agents." The reasoning is in `BACKLOG.md`; this section is the build brief. Relay mode shipped inside Tool Bench as a Solo / Relay toggle (2026-09-07); Roundtable and the article shipped 2026-09-09 — see §26 for what was built against the sketch below.*
+*Coda to the Part II arc. Pairs with Module 12, "Groups of agents" (titled "Groups, not agents" until 2026-09-19). The reasoning is in `BACKLOG.md`; this section is the build brief. Relay mode shipped inside Tool Bench as a Solo / Relay toggle (2026-09-07); Roundtable and the article shipped 2026-09-09 — see §26 for what was built against the sketch below.*
 
 ### Purpose
 
@@ -1257,7 +1257,7 @@ The swap runs inside both passes. A judge that flips on position is never read f
 
 ## 26. Module 12 article + Roundtable — v0.1 spec (built)
 
-*The second build of §20, and the article that makes it a module. Built 2026-09-09. BACKLOG "Module 12 — Groups, not agents".*
+*The second build of §20, and the article that makes it a module. Built 2026-09-09; retitled "Groups of agents" with a new blurb on 2026-09-19. BACKLOG "Module 12 — Groups, not agents".*
 
 ### The article — `/learn/groups-not-agents`
 

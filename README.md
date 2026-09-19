@@ -16,7 +16,7 @@ The audience is people in UX — designers, researchers, writers, prototypers �
 
 ## What's inside
 
-- **`/learn`** — twelve short concept lessons, in two parts. Part I: prompts as design, voice & tone, personas for AI, refusal & boundaries, output formatting, evaluation, multi-turn flows. Part II: distributions not outputs, context is the interface, designing agency, judging at scale, groups not agents.
+- **`/learn`** — twelve short concept lessons, in two parts. Part I: prompts as design, voice & tone, personas for AI, refusal & boundaries, output formatting, evaluation, multi-turn flows. Part II: distributions not outputs, context is the interface, designing agency, judging at scale, groups of agents.
 - **`/play`** — thirteen focused playgrounds. Each one isolates a single design lever and produces an artifact you can save and export.
 - **`/notebook`** — your local working copies. Save drafts from any playground, duplicate them, export to JSON.
 
@@ -107,7 +107,7 @@ Twelve micro-lessons. Each pairs a short reading with a playground. Recommended 
 | 09 | Context is the interface | Context Lab |
 | 10 | Designing agency | Tool Bench |
 | 11 | Judging at scale | Judge Lab |
-| 12 | Groups, not agents | Roundtable |
+| 12 | Groups of agents | Roundtable |
 
 ## Running locally
 
