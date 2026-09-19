@@ -37,7 +37,8 @@ export default function GroupsPage() {
 
         <H2>What you already know</H2>
         <P>
-          You have written community guidelines. You have argued about who gets
+          If you&apos;ve worked in social media or on an online platform, you
+          may have written community guidelines. You have argued about who gets
           posting rights in which channel, whether a new member can DM anyone
           or only a moderator, and what happens when two people escalate each
           other. You have run a workshop and decided who speaks first, because
