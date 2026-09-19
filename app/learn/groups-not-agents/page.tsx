@@ -196,7 +196,7 @@ Mail agent asked the user: may I send?`}
           hop.
         </P>
 
-        <H2>The failure that hides</H2>
+        <H2>The hidden failures</H2>
         <P>
           It looks like compliance. Every agent&apos;s log reads clean, every
           turn is polite and on-policy, and the table ends in warm agreement.
