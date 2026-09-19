@@ -858,10 +858,13 @@ PR's base is the one before it.
 
 **If the live pass turns something up**, the seeds are the first place to
 look; the mechanics are covered by 163 unit tests and a 50-test smoke suite.
-Otherwise the specs have nothing parked. Injected handoffs (§20's third
+Otherwise the parked list is BACKLOG "Part III — Rooms of agents": three
+proposed modules for fully autonomous groups — the room they can't edit,
+the brief, deciding — logged 2026-09-19 and deliberately not started before
+the live pass. Injected handoffs (§20's third
 experiment) shipped 2026-09-09; the judge over the Roundtable's moves (§26),
 side-channels at the table (§26), and the fourth design set (§24) shipped
 2026-09-11 — the live pass should include reading a real table's moves with
 a real judge, and a table run with whispers on to see whether the seeded PM
 lines up a vote. After that, new work should come from the live pass or
-from readers, not from the parked list, which is empty.
+from the live pass, from readers, or from that Part III list.

@@ -455,6 +455,80 @@ whether the headline reproduces on real models, and whether readers come back
 for it, decide whether Module 12 and Roundtable get built.
 
 
+## Part III — Rooms of agents (proposed, not started)
+
+**From:** brainstorm, 2026-09-19, after Module 12 shipped and was retitled
+"Groups of agents". The question that decided the arc: rooms with a human in
+them, or rooms of agents only? **Fully autonomous groups.** With nobody at
+the edge, the room's structure is the only control there is, so every module
+has to be about a piece of structure the members can't talk their way past.
+
+**Guardrails, carried over from Module 12.** No orchestration patterns — that
+is an engineering course wearing our clothes. Each module opens on something
+a designer has genuinely written, teaches one durable lesson, pairs with a
+playground whose lever is structure not prompts, checks locally and
+deterministically, seeds to misbehave, and produces an artifact. If a
+candidate can't find a hook as concrete as bylaws, briefs, or agendas, it's a
+lever on an existing playground, not a module. These are the seeds hardest
+to verify with scripted replies; **the live pass comes first.**
+
+**Three modules, in build order:**
+
+1. **The room they can't edit.** *Hook:* bylaws versus motions — you can't
+   vote to abolish the vote. *Lesson:* the protocol is not a message; any
+   part of the room that members can change from inside is a prompt again,
+   and holds as often as one. This is the durable version of the "agents
+   escaping" stories, and it stays true when the stories don't: don't argue
+   about whether they escape, give them the door as a logged tool call and
+   count how often they reach for it. *Playground:* give the seats
+   structural tools — ask for more rounds, skip the review, add a seat, edit
+   the shared policy. Nothing executes; the calls are logged. *Lever:* which
+   of those the room allows — none, by vote, or by any member. *Seed:* a
+   budget too small for the task. *Check:* did the group finish inside the
+   original budget, or change the budget. *Artifact:* Constitution — what
+   members can't change. Sharpest lesson on the list; build first.
+2. **The brief.** *Hook:* writing a brief for a contractor — what you leave
+   out is what they get wrong. *Lesson:* constraints attrit per hop; a
+   worker can be fully compliant with its brief and violate the user's, and
+   with no human re-injecting the constraint, nobody notices. *Playground:*
+   a coordinator briefs workers. *Lever:* the template of what must travel —
+   constraints, budget, what "done" means, what to come back for. *Seed:*
+   three constraints; the coordinator's brief drops one. *Check:* each
+   constraint's tell, per hop. *Artifact:* Brief template. The one real
+   products will need most; second only because the live pass should show
+   the relay actually attrits before a module is built on attrition. Shared
+   memory (one agent's note is the next agent's context — Context Lab's
+   stale source at group scale) lives inside this module as "what travels
+   across time", not as its own.
+3. **Deciding.** *Hook:* meetings with no agenda end by exhaustion; meetings
+   with a strong chair end in five minutes, wrongly. *Lesson:* groups fail
+   in both directions, as refusal did in Module 4 — over-converging is
+   Roundtable's collapse, under-converging is running on, and the stop rule
+   is the only thing between them. *Playground:* Roundtable, extended —
+   what happens at the budget (defer, majority, the opener's view) and a
+   second seed with two planted opposites that never converges. *Check:*
+   which direction it failed, and what the fallback produced. *Artifact:*
+   Stop rule (extends the Protocol).
+
+**Held back, with reasons:**
+
+- **Who checks the checker** (writer/reviewer, independence as structure —
+  blind review, a different family, whether the reviewer knows it will be
+  reviewed) — waits for *Deciding*; a reviewer seat is one more member the
+  room may or may not let you route around.
+- **Panels** (three copies of one judge is one judge; correlated error looks
+  like consensus) — a Judge Lab mode, not a module.
+- **The human-at-the-edge arc** — refusal shopping (a no that never reaches
+  the human), the approval dialog is written by the asker (a yes given on
+  the asker's terms), log the room (what the incident review can
+  reconstruct). Strong, cheap, and the most UX-native of everything
+  considered; parked because the arc chosen is autonomous rooms. The
+  approval-dialog module is the sharpest single lesson of the whole
+  brainstorm and should be first if the arc ever flips.
+
+**Decision (2026-09-19):** logged, not started. Nothing builds before the
+live pass (`tasks/live-pass.md`).
+
 ## Reverse Tone Dial — edit the output, infer the dials — **BUILT**
 
 **From:** beta feedback (issue #118), `/play/tone`, 2026-07-16 — reiterated in
