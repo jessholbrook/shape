@@ -31,8 +31,8 @@ export default function GroupsPage() {
 
         <Lede>
           Every module so far has been about one model. Products are starting to
-          ship several, talking to each other. The unit you were designing was
-          never the model. It was the room.
+          ship multi-agent systems by default that communicate with each other.
+          This requires designing &ldquo;the room&rdquo; as well as the prompts.
         </Lede>
 
         <H2>What you already know</H2>
