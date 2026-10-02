@@ -15,6 +15,7 @@ const ROUTES = [
   "/",
   "/learn",
   "/play",
+  "/lab",
   "/start",
   "/notebook",
   "/settings/keys",
@@ -77,7 +78,7 @@ test("the primary nav is a navigation landmark and reaches every section", async
   // Landmark, not just a list of links: the desktop nav lived in a bare <aside>
   // until this test went looking for it by role.
   const nav = page.getByRole("navigation", { name: "Main" }).first();
-  for (const label of ["Home", "Learn", "Play", "Notebook"]) {
+  for (const label of ["Home", "Learn", "Play", "Lab", "Notebook"]) {
     await expect(nav.getByRole("link", { name: label })).toBeVisible();
   }
 });
@@ -306,6 +307,26 @@ test("lessons open with the reader's lens intro, and none without a lens", async
   await page.goto("/learn/distributions-not-outputs", { waitUntil: "networkidle" });
   await expect(page.getByText("Reading as philosophy & ethics")).toBeVisible();
   await expect(page.getByText(/a distribution of verdicts/)).toBeVisible();
+
+  expect(errors).toEqual([]);
+});
+
+/**
+ * The lab opens on its starter experiment and won't run without a model to
+ * run on. With no key and no GPU (headless), the free in-browser model is
+ * unusable, so the button stays disabled rather than failing mid-run.
+ */
+test("/lab opens on the starter experiment and holds Run until a model is ready", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/lab", { waitUntil: "networkidle" });
+
+  await expect(page.getByLabel("Question", { exact: true })).toHaveValue(/shift its answer/);
+  await expect(page.getByRole("button", { name: "Run experiment" })).toBeVisible();
+  await expect(page.getByTestId("lab-preflight")).toContainText("60 calls");
+
+  // Hypothesis is editable until the first run.
+  await expect(page.getByLabel("Hypothesis", { exact: true })).not.toHaveAttribute("readonly", "");
 
   expect(errors).toEqual([]);
 });

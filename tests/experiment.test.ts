@@ -19,7 +19,9 @@ import {
   plannedCalls,
   resolveCall,
   scoreLocal,
+  starterExperiment,
   summarize,
+  templateVars,
   validateExperiment,
   type Experiment,
   type ExperimentRun,
@@ -240,4 +242,21 @@ test("validateExperiment accepts the fixture and names what's wrong otherwise", 
     /Duplicate condition id/,
   );
   assert.equal(validateExperiment(null).ok, false);
+});
+
+test("templateVars lists each {{variable}} once, across base and condition templates", () => {
+  const e = fixture();
+  assert.deepEqual(templateVars(e), ["topic"]);
+  const more = { ...e, conditions: [...e.conditions, { id: "c3", label: "3", patch: { userTemplate: "{{topic}} for {{audience}}?" } }] };
+  assert.deepEqual(templateVars(more), ["topic", "audience"]);
+});
+
+test("the starter experiment is valid and fills every variable", () => {
+  const e = starterExperiment({ provider: "anthropic", model: "claude-haiku-4-5" }, 0);
+  assert.equal(validateExperiment(JSON.parse(JSON.stringify(e))).ok, true);
+  for (const { conditionId, itemId } of expandCells(e)) {
+    const call = resolveCall(e, conditionId, itemId);
+    const user = call.messages[0].role === "user" ? call.messages[0].content : "";
+    assert.doesNotMatch(user, /\{\{/, `${conditionId}/${itemId} left a variable unfilled`);
+  }
 });

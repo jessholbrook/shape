@@ -19,6 +19,7 @@ export const ARTIFACT_KIND_LABEL: Record<DraftKind, string> = {
   agency: "Agency Policy",
   judge: "Calibrated Judge",
   protocol: "Protocol",
+  experiment: "Experiment",
 };
 
 /**
@@ -39,4 +40,5 @@ export const DRAFT_KIND_SHORT_LABEL: Record<DraftKind, string> = {
   agency: "Agency",
   judge: "Judge",
   protocol: "Protocol",
+  experiment: "Experiment",
 };

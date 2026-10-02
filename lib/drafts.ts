@@ -16,6 +16,7 @@ import type {
 } from "./context-lab";
 import type { Mechanism, RelayConfig, Scenario, ScenarioResult, Tool } from "./agency";
 import type { JudgeMode, Pair, PairResult, Writers } from "./judge";
+import { validateExperiment, type Experiment } from "./experiment";
 
 const DRAFTS_KEY = "shape:drafts:log";
 const MAX_DRAFTS = 100;
@@ -33,7 +34,8 @@ export type DraftKind =
   | "context"
   | "agency"
   | "judge"
-  | "protocol";
+  | "protocol"
+  | "experiment";
 
 export type DiffDraftConfig = {
   provider: ProviderId;
@@ -387,7 +389,24 @@ export type Draft =
   | ContextDraft
   | AgencyDraft
   | JudgeDraft
-  | ProtocolDraft;
+  | ProtocolDraft
+  | ExperimentDraft;
+
+/**
+ * Lab — an experiment: question, hypothesis, conditions, items, measures,
+ * and every run with its scores. The title lives on the draft; the
+ * experiment carries everything needed to rerun it.
+ */
+export type ExperimentDraft = {
+  id: string;
+  kind: "experiment";
+  title: string;
+  experiment: Experiment;
+  /** The user's answer to the lab's reflection question, if they jotted one. */
+  reflection?: string;
+  createdAt: number;
+  updatedAt: number;
+};
 
 /**
  * Roundtable — Module 12. The group-level Agency Policy: who sits at the
@@ -428,6 +447,7 @@ const KNOWN_KINDS: DraftKind[] = [
   "agency",
   "judge",
   "protocol",
+  "experiment",
 ];
 
 function read(): Draft[] {
@@ -489,7 +509,8 @@ export type DraftInput =
   | (Omit<ContextDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
   | (Omit<AgencyDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
   | (Omit<JudgeDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
-  | (Omit<ProtocolDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
+  | (Omit<ProtocolDraft, "id" | "createdAt" | "updatedAt"> & { id?: string })
+  | (Omit<ExperimentDraft, "id" | "createdAt" | "updatedAt"> & { id?: string });
 
 /**
  * Save a draft. If `data.id` matches an existing draft, it's updated in place;
@@ -600,7 +621,8 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
     kind !== "context" &&
     kind !== "agency" &&
     kind !== "judge" &&
-    kind !== "protocol"
+    kind !== "protocol" &&
+    kind !== "experiment"
   ) {
     return { ok: false, reason: `Unknown draft kind: ${String(kind)}` };
   }
@@ -776,6 +798,9 @@ function validateDraftShape(d: unknown): { ok: true } | { ok: false; reason: str
         return { ok: false, reason: "Judge draft's writers are malformed." };
       }
     }
+  } else if (kind === "experiment") {
+    const result = validateExperiment(d.experiment);
+    if (!result.ok) return { ok: false, reason: `Experiment draft: ${result.reason}` };
   }
   return { ok: true };
 }
@@ -863,6 +888,8 @@ export function draftEditorHref(draft: Draft): string {
       return `/play/tools?draft=${draft.id}`;
     case "judge":
       return `/play/judge?draft=${draft.id}`;
+    case "experiment":
+      return `/lab?draft=${draft.id}`;
   }
 }
 

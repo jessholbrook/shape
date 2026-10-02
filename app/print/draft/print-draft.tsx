@@ -88,7 +88,9 @@ import type {
   SpreadDraft,
   ToneDraft,
   ProtocolDraft,
+  ExperimentDraft,
 } from "@/lib/drafts";
+import { analyze, summarize } from "@/lib/experiment";
 
 export function PrintDraft() {
   const searchParams = useSearchParams();
@@ -180,6 +182,11 @@ function modelLabel(provider: keyof typeof PROVIDERS, model: string): string {
 /** Header meta line. Diff drafts carry per-side configs instead of a single
  *  top-level model, so they get an A/B summary. */
 function draftMeta(draft: Draft): string {
+  if (draft.kind === "experiment") {
+    const e = draft.experiment;
+    const done = e.runs.filter((r) => r.status === "done").length;
+    return `${modelLabel(e.base.model.provider, e.base.model.model)} · temp ${e.base.temperature.toFixed(1)} · N = ${e.n} per cell · ${done} runs`;
+  }
   if (draft.kind === "portability") {
     return draft.refs.map((r) => portabilityModelLabel(r)).join(" · ");
   }
@@ -232,6 +239,8 @@ function KindBody({ draft }: { draft: Draft }) {
       return <JudgeBody draft={draft} />;
     case "protocol":
       return <ProtocolBody draft={draft} />;
+    case "experiment":
+      return <ExperimentBody draft={draft} />;
   }
 }
 
@@ -1336,6 +1345,77 @@ function ProtocolBody({ draft }: { draft: ProtocolDraft }) {
           </ul>
         </Section>
       ))}
+    </>
+  );
+}
+
+/* ------------------------------------------------------------ experiment */
+
+function ExperimentBody({ draft }: { draft: ExperimentDraft }) {
+  const e = draft.experiment;
+  const a = analyze(e);
+  const condLabel = (id: string) => e.conditions.find((c) => c.id === id)?.label ?? id;
+  const pct = (x: number) => `${Math.round(x * 100)}%`;
+  return (
+    <>
+      <Section label="Question">
+        <Prose>{e.question}</Prose>
+      </Section>
+      <Section label={e.hypothesisLockedAt ? "Hypothesis — stated before running" : "Hypothesis"}>
+        <Prose>{e.hypothesis}</Prose>
+      </Section>
+      {a.comparisons.length > 0 && e.runs.length > 0 && (
+        <Section label="Findings">
+          <ul className="flex flex-col gap-1.5">
+            {a.comparisons.map((c) => (
+              <li key={`${c.measureId}-${c.conditionId}`} className="font-sans text-[13px] leading-[1.5] text-ink">
+                {summarize(e, c)}
+              </li>
+            ))}
+          </ul>
+          {a.manyComparisons && (
+            <p className="font-sans text-[12px] text-ink-muted mt-2">
+              Several comparisons were made; at 95% intervals, roughly one in twenty clear-looking differences is chance.
+            </p>
+          )}
+        </Section>
+      )}
+      {e.measures.map((m) => (
+        <Section key={m.id} label={`Measure — ${m.label}`}>
+          <ul className="flex flex-col gap-1.5">
+            {a.cells
+              .filter((c) => c.measureId === m.id)
+              .map((c) => (
+                <li key={c.conditionId} className="font-mono text-[12px] text-ink flex justify-between gap-4">
+                  <span>{condLabel(c.conditionId)}</span>
+                  <span>
+                    {c.kind === "binary"
+                      ? `${pct(c.rate.p)} [${pct(c.rate.lo)}–${pct(c.rate.hi)}] · ${c.k}/${c.n}`
+                      : `${c.mean.toFixed(1)} ± ${c.sd.toFixed(1)} · n ${c.n}`}
+                    {c.excluded > 0 ? ` · ${c.excluded} excluded` : ""}
+                  </span>
+                </li>
+              ))}
+          </ul>
+          {(m.kind === "classify" || m.kind === "rate") && (
+            <p className="font-sans text-[12px] text-ink-muted mt-2">
+              Scored by a model ({m.judge.model}){m.kind === "classify" ? `, asked: “${m.question}”` : `, against: “${m.rubric}”`}
+            </p>
+          )}
+        </Section>
+      ))}
+      <Section label="Setup">
+        <MonoBlock>{e.base.system}</MonoBlock>
+        <Prose>{e.base.userTemplate}</Prose>
+        {e.conditions.slice(1).map((c) => (
+          <p key={c.id} className="font-sans text-[12px] text-ink-muted mt-2">
+            <span className="text-ink">{c.label}:</span>{" "}
+            {[c.patch.system && `system → ${c.patch.system}`, c.patch.userTemplate && `message → ${c.patch.userTemplate}`]
+              .filter(Boolean)
+              .join(" · ") || "same as baseline"}
+          </p>
+        ))}
+      </Section>
     </>
   );
 }

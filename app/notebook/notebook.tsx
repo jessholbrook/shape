@@ -114,6 +114,7 @@ export function Notebook() {
   const agencyDrafts = drafts.filter((d) => d.kind === "agency");
   const judgeDrafts = drafts.filter((d) => d.kind === "judge");
   const protocolDrafts = drafts.filter((d) => d.kind === "protocol");
+  const experimentDrafts = drafts.filter((d) => d.kind === "experiment");
   const noDrafts = drafts.length === 0;
 
   return (
@@ -146,6 +147,20 @@ export function Notebook() {
         <EmptyState />
       ) : (
         <div className="flex flex-col gap-12">
+          {experimentDrafts.length > 0 && (
+            <Section title="Experiments" count={experimentDrafts.length}>
+              {experimentDrafts.map((d) => (
+                <DraftRow
+                  key={d.id}
+                  draft={d}
+                  onDuplicate={() => handleDuplicate(d)}
+                  onExport={() => handleExport(d)}
+                  onDelete={() => handleDelete(d)}
+                />
+              ))}
+            </Section>
+          )}
+
           {diffDrafts.length > 0 && (
             <Section title="Diff sessions" count={diffDrafts.length}>
               {diffDrafts.map((d) => (
@@ -436,6 +451,24 @@ function DraftRow({
 }
 
 function DraftSummary({ draft }: { draft: Draft }) {
+  if (draft.kind === "experiment") {
+    const e = draft.experiment;
+    const done = e.runs.filter((r) => r.status === "done").length;
+    return (
+      <p className="font-mono text-[12px] text-ink-muted mt-2 break-words">
+        {e.conditions.length} conditions · {done} {done === 1 ? "run" : "runs"}
+        {e.question.trim() && (
+          <>
+            {" — "}
+            <span className="italic">
+              {e.question.length > 90 ? e.question.slice(0, 87) + "…" : e.question}
+            </span>
+          </>
+        )}
+      </p>
+    );
+  }
+
   if (draft.kind === "diff") {
     const aName =
       PROVIDERS[draft.configA.provider].models.find(
