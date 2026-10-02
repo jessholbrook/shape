@@ -36,6 +36,8 @@ import { SpreadRunCard } from "@/components/play/spread-run-card";
 import { StabilityReportPanel } from "@/components/play/stability-report";
 import { SpreadCompare } from "@/components/play/spread-compare";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
+import { OpenAsExperiment } from "@/components/play/open-as-experiment";
+import { fromSpread } from "@/lib/experiments/from-playground";
 import { ReflectionCard } from "@/components/play/reflection-card";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
@@ -496,6 +498,12 @@ export function SpreadMode() {
         onSave={handleSave}
         disabled={runs.length === 0}
         artifact="Stability Report"
+      />
+
+      <OpenAsExperiment
+        disabled={running}
+        hint="Compare this spec with a revised one — many runs each — and see which holds its clauses."
+        build={() => fromSpread(config, userMessage, assertions)}
       />
     </div>
   );

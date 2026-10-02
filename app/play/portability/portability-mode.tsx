@@ -38,6 +38,8 @@ import { ModelRoster } from "@/components/play/model-roster";
 import { PortabilityMatrix } from "@/components/play/portability-matrix";
 import { PortabilityLane } from "@/components/play/portability-lane";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
+import { OpenAsExperiment } from "@/components/play/open-as-experiment";
+import { fromPortability } from "@/lib/experiments/from-playground";
 import { ReflectionCard } from "@/components/play/reflection-card";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
@@ -487,6 +489,12 @@ export function PortabilityMode() {
         onSave={handleSave}
         disabled={lanes.length === 0}
         artifact="Portability Report"
+      />
+
+      <OpenAsExperiment
+        disabled={running}
+        hint="Run the spec on each model many times, with intervals — so a clause that 'breaks' on one model isn't just one bad run."
+        build={() => fromPortability(refs, system, userMessage, temperature, assertions)}
       />
     </div>
   );

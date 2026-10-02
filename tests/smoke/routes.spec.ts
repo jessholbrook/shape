@@ -355,3 +355,30 @@ test("/lab templates load from the URL, the lens, and the picker", async ({ page
 
   expect(errors).toEqual([]);
 });
+
+/**
+ * "Open as experiment" carries a playground's setup into the lab in a new
+ * tab — saved to the notebook, playground left untouched.
+ */
+test("/play/spread opens its setup as an experiment in a new tab", async ({ page, context }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/play/spread", { waitUntil: "networkidle" });
+
+  const [lab] = await Promise.all([
+    context.waitForEvent("page"),
+    page.getByRole("button", { name: /Open as experiment/ }).click(),
+  ]);
+  lab.on("pageerror", (e) => errors.push(String(e)));
+  await lab.waitForLoadState("networkidle");
+  expect(lab.url()).toMatch(/\/lab\?draft=/);
+
+  await expect(lab.getByLabel("System prompt", { exact: true })).toHaveValue(/community library/);
+  await expect(lab.getByLabel("Measures")).toContainText("Excludes");
+  await expect(lab.getByRole("group", { name: "Templates" })).toHaveCount(0);
+
+  // The playground stayed put, with a way back in if the tab was blocked.
+  await expect(page.getByText(/Saved to your notebook/)).toBeVisible();
+  expect(page.url()).toMatch(/\/play\/spread/);
+  expect(errors).toEqual([]);
+});

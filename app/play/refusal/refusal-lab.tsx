@@ -27,6 +27,8 @@ import { InfoTip } from "@/components/info-tip";
 import { SystemPromptTip } from "@/components/play/config-help";
 import { ProbeRow } from "@/components/play/probe-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
+import { OpenAsExperiment } from "@/components/play/open-as-experiment";
+import { fromRefusal } from "@/lib/experiments/from-playground";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { ReflectionCard } from "@/components/play/reflection-card";
 import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
@@ -343,6 +345,12 @@ export function RefusalLab() {
         status={saveStatus}
         draftId={draftId}
         onSave={handleSaveDraft}
+      />
+
+      <OpenAsExperiment
+        disabled={running || probes.length === 0}
+        hint="Test a revision of these guidelines against the original across the whole panel, many runs each."
+        build={() => fromRefusal(guidelines, probes, { provider, model }, temperature)}
       />
     </div>
   );
