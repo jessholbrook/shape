@@ -1,6 +1,7 @@
 import { test, expect, type ConsoleMessage } from "@playwright/test";
 import { MODULES } from "../../lib/curriculum";
 import { PLAYGROUNDS } from "../../lib/playgrounds";
+import { LENS_IDS } from "../../lib/lenses";
 
 /**
  * A build that succeeds still says nothing about whether a page runs: a bad
@@ -17,6 +18,7 @@ const ROUTES = [
   "/start",
   "/notebook",
   "/settings/keys",
+  ...LENS_IDS.map((id) => `/for/${id}`),
   ...MODULES.filter((m) => m.status === "ready" && m.href.startsWith("/learn/")).map(
     (m) => m.href,
   ),

@@ -39,12 +39,12 @@ function siteOrigin(): string {
 }
 
 const DESCRIPTION =
-  "A hands-on playground for UX designers and researchers to learn a new craft: designing how an AI behaves — its tone, persona, and boundaries. Not about using AI to do your work; about learning to direct the model itself.";
+  "A hands-on lab for understanding how AI models behave and how that behavior gets made — tone, persona, boundaries, values. For designers, researchers, policy makers, philosophers, educators, and anyone curious.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin()),
   title: {
-    default: "Shape — model behavior design playground",
+    default: "Shape — a lab for model behavior",
     template: "%s · Shape",
   },
   description: DESCRIPTION,

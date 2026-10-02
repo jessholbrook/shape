@@ -16,6 +16,7 @@ import { join } from "node:path";
 import { MODULES, moduleTitle } from "../lib/curriculum";
 import { PLAYGROUNDS } from "../lib/playgrounds";
 import sitemap from "../app/sitemap";
+import { CORE, LENSES, LENS_IDS } from "../lib/lenses";
 
 const ROOT = join(import.meta.dirname, "..");
 const dirsIn = (p: string) =>
@@ -180,4 +181,47 @@ test("README's curriculum table has one row per lesson", () => {
   assert.ok(table, "README: curriculum table not found");
   const nums = [...table[1].matchAll(/^\| (\d+) \|/gm)].map((m) => m[1]);
   assert.deepEqual(nums, LESSONS.map((m) => m.num));
+});
+
+// ── Lenses ──────────────────────────────────────────────────────────────────
+
+const ROUTABLE = new Set([
+  ...MODULES.filter((m) => m.status === "ready").map((m) => m.href),
+  ...PLAYGROUNDS.filter((p) => p.status === "ready").map((p) => p.href),
+]);
+
+const LENS_CONTENT = [
+  ["core", CORE] as const,
+  ...LENS_IDS.map((id) => [id, LENSES[id]] as const),
+];
+
+test("every lens bridge and path entry resolves to a ready route", () => {
+  for (const [id, c] of LENS_CONTENT) {
+    for (const b of c.bridges) {
+      assert.ok(ROUTABLE.has(b.href), `${id} bridge points at ${b.href}, which is not a ready lesson or playground`);
+    }
+    assert.ok(c.path.length >= 4, `${id} path should have at least 4 steps`);
+    for (const href of c.path) {
+      assert.ok(ROUTABLE.has(href), `${id} path includes ${href}, which is not a ready lesson or playground`);
+    }
+    assert.equal(new Set(c.path).size, c.path.length, `${id} path repeats a step`);
+  }
+});
+
+test("lens ids match their keys", () => {
+  for (const id of LENS_IDS) assert.equal(LENSES[id].id, id);
+});
+
+test("the sitemap lists every lens landing page", () => {
+  const urls = sitemap().map((e) => new URL(e.url).pathname);
+  for (const id of LENS_IDS) {
+    assert.ok(urls.includes(`/for/${id}`), `/for/${id} is missing from the sitemap`);
+  }
+});
+
+test("site-wide framing is not scoped to UX — that lives in the UX lens", () => {
+  for (const file of ["app/layout.tsx", "components/og-card.tsx", "app/page.tsx", "app/learn/page.tsx", "lib/curriculum.ts"]) {
+    const src = readFileSync(join(ROOT, file), "utf8");
+    assert.doesNotMatch(src, /UX designers|behavior designer|usability study|brand-voice/i, `${file} frames the whole site for UX`);
+  }
 });

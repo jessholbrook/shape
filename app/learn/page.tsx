@@ -15,7 +15,7 @@ export default function LearnPage() {
         <SectionNumber>02</SectionNumber>
 
         <h1 className="font-display text-[64px] md:text-[88px] leading-[0.95] tracking-tight text-ink mt-8 max-w-4xl">
-          Model behavior designer{" "}
+          Model behavior{" "}
           <span className="italic">101 → 201</span>.
         </h1>
 
