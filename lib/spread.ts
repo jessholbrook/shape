@@ -202,7 +202,7 @@ export function buildReport(
 // the main thread. So ranking uses a cheap token-set Jaccard over all pairs,
 // and the expensive LCS is reserved for the single pair the user opens.
 
-function tokenSet(text: string): Set<string> {
+export function tokenSet(text: string): Set<string> {
   const words = text
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\s]/gu, " ")
