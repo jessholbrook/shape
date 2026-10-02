@@ -192,7 +192,7 @@ function MeasureBlock({
         {m.kind === "classify" && `Judged by ${m.judge.model}: “${m.question}” — hit = ${m.target}`}
         {m.kind === "rate" && `Judged by ${m.judge.model} on 1–${m.scale}: “${m.rubric}”`}
         {m.kind === "assertion" && "Exact text check"}
-        {m.kind === "regex" && `Pattern /${m.pattern}/${m.flags ?? ""}`}
+        {m.kind === "regex" && <span title={`/${m.pattern}/${m.flags ?? ""}`}>{m.describe ?? `Pattern /${m.pattern}/${m.flags ?? ""}`}</span>}
         {m.kind === "length" && "Words per answer"}
         {judged && " · a model's call, not ground truth"}
       </p>

@@ -73,6 +73,7 @@ export const CORE: LensContent = {
     "/play/spread",
     "/learn/refusal-and-boundaries",
     "/play/refusal",
+    "/lab",
   ],
 };
 
@@ -113,6 +114,7 @@ export const LENSES: Record<LensId, Lens> = {
       "/play/tone",
       "/learn/personas-for-ai",
       "/play/persona",
+      "/lab?template=side-with-user",
     ],
   },
   policy: {
@@ -151,6 +153,7 @@ export const LENSES: Record<LensId, Lens> = {
       "/play/portability",
       "/learn/judging-at-scale",
       "/play/judge",
+      "/lab?template=rule-vs-reason",
     ],
   },
   philosophy: {
@@ -189,6 +192,7 @@ export const LENSES: Record<LensId, Lens> = {
       "/play/spread",
       "/learn/evaluation",
       "/play/evals",
+      "/lab?template=framing",
     ],
   },
   education: {
@@ -227,6 +231,7 @@ export const LENSES: Record<LensId, Lens> = {
       "/play/context",
       "/learn/evaluation",
       "/play/evals",
+      "/lab?template=padding",
     ],
   },
 };

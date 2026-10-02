@@ -1,11 +1,15 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { useDefaultProvider } from "@/lib/hooks/use-default-provider";
 import { useUnsavedWork } from "@/lib/hooks/use-unsaved-work";
+import { useLens } from "@/lib/hooks/use-lens";
+import { useHydrated } from "@/lib/hooks/use-local-store";
+import { getTemplate, templateFor, DEFAULT_TEMPLATE_ID } from "@/lib/experiments/templates";
+import { TemplatePicker } from "@/components/lab/template-picker";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage } from "@/lib/usage";
 import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
@@ -14,7 +18,6 @@ import type { ExperimentDraft } from "@/lib/drafts";
 import {
   analyze,
   canonicalJson,
-  starterExperiment,
   templateVars,
   type Experiment,
   type ExperimentRun,
@@ -51,7 +54,11 @@ export function LabWorkshop() {
 
   // A fixed timestamp keeps the server and hydration renders identical; real
   // times are stamped on run and save.
-  const [experiment, setExperiment] = useState<Experiment>(() => starterExperiment(INITIAL_MODEL, 0));
+  const [experiment, setExperiment] = useState<Experiment>(() => getTemplate(DEFAULT_TEMPLATE_ID)!.build(INITIAL_MODEL, 0));
+  const [templateId, setTemplateId] = useState<string | null>(initialDraftId ? null : DEFAULT_TEMPLATE_ID);
+  const { lens } = useLens();
+  const hydrated2 = useHydrated();
+  const templateApplied = useRef(false);
   const [ranDesign, setRanDesign] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -95,6 +102,33 @@ export function LabWorkshop() {
     enabled: !initialDraftId,
     onResolve: useCallback((provider: ProviderId, model: string) => setModel({ provider, model }), [setModel]),
   });
+
+  /** Swap in a template, keeping the reader's chosen run model. */
+  const loadTemplate = useCallback((id: string) => {
+    const t = getTemplate(id);
+    if (!t) return;
+    setExperiment((prev) => t.build(prev.base.model, 0));
+    setRanDesign(null);
+    setTemplateId(id);
+    setDirty(false);
+  }, []);
+
+  // After hydration, once, and never over a draft: ?template= wins, then the
+  // reader's lens. Same contract as the playgrounds' lens seeds — the server
+  // render always shows the default, so nothing mismatches.
+  useEffect(() => {
+    if (templateApplied.current || initialDraftId || !hydrated2) return;
+    templateApplied.current = true;
+    const wanted = getTemplate(searchParams.get("template")) ?? templateFor(lens);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- lens and URL are only readable after hydration
+    if (wanted.id !== DEFAULT_TEMPLATE_ID) loadTemplate(wanted.id);
+  }, [hydrated2, initialDraftId, lens, loadTemplate, searchParams]);
+
+  function pickTemplate(id: string) {
+    if (id === templateId && !dirty && experiment.runs.length === 0) return;
+    if ((dirty || experiment.runs.length > 0) && !window.confirm("Start from this template? It replaces your current experiment.")) return;
+    loadTemplate(id);
+  }
 
   const e = experiment;
   const locked = running;
@@ -177,6 +211,10 @@ export function LabWorkshop() {
         disabled={running}
         artifact="Experiment"
       />
+
+      {!initialDraftId && !running && (
+        <TemplatePicker lens={hydrated2 ? lens : null} activeId={templateId} onPick={pickTemplate} />
+      )}
 
       {/* 01 — Question */}
       <section className={PANEL} aria-label="Question and hypothesis">

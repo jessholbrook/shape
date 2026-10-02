@@ -7,6 +7,7 @@ import { BridgeCard } from "@/components/home/bridge-card";
 import { LENSES, LENS_IDS, isLensId } from "@/lib/lenses";
 import { MODULES, moduleTitle } from "@/lib/curriculum";
 import { PLAYGROUNDS } from "@/lib/playgrounds";
+import { getTemplate, templateFor } from "@/lib/experiments/templates";
 import { RememberLens } from "./remember-lens";
 
 type Props = { params: Promise<{ lens: string }> };
@@ -24,7 +25,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /** Resolve a path href to a display row from the lesson or playground registry. */
-function pathItem(href: string): { kind: "Lesson" | "Playground"; title: string; blurb: string } | null {
+function pathItem(href: string): { kind: "Lesson" | "Playground" | "Experiment"; title: string; blurb: string } | null {
+  if (href === "/lab" || href.startsWith("/lab?")) {
+    const t = getTemplate(new URLSearchParams(href.split("?")[1] ?? "").get("template")) ?? templateFor(null);
+    return { kind: "Experiment", title: t.title, blurb: t.blurb };
+  }
   const mod = MODULES.find((m) => m.href === href);
   if (mod) return { kind: "Lesson", title: moduleTitle(mod), blurb: mod.blurb };
   const pg = PLAYGROUNDS.find((p) => p.href === href);

@@ -330,3 +330,28 @@ test("/lab opens on the starter experiment and holds Run until a model is ready"
 
   expect(errors).toEqual([]);
 });
+
+/**
+ * Templates: a ?template= link opens on that template, a lens sends the lab
+ * to its own template, and the picker swaps templates without a key.
+ */
+test("/lab templates load from the URL, the lens, and the picker", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  const question = page.getByLabel("Question", { exact: true });
+
+  await page.goto("/lab?template=framing", { waitUntil: "networkidle" });
+  await expect(question).toHaveValue(/lives saved or lives lost/);
+
+  await page.goto("/for/education", { waitUntil: "networkidle" });
+  await page.goto("/lab", { waitUntil: "networkidle" });
+  await expect(question).toHaveValue(/AI grader/);
+  const picker = page.getByRole("group", { name: "Templates" });
+  await expect(picker.getByRole("button").first()).toContainText("for you");
+
+  await picker.getByRole("button", { name: /Do rules hold better/ }).click();
+  await expect(question).toHaveValue(/rule's rationale/);
+  await expect(picker.getByRole("button", { name: /Do rules hold better/ })).toHaveAttribute("aria-pressed", "true");
+
+  expect(errors).toEqual([]);
+});

@@ -51,7 +51,15 @@ export type Item = {
 
 export type Measure =
   | { id: string; label: string; kind: "assertion"; assertion: Assertion }
-  | { id: string; label: string; kind: "regex"; pattern: string; flags?: string }
+  | {
+      id: string;
+      label: string;
+      kind: "regex";
+      pattern: string;
+      flags?: string;
+      /** Plain-language reading of the pattern, shown in place of the regex. */
+      describe?: string;
+    }
   | { id: string; label: string; kind: "length" }
   | {
       id: string;
@@ -446,10 +454,12 @@ export function summarize(e: Experiment, c: Comparison): string {
 
   if (c.kind === "binary") {
     const d = c.diff;
-    const range = `[${pts(d.lo)} to ${pts(d.hi)}]`;
     if (!isClear(c)) {
-      return `No clear difference in “${measure}” between ${cond} and ${base}: ${signed(pts(d.diff))} points ${range}, ${ns}.`;
+      return `No clear difference in “${measure}” between ${cond} and ${base}: ${signed(pts(d.diff))} points [${pts(d.lo)} to ${pts(d.hi)}], ${ns}.`;
     }
+    // "Lowered by 60 [24 to 78]" — once the verb carries the direction, the
+    // bracket is in magnitudes too, so the reader never flips a sign.
+    const range = d.diff > 0 ? `[${pts(d.lo)} to ${pts(d.hi)}]` : `[${pts(-d.hi)} to ${pts(-d.lo)}]`;
     return `${cond} ${d.diff > 0 ? "raised" : "lowered"} “${measure}” by ${Math.abs(pts(d.diff))} points ${range} — a ${effectLabel(c.effect)} effect (h = ${c.effect.toFixed(2)}), ${ns}.`;
   }
 
@@ -457,10 +467,10 @@ export function summarize(e: Experiment, c: Comparison): string {
     return `Not enough scored runs to compare “${measure}” between ${cond} and ${base} (${ns}; at least 2 each).`;
   }
   const d = c.diff;
-  const range = `[${num(d.lo)} to ${num(d.hi)}]`;
   if (!isClear(c)) {
-    return `No clear difference in “${measure}” between ${cond} and ${base}: ${signed(Number(num(d.diff)))} ${range}, ${ns}.`;
+    return `No clear difference in “${measure}” between ${cond} and ${base}: ${signed(Number(num(d.diff)))} [${num(d.lo)} to ${num(d.hi)}], ${ns}.`;
   }
+  const range = d.diff > 0 ? `[${num(d.lo)} to ${num(d.hi)}]` : `[${num(-d.hi)} to ${num(-d.lo)}]`;
   const g = c.effect === null ? "" : ` — a ${effectLabel(c.effect)} effect (g = ${c.effect.toFixed(2)})`;
   return `${cond} ${d.diff > 0 ? "raised" : "lowered"} “${measure}” by ${num(Math.abs(d.diff))} ${range}${g}, ${ns}.`;
 }

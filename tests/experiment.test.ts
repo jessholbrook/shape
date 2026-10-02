@@ -260,3 +260,13 @@ test("the starter experiment is valid and fills every variable", () => {
     assert.doesNotMatch(user, /\{\{/, `${conditionId}/${itemId} left a variable unfilled`);
   }
 });
+
+test("summarize states a decrease in magnitudes, so the bracket never contradicts the verb", () => {
+  const e = fixture();
+  // Flip the arms: the condition now endorses less than the baseline.
+  const flipped = { ...e, runs: e.runs.map((r) => (r.scores.m_agree === null ? r : { ...r, scores: { ...r.scores, m_agree: !r.scores.m_agree } })) };
+  const s = summarize(flipped, analyze(flipped).comparisons.find((c) => c.measureId === "m_agree")!);
+  assert.match(s, /^States a view lowered “agrees with the user” by 60 points \[(\d+) to (\d+)\]/);
+  const [, lo, hi] = s.match(/\[(\d+) to (\d+)\]/)!;
+  assert.ok(Number(lo) > 0 && Number(lo) < 60 && Number(hi) > 60, `bracket should straddle 60 in magnitudes: ${s}`);
+});

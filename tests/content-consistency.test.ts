@@ -19,6 +19,7 @@ import sitemap from "../app/sitemap";
 import { CORE, LENSES, LENS_IDS, isLensId } from "../lib/lenses";
 import { packKeys, seedFor, type SeedPack } from "../lib/seeds";
 import { LESSON_INTROS } from "../lib/lens-intros";
+import { TEMPLATES, templateFor } from "../lib/experiments/templates";
 import { REFUSAL_PACK, SEED_PROBES } from "../lib/refusal";
 import {
   SPREAD_PACK,
@@ -198,6 +199,8 @@ test("README's curriculum table has one row per lesson", () => {
 // ── Lenses ──────────────────────────────────────────────────────────────────
 
 const ROUTABLE = new Set([
+  "/lab",
+  ...TEMPLATES.map((t) => `/lab?template=${t.id}`),
   ...MODULES.filter((m) => m.status === "ready").map((m) => m.href),
   ...PLAYGROUNDS.filter((p) => p.status === "ready").map((p) => p.href),
 ]);
@@ -214,7 +217,7 @@ test("every lens bridge and path entry resolves to a ready route", () => {
     }
     assert.ok(c.path.length >= 4, `${id} path should have at least 4 steps`);
     for (const href of c.path) {
-      assert.ok(ROUTABLE.has(href), `${id} path includes ${href}, which is not a ready lesson or playground`);
+      assert.ok(ROUTABLE.has(href), `${id} path includes ${href}, which is not a ready lesson, playground or lab template`);
     }
     assert.equal(new Set(c.path).size, c.path.length, `${id} path repeats a step`);
   }
@@ -329,5 +332,16 @@ test("every non-UX lens has an intro for every ready lesson, and no strays", () 
     for (const slug of Object.keys(intros)) {
       assert.ok(lessons.includes(slug), `${lens} has an intro for "${slug}", which is not a ready lesson`);
     }
+  }
+});
+
+test("every lens path ends in an experiment, and each lens's is its own template", () => {
+  for (const [id, c] of LENS_CONTENT) {
+    const last = c.path[c.path.length - 1];
+    assert.ok(last === "/lab" || last.startsWith("/lab?template="), `${id} path should end in the lab`);
+  }
+  for (const id of LENS_IDS) {
+    const last = LENSES[id].path[LENSES[id].path.length - 1];
+    assert.equal(last, `/lab?template=${templateFor(id).id}`, `${id} path ends in a different template than the lab opens on`);
   }
 });
