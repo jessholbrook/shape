@@ -79,7 +79,7 @@ export default function Home() {
       <Divider />
 
       {/* BRIDGE */}
-      <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
+      <section id="lenses" className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
         <SectionNumber>03</SectionNumber>
         <LensBridges />
       </section>

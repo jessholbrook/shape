@@ -18,6 +18,7 @@ import { PLAYGROUNDS } from "../lib/playgrounds";
 import sitemap from "../app/sitemap";
 import { CORE, LENSES, LENS_IDS, isLensId } from "../lib/lenses";
 import { packKeys, seedFor, type SeedPack } from "../lib/seeds";
+import { LESSON_INTROS } from "../lib/lens-intros";
 import { REFUSAL_PACK, SEED_PROBES } from "../lib/refusal";
 import {
   SPREAD_PACK,
@@ -317,4 +318,16 @@ test("legacy SEED_* exports still match the scenarios they always were", () => {
   assert.equal(JUDGE_PACK.ux?.pairs, SEED_PAIRS);
   assert.equal(REFUSAL_PACK.core.probes, SEED_PROBES);
   assert.equal(PORTABILITY_PACK.core.system, PORTABILITY_SEED_SYSTEM);
+});
+
+test("every non-UX lens has an intro for every ready lesson, and no strays", () => {
+  const lessons = LESSONS.filter((m) => m.status === "ready").map((m) => m.slug);
+  for (const [lens, intros] of Object.entries(LESSON_INTROS)) {
+    for (const slug of lessons) {
+      assert.ok(intros[slug]?.trim(), `${lens} has no intro for lesson "${slug}"`);
+    }
+    for (const slug of Object.keys(intros)) {
+      assert.ok(lessons.includes(slug), `${lens} has an intro for "${slug}", which is not a ready lesson`);
+    }
+  }
 });

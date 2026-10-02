@@ -294,3 +294,18 @@ test("/play/spread switches to the philosophy example without a key", async ({ p
 
   expect(errors).toEqual([]);
 });
+
+test("lessons open with the reader's lens intro, and none without a lens", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+
+  await page.goto("/learn/distributions-not-outputs", { waitUntil: "networkidle" });
+  await expect(page.getByText(/^Reading as/)).toHaveCount(0);
+
+  await page.goto("/for/philosophy", { waitUntil: "networkidle" });
+  await page.goto("/learn/distributions-not-outputs", { waitUntil: "networkidle" });
+  await expect(page.getByText("Reading as philosophy & ethics")).toBeVisible();
+  await expect(page.getByText(/a distribution of verdicts/)).toBeVisible();
+
+  expect(errors).toEqual([]);
+});
