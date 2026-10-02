@@ -252,3 +252,45 @@ test("/play/tools relay mode seeds a retrieved document and offers the provenanc
   expect((await values("Scenario name")).filter((v) => v === "Retrieved notes")).toHaveLength(1);
   expect(errors).toEqual([]);
 });
+
+/**
+ * Lens packs. A ?lens= link must land on that lens's scenario and stick, the
+ * picker must swap scenarios without a key, and a saved draft must never be
+ * overwritten by the lens — the draft owns its content.
+ */
+test("/play/refusal?lens=policy opens on the policy probe panel", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/play/refusal?lens=policy", { waitUntil: "networkidle" });
+
+  const picker = page.getByRole("group", { name: "Example scenario" });
+  await expect(picker.getByRole("button", { name: "Policy" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText("Sounds adversarial, isn't")).toBeVisible();
+
+  // The lens sticks: a plain visit to another playground uses it too.
+  await page.goto("/play/portability", { waitUntil: "networkidle" });
+  const textareas = page.locator("textarea");
+  await expect
+    .poll(() => textareas.evaluateAll((els) => els.some((e) => (e as HTMLTextAreaElement).value.includes("claimant handbook"))))
+    .toBe(true);
+
+  expect(errors).toEqual([]);
+});
+
+test("/play/spread switches to the philosophy example without a key", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/play/spread", { waitUntil: "networkidle" });
+
+  const picker = page.getByRole("group", { name: "Example scenario" });
+  await expect(picker.getByRole("button", { name: "General" })).toHaveAttribute("aria-pressed", "true");
+  await picker.getByRole("button", { name: "Philosophy" }).click();
+  await expect(picker.getByRole("button", { name: "Philosophy" })).toHaveAttribute("aria-pressed", "true");
+
+  const textareas = page.locator("textarea");
+  await expect
+    .poll(() => textareas.evaluateAll((els) => els.some((e) => (e as HTMLTextAreaElement).value.includes("trolley"))))
+    .toBe(true);
+
+  expect(errors).toEqual([]);
+});

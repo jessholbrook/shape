@@ -5,6 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { useDefaultProvider } from "@/lib/hooks/use-default-provider";
+import { useLensSeed } from "@/lib/hooks/use-lens-seed";
+import { seedFor } from "@/lib/seeds";
+import { SeedPackPicker } from "@/components/play/seed-pack-picker";
 import { useUnsavedWork } from "@/lib/hooks/use-unsaved-work";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
@@ -18,8 +21,8 @@ import {
   LENGTH_LABEL,
   MAX_PAIRS,
   MIN_PAIRS,
-  SEED_CRITERIA,
-  SEED_PAIRS,
+  JUDGE_PACK,
+  type JudgeSeed,
   SELF_JUDGE_TEMPERATURE,
   VERDICT_LABEL,
   buildJudgeReport,
@@ -80,8 +83,8 @@ export function JudgeLab() {
   const [provider, setProvider] = useState<ProviderId>("webllm");
   const [model, setModel] = useState(PROVIDERS.webllm.defaultModel);
   const [temperature, setTemperature] = useState(0.2);
-  const [criteria, setCriteria] = useState(SEED_CRITERIA);
-  const [pairs, setPairs] = useState<Pair[]>(SEED_PAIRS);
+  const [criteria, setCriteria] = useState(JUDGE_PACK.core.criteria);
+  const [pairs, setPairs] = useState<Pair[]>(JUDGE_PACK.core.pairs);
   const [results, setResults] = useState<PairResult[]>([]);
   const [mode, setMode] = useState<JudgeMode>("pairs");
   const [lengthCheck, setLengthCheck] = useState(false);
@@ -141,6 +144,25 @@ export function JudgeLab() {
     enabled: !initialDraftId,
     onResolve: handleResolveProvider,
   });
+
+  const applySeed = useCallback((seed: JudgeSeed) => {
+    setCriteria(seed.criteria);
+    setPairs(seed.pairs);
+    setResults([]);
+    setDirty(false);
+    setReflectionDismissed(false);
+  }, []);
+  const { active: activePack, choose: choosePack } = useLensSeed({
+    enabled: !initialDraftId,
+    pack: JUDGE_PACK,
+    apply: applySeed,
+  });
+  const activeSeed = activePack ? seedFor(JUDGE_PACK, activePack) : undefined;
+  const seedEdited =
+    dirty ||
+    !activeSeed ||
+    criteria !== activeSeed.criteria ||
+    pairs !== activeSeed.pairs;
 
   const isSelf = mode === "self";
   const keyFor = (p: ProviderId) => !providerNeedsKey(p) || !!keys[p];
@@ -448,6 +470,14 @@ export function JudgeLab() {
         action={isSelf ? "write and judge" : "run the judge"}
       />
       <WebLLMUnsupportedBanner show={isWebLLM} />
+
+      <SeedPackPicker
+        pack={JUDGE_PACK}
+        active={activePack}
+        onChoose={choosePack}
+        hasChanges={seedEdited}
+        disabled={running}
+      />
 
       <div className="bg-surface border border-line rounded-[16px] p-4 flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex rounded-[10px] border border-line bg-canvas p-0.5">

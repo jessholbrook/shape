@@ -9,6 +9,14 @@ const LENS_EVENT = "shape:lens-changed";
 
 function readLens(): LensId | null {
   try {
+    // A ?lens= link wins, and sticks — so /play/refusal?lens=policy works as
+    // a shareable entry point. Written directly rather than via writeLens:
+    // this runs inside a store read, which must not fire the change event.
+    const fromUrl = new URLSearchParams(window.location.search).get("lens");
+    if (isLensId(fromUrl)) {
+      window.localStorage.setItem(LENS_KEY, fromUrl);
+      return fromUrl;
+    }
     const v = window.localStorage.getItem(LENS_KEY);
     return isLensId(v) ? v : null;
   } catch {

@@ -1,4 +1,5 @@
 import { ProviderId, getModel } from "./providers";
+import type { SeedPack } from "./seeds";
 
 /**
  * Spread runs one configuration N times and scores the variance. The teaching
@@ -332,3 +333,52 @@ export const SEED_ASSERTIONS: Assertion[] = [
   { id: "seed_bang", kind: "excludes", value: "!" },
   { id: "seed_topic", kind: "contains", value: "interview" },
 ];
+
+// --- Lens packs --------------------------------------------------------------
+
+export type SpreadSeed = { system: string; message: string; assertions: Assertion[] };
+
+/**
+ * Every pack keeps the seed's shape: one instruction the model is asked for
+ * directly and tends to drift on anyway, beside claims that usually hold, so
+ * the first report splits instead of sweeping green. The original seed lives
+ * on as the UX pack; the general pack moves the same exclamation-mark trap to
+ * a neutral setting, which keeps the Distributions lesson's example true.
+ */
+export const SPREAD_PACK: SeedPack<SpreadSeed> = {
+  core: {
+    system:
+      "You write for a community library's website. Warm, plain language. No exclamation marks.",
+    message: "Write a one-sentence welcome message for the library's homepage.",
+    assertions: [
+      { id: "seed_words", kind: "maxWords", value: "25" },
+      { id: "seed_bang", kind: "excludes", value: "!" },
+      { id: "seed_topic", kind: "contains", value: "library" },
+    ],
+  },
+  ux: { system: SEED_SYSTEM, message: SEED_MESSAGE, assertions: SEED_ASSERTIONS },
+  policy: {
+    system:
+      "You draft public notices for a city government. Plain language, neutral and factual. Exactly two sentences. No exclamation marks.",
+    message:
+      "Write the notice announcing that a protected bike lane opens on Main Street next month.",
+    assertions: [
+      { id: "seed_words", kind: "maxWords", value: "50" },
+      { id: "seed_bang", kind: "excludes", value: "!" },
+      { id: "seed_topic", kind: "contains", value: "Main Street" },
+    ],
+  },
+  philosophy: {
+    system:
+      "You are an ethics tutor. Begin with a one-word verdict — Yes or No — then give one sentence of reasoning. Never say \"it depends.\"",
+    message:
+      "A runaway trolley will kill five people unless you pull a lever that diverts it onto a track where it will kill one. Should you pull the lever?",
+    // The "yes" hit rate *is* the verdict distribution: one run is an
+    // answer, ten runs show whether the model has a position at all.
+    assertions: [
+      { id: "seed_verdict", kind: "contains", value: "yes" },
+      { id: "seed_hedge", kind: "excludes", value: "it depends" },
+      { id: "seed_words", kind: "maxWords", value: "60" },
+    ],
+  },
+};

@@ -5,6 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { useDefaultProvider } from "@/lib/hooks/use-default-provider";
+import { useLensSeed } from "@/lib/hooks/use-lens-seed";
+import { seedFor } from "@/lib/seeds";
+import { SeedPackPicker } from "@/components/play/seed-pack-picker";
 import { useUnsavedWork } from "@/lib/hooks/use-unsaved-work";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
@@ -14,9 +17,8 @@ import { REFLECTION } from "@/lib/reflection-questions";
 import {
   DEFAULT_RUNS,
   RUN_COUNTS,
-  SEED_ASSERTIONS,
-  SEED_MESSAGE,
-  SEED_SYSTEM,
+  SPREAD_PACK,
+  type SpreadSeed,
   WEBLLM_DEFAULT_RUNS,
   buildReport,
   concurrencyFor,
@@ -42,7 +44,7 @@ import { InfoTip } from "@/components/info-tip";
 const INITIAL_CONFIG: ConfigState = {
   provider: "webllm",
   model: PROVIDERS.webllm.defaultModel,
-  system: SEED_SYSTEM,
+  system: SPREAD_PACK.core.system,
   temperature: 0.7,
 };
 
@@ -60,9 +62,9 @@ export function SpreadMode() {
   const initialDraftId = searchParams.get("draft");
 
   const [config, setConfig] = useState<ConfigState>(INITIAL_CONFIG);
-  const [userMessage, setUserMessage] = useState(SEED_MESSAGE);
+  const [userMessage, setUserMessage] = useState(SPREAD_PACK.core.message);
   const [runCount, setRunCount] = useState(WEBLLM_DEFAULT_RUNS);
-  const [assertions, setAssertions] = useState<Assertion[]>(SEED_ASSERTIONS);
+  const [assertions, setAssertions] = useState<Assertion[]>(SPREAD_PACK.core.assertions);
   const [runs, setRuns] = useState<SpreadRun[]>([]);
   const [running, setRunning] = useState(false);
   const [compare, setCompare] = useState<string[]>([]);
@@ -105,6 +107,28 @@ export function SpreadMode() {
     enabled: !initialDraftId,
     onResolve: handleResolveProvider,
   });
+
+  const applySeed = useCallback((seed: SpreadSeed) => {
+    setConfig((prev) => ({ ...prev, system: seed.system }));
+    setUserMessage(seed.message);
+    setAssertions(seed.assertions);
+    setRuns([]);
+    setCompare([]);
+    setDirty(false);
+    setReflectionDismissed(false);
+  }, []);
+  const { active: activePack, choose: choosePack } = useLensSeed({
+    enabled: !initialDraftId,
+    pack: SPREAD_PACK,
+    apply: applySeed,
+  });
+  const activeSeed = activePack ? seedFor(SPREAD_PACK, activePack) : undefined;
+  const seedEdited =
+    dirty ||
+    !activeSeed ||
+    config.system !== activeSeed.system ||
+    userMessage !== activeSeed.message ||
+    assertions !== activeSeed.assertions;
 
   const provider = config.provider;
   const maxRuns = maxRunsFor(provider);
@@ -277,6 +301,14 @@ export function SpreadMode() {
         action="run the spread"
       />
       <WebLLMUnsupportedBanner show={isWebLLM} />
+
+      <SeedPackPicker
+        pack={SPREAD_PACK}
+        active={activePack}
+        onChoose={choosePack}
+        hasChanges={seedEdited}
+        disabled={running}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <ConfigPanel

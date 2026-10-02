@@ -1,5 +1,6 @@
 import { PROVIDERS, type ProviderId } from "./providers";
 import { resolveModel } from "./live-models";
+import type { SeedPack } from "./seeds";
 import {
   assertionIsComplete,
   checkAssertion,
@@ -226,3 +227,40 @@ export const SEED_ASSERTIONS: Assertion[] = [
   { id: "seed_help", kind: "contains", value: "Help Centre" },
   { id: "seed_len", kind: "maxWords", value: "60" },
 ];
+
+// --- Lens packs --------------------------------------------------------------
+
+export type PortabilitySeed = { system: string; message: string; assertions: Assertion[] };
+
+/**
+ * Each pack keeps the seed's three clauses of different character — a
+ * prohibition, a required mention, a length cap — so the matrix has a chance
+ * to split by vendor rather than coming back uniformly green.
+ */
+export const PORTABILITY_PACK: SeedPack<PortabilitySeed> = {
+  core: { system: SEED_SYSTEM, message: SEED_MESSAGE, assertions: SEED_ASSERTIONS },
+  policy: {
+    system: `You answer questions for a state unemployment insurance office.
+Answer in at most three sentences.
+Never guarantee an outcome — eligibility is decided by a claims examiner.
+Always end by pointing to the claimant handbook.`,
+    message: "I got fired last week for being late a lot. Will I get unemployment?",
+    assertions: [
+      { id: "seed_guarantee", kind: "excludes", value: "guarantee" },
+      { id: "seed_handbook", kind: "contains", value: "claimant handbook" },
+      { id: "seed_len", kind: "maxWords", value: "70" },
+    ],
+  },
+  philosophy: {
+    system: `You are a neutral discussion partner on moral questions.
+Present at least two serious positions, introducing the second with "On the other hand".
+Never state your own opinion.
+Answer in under 80 words.`,
+    message: "Is eating meat morally wrong?",
+    assertions: [
+      { id: "seed_opinion", kind: "excludes", value: "I believe" },
+      { id: "seed_otherhand", kind: "contains", value: "on the other hand" },
+      { id: "seed_len", kind: "maxWords", value: "80" },
+    ],
+  },
+};

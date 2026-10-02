@@ -5,14 +5,17 @@ import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { useDefaultProvider } from "@/lib/hooks/use-default-provider";
+import { useLensSeed } from "@/lib/hooks/use-lens-seed";
+import { seedFor } from "@/lib/seeds";
+import { SeedPackPicker } from "@/components/play/seed-pack-picker";
 import { useUnsavedWork } from "@/lib/hooks/use-unsaved-work";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
 import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
 import {
-  DEFAULT_REFUSAL_GUIDELINES,
   EMPTY_RESULT,
-  SEED_PROBES,
+  REFUSAL_PACK,
+  type RefusalSeed,
   evaluateMatch,
   type Probe,
   type ProbeResult,
@@ -43,10 +46,10 @@ export function RefusalLab() {
   const [provider, setProvider] = useState<ProviderId>("webllm");
   const [model, setModel] = useState<string>(PROVIDERS.webllm.defaultModel);
   const [temperature, setTemperature] = useState(0.3);
-  const [guidelines, setGuidelines] = useState(DEFAULT_REFUSAL_GUIDELINES);
-  const [probes, setProbes] = useState<Probe[]>(SEED_PROBES);
+  const [guidelines, setGuidelines] = useState(REFUSAL_PACK.core.guidelines);
+  const [probes, setProbes] = useState<Probe[]>(REFUSAL_PACK.core.probes);
   const [results, setResults] = useState<Record<string, ProbeResult>>(() =>
-    emptyResults(SEED_PROBES),
+    emptyResults(REFUSAL_PACK.core.probes),
   );
   const [running, setRunning] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -82,6 +85,25 @@ export function RefusalLab() {
       setModel(m);
     }, []),
   });
+
+  const applySeed = useCallback((seed: RefusalSeed) => {
+    setGuidelines(seed.guidelines);
+    setProbes(seed.probes);
+    setResults(emptyResults(seed.probes));
+    setDirty(false);
+    setReflectionDismissed(false);
+  }, []);
+  const { active: activePack, choose: choosePack } = useLensSeed({
+    enabled: !initialDraftId,
+    pack: REFUSAL_PACK,
+    apply: applySeed,
+  });
+  const activeSeed = activePack ? seedFor(REFUSAL_PACK, activePack) : undefined;
+  const seedEdited =
+    dirty ||
+    !activeSeed ||
+    guidelines !== activeSeed.guidelines ||
+    probes !== activeSeed.probes;
 
   const ready = hydrated && (!providerNeedsKey(provider) || !!keys[provider]);
 
@@ -225,6 +247,14 @@ export function RefusalLab() {
         action="run the panel"
       />
       <WebLLMUnsupportedBanner show={provider === "webllm"} />
+
+      <SeedPackPicker
+        pack={REFUSAL_PACK}
+        active={activePack}
+        onChoose={choosePack}
+        hasChanges={seedEdited}
+        disabled={running}
+      />
 
       {/* Provider / model / temperature */}
       <ProviderModelTempRow
