@@ -549,6 +549,11 @@ export function buildManifest(
   };
 }
 
+/** When the runs happened: the last run's start, or the last edit for a design with no runs. */
+export function ranAtOf(e: Pick<Experiment, "runs" | "updatedAt">): string {
+  return new Date(e.runs.reduce((t, r) => Math.max(t, r.startedAt ?? 0), 0) || e.updatedAt).toISOString();
+}
+
 /** JSON with object keys sorted at every level, so equal manifests hash equally. */
 export function canonicalJson(value: unknown): string {
   return JSON.stringify(value, (_key, v) =>

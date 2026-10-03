@@ -33,6 +33,8 @@ import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-ba
 import { INPUT, Label, MONO_INPUT, PANEL, PanelHeader } from "@/components/lab/fields";
 import { ConditionsEditor, ItemsEditor, MeasuresEditor } from "@/components/lab/setup";
 import { Findings, ManifestPanel, ResultsTable, RunList } from "@/components/lab/results";
+import { SharePanel } from "@/components/lab/share-panel";
+import { useShareStatus } from "@/lib/hooks/use-share-status";
 
 const INITIAL_MODEL: LabModel = { provider: "webllm", model: PROVIDERS.webllm.defaultModel };
 
@@ -60,6 +62,7 @@ export function LabWorkshop() {
   const [templateId, setTemplateId] = useState<string | null>(initialDraftId ? null : DEFAULT_TEMPLATE_ID);
   const { lens } = useLens();
   const hosted = useHostedStatus();
+  const sharing = useShareStatus();
   const hydrated2 = useHydrated();
   const templateApplied = useRef(false);
   const [ranDesign, setRanDesign] = useState<string | null>(null);
@@ -162,6 +165,13 @@ export function LabWorkshop() {
   const canRun = hydrated && !missing && !running && !incomplete && !overQuota;
   const stale = e.runs.length > 0 && ranDesign !== null && ranDesign !== designKey(e);
   const done = e.runs.filter((r) => r.status === "done" || r.status === "error").length;
+  const shareBlocked = running
+    ? "Wait for the run to finish."
+    : stale
+      ? "The setup has changed since these runs. Run again, or undo the change, so the link shows results for the setup it describes."
+      : !e.question.trim()
+        ? "Write the question before sharing."
+        : null;
 
   async function run() {
     if (!canRun) return;
@@ -219,6 +229,16 @@ export function LabWorkshop() {
 
       {!initialDraftId && !running && (
         <TemplatePicker lens={hydrated2 ? lens : null} activeId={templateId} onPick={pickTemplate} />
+      )}
+
+      {e.forkedFrom && (
+        <p className="bg-surface border border-line rounded-[12px] px-4 py-3 font-sans text-[14px] text-ink-muted" data-testid="lab-rerun-of">
+          A rerun of a shared experiment.{" "}
+          <a href={`/e/${e.forkedFrom.slug}`} target="_blank" rel="noopener noreferrer" className="text-ink underline decoration-highlight underline-offset-4 decoration-2">
+            See the original results ↗
+          </a>{" "}
+          — run this and compare. Sampling varies, so expect close, not identical.
+        </p>
       )}
 
       {/* 01 — Question */}
@@ -359,6 +379,15 @@ export function LabWorkshop() {
           <RunList experiment={e} />
           <ManifestPanel experiment={e} runner={runnerFor(e.base.model.provider)} />
         </>
+      )}
+
+      {sharing && (
+        <SharePanel
+          experiment={e}
+          title={title.trim() || e.title.trim() || "Untitled experiment"}
+          runner={runnerFor(e.base.model.provider)}
+          blockedReason={shareBlocked}
+        />
       )}
     </div>
   );
