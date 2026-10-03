@@ -382,3 +382,46 @@ test("/play/spread opens its setup as an experiment in a new tab", async ({ page
   expect(page.url()).toMatch(/\/play\/spread/);
   expect(errors).toEqual([]);
 });
+
+/**
+ * /start offers the free ways to run. With the free tier off (no env in CI)
+ * only the in-browser model shows; with it up, hosted Claude leads, and
+ * choosing the in-browser model sticks — the playground doesn't switch the
+ * reader onto hosted Claude behind their back.
+ */
+test("/start shows only the in-browser option when the free tier is off", async ({ page }) => {
+  await page.goto("/start", { waitUntil: "networkidle" });
+  await expect(page.getByTestId("run-local")).toBeVisible();
+  await expect(page.getByTestId("run-local")).toContainText("Never leave your machine");
+  await expect(page.getByTestId("run-hosted")).toHaveCount(0);
+});
+
+test("/start offers hosted Claude when the free tier is up, and keeps an in-browser choice", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.route("**/api/hosted/status", (route) =>
+    route.fulfill({
+      json: { enabled: true, limit: 100, remaining: 87, resetsAt: "2099-01-01T00:00:00.000Z", model: "claude-haiku-4-5" },
+    }),
+  );
+
+  await page.goto("/start", { waitUntil: "networkidle" });
+  const hosted = page.getByTestId("run-hosted");
+  await expect(hosted).toContainText("Recommended");
+  await expect(hosted).toContainText("87 of 100 free runs left today");
+  await expect(hosted).toContainText("Shape doesn't store them");
+
+  // Hosted is the default in a playground…
+  await hosted.getByRole("link", { name: /free Claude/ }).click();
+  await page.waitForURL("**/play/diff");
+  await expect(page.getByTestId("hosted-note").first()).toBeVisible();
+
+  // …unless the reader picked the in-browser model.
+  await page.goto("/start", { waitUntil: "networkidle" });
+  await page.getByTestId("run-local").getByRole("link", { name: /in your browser/ }).click();
+  await page.waitForURL("**/play/diff");
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByTestId("hosted-note")).toHaveCount(0);
+
+  expect(errors).toEqual([]);
+});

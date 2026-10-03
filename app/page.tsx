@@ -61,7 +61,7 @@ export default function Home() {
           <StepCard
             num="01"
             title="Start free."
-            body="A small open model runs right in your browser — no key required. Bring an Anthropic, OpenAI, or Google key when you want bigger models."
+            body="No key required — pick a free way to run and open a playground. Bring an Anthropic, OpenAI, or Google key when you want bigger models."
           />
           <StepCard
             num="02"

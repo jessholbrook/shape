@@ -172,6 +172,9 @@ export function createHostedHandler(deps: HostedDeps) {
   };
 }
 
+// Once per instance: an intentionally-off tier shouldn't log on every page view.
+let warnedOff = false;
+
 export type HostedStatus = { enabled: boolean; limit: number; remaining: number; resetsAt: string; model: string };
 
 /** GET /api/hosted/status — whether the free tier is usable right now, and how much of today is left. */
@@ -183,7 +186,10 @@ export function createStatusHandler(deps: Omit<HostedDeps, "stream">) {
     const config = deps.config;
     if (!config.enabled || !deps.rpc) {
       // Names only, never values: says which setting to fix.
-      if (!config.enabled) console.warn(`hosted: free tier off — ${config.reason}`);
+      if (!config.enabled && !warnedOff) {
+        warnedOff = true;
+        console.warn(`hosted: free tier off — ${config.reason}`);
+      }
       return json(200, off);
     }
 

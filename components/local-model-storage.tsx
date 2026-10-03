@@ -80,7 +80,7 @@ export function LocalModelStorage() {
 
       <p className="font-sans text-[13px] leading-[1.55] text-ink-muted max-w-xl">
         {empty
-          ? "Nothing significant cached for this site yet. The Free option will download a model the first time you open a playground — you can clear it from here any time."
+          ? "Nothing significant cached for this site yet. The in-browser model downloads the first time you use it in a playground — you can clear it from here any time."
           : noUsageInfo
           ? "Your browser doesn't report storage usage. You can still clear the in-browser model below."
           : "Includes the in-browser model (the big chunk) plus a small amount for your drafts and settings. Clearing wipes the model, not your keys or drafts."}

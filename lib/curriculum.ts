@@ -25,10 +25,10 @@ export const MODULES: CurriculumModule[] = [
   {
     num: "00",
     slug: "start",
-    title: "Get your key",
+    title: "Choose how to run",
     kicker: "Setup",
     blurb:
-      "Bring your own model access. Five minutes to set up, then every playground is yours.",
+      "Run free with no key, or bring your own for bigger models. A minute to set up, then every playground is yours.",
     playground: { label: "Setup", href: "/start" },
     artifact: "First successful call",
     href: "/start",
