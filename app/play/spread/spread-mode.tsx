@@ -406,7 +406,9 @@ export function SpreadMode() {
           <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-quiet">
             {isWebLLM
               ? "Free · runs one at a time"
-              : `≈ ${
+              : provider === "shape-free"
+                ? "Free · uses your daily free runs"
+                : `≈ ${
                   costEstimate < 0.01
                     ? "<$0.01"
                     : `$${costEstimate.toFixed(3)}`

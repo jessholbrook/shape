@@ -180,23 +180,28 @@ const ASSUMED_OUTPUT_TOKENS = 250;
  * estimated at four characters each, outputs at a fixed allowance — the same
  * rough model Spread uses. Free when every model involved is free (in-browser).
  */
-export function estimateExperimentCost(e: Experiment): { calls: number; usd: number; free: boolean } {
+export function estimateExperimentCost(e: Experiment): { calls: number; usd: number; free: boolean; hostedCalls: number } {
   const calls = plannedCalls(e);
   let usd = 0;
   let free = true;
+  // Calls that draw on the hosted free tier's daily allowance.
+  let hostedCalls = 0;
+  const isFree = (p: string) => p === "webllm" || p === "shape-free";
   for (const { conditionId, itemId } of expandCells(e)) {
     const call = resolveCall(e, conditionId, itemId);
     const first = call.messages[0];
     const promptChars = call.system.length + (first && first.role === "user" ? first.content.length : 0);
     const meta = getModel(call.provider, call.model);
     const runOutput = Math.min(ASSUMED_OUTPUT_TOKENS, call.maxTokens);
-    if (call.provider !== "webllm") free = false;
+    if (!isFree(call.provider)) free = false;
+    if (call.provider === "shape-free") hostedCalls += e.n;
     if (meta) {
       usd += e.n * ((promptChars / 4 / 1e6) * meta.inputPer1M + (runOutput / 1e6) * meta.outputPer1M);
     }
     for (const m of e.measures.filter(usesJudge)) {
       if (m.kind !== "classify" && m.kind !== "rate") continue;
-      if (m.judge.provider !== "webllm") free = false;
+      if (!isFree(m.judge.provider)) free = false;
+      if (m.judge.provider === "shape-free") hostedCalls += e.n;
       const jm = getModel(m.judge.provider, m.judge.model);
       if (!jm) continue;
       // The judge reads the answer plus its own instructions (~600 chars).
@@ -204,5 +209,5 @@ export function estimateExperimentCost(e: Experiment): { calls: number; usd: num
       usd += e.n * ((judgeIn / 1e6) * jm.inputPer1M + (JUDGE_MAX_TOKENS / 1e6) * jm.outputPer1M);
     }
   }
-  return { calls, usd: free ? 0 : usd, free };
+  return { calls, usd: free ? 0 : usd, free, hostedCalls };
 }

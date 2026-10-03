@@ -1,8 +1,9 @@
 "use client";
 
+import { HostedNote } from "@/components/play/hosted-note";
+import { ProviderOptions } from "@/components/play/provider-options";
 import { useEffect } from "react";
 import {
-  PROVIDER_LIST,
   PROVIDERS,
   type ModelMeta,
   type ProviderId,
@@ -58,11 +59,7 @@ export function ProviderModelTempRow({
           }}
           className="w-full bg-canvas border border-line rounded-[10px] px-3 py-2 font-mono text-[13px] text-ink focus:border-ink focus:outline-none"
         >
-          {PROVIDER_LIST.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
+          <ProviderOptions current={provider} />
         </select>
       </Field>
       <Field label="Model" tip={<ModelTip provider={provider} model={model} />}>
@@ -111,6 +108,11 @@ export function ProviderModelTempRow({
           className="w-full accent-[var(--highlight)]"
         />
       </Field>
+      {provider === "shape-free" && (
+        <div className="md:col-span-3">
+          <HostedNote provider={provider} />
+        </div>
+      )}
     </div>
   );
 }

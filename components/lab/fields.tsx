@@ -1,6 +1,7 @@
 "use client";
 
 import { PROVIDER_LIST, PROVIDERS } from "@/lib/providers";
+import { useHostedStatus } from "@/lib/hooks/use-hosted-status";
 import type { LabModel } from "@/lib/experiment";
 
 /** Shared form atoms for the lab. Classes follow the playgrounds' panels. */
@@ -63,6 +64,7 @@ export function ModelRefSelect({
   ariaLabel: string;
   disabled?: boolean;
 }) {
+  const hosted = useHostedStatus();
   const current = `${value.provider}${SEP}${value.model}`;
   const inCatalog = PROVIDERS[value.provider]?.models.some((m) => m.id === value.model);
   return (
@@ -77,7 +79,7 @@ export function ModelRefSelect({
       className={`${INPUT} font-mono text-[12px]`}
     >
       {!inCatalog && <option value={current}>{value.model}</option>}
-      {PROVIDER_LIST.map((p) => (
+      {PROVIDER_LIST.filter((p) => p.id !== "shape-free" || hosted.enabled || value.provider === "shape-free").map((p) => (
         <optgroup key={p.id} label={p.name}>
           {p.models
             .filter((m) => !m.retired)

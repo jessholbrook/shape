@@ -429,7 +429,7 @@ export function PortabilityMode() {
           {costEstimate > 0 && (
             <>
               {" · ≈ "}
-              {costEstimate < 0.01 ? "<$0.01" : `$${costEstimate.toFixed(3)}`}
+              {costEstimate === 0 ? "Free" : costEstimate < 0.01 ? "<$0.01" : `$${costEstimate.toFixed(3)}`}
             </>
           )}
         </span>

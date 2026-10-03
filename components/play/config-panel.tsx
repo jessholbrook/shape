@@ -1,6 +1,8 @@
 "use client";
 
-import { PROVIDER_LIST, ProviderId, PROVIDERS } from "@/lib/providers";
+import { HostedNote } from "@/components/play/hosted-note";
+import { ProviderOptions } from "@/components/play/provider-options";
+import { ProviderId, PROVIDERS } from "@/lib/providers";
 import { ModelSelect } from "@/components/play/model-select";
 import { InfoTip } from "@/components/info-tip";
 import {
@@ -46,7 +48,7 @@ export function ConfigPanel({
               connected ? "bg-success" : "bg-danger"
             }`}
           />
-          {connected ? "Key set" : "No key"}
+          {config.provider === "shape-free" ? "Free" : connected ? "Key set" : "No key"}
         </div>
       </div>
 
@@ -64,11 +66,7 @@ export function ConfigPanel({
             }}
             className="w-full bg-canvas border border-line rounded-[10px] px-3 py-2 font-mono text-[13px] text-ink focus:border-ink focus:outline-none"
           >
-            {PROVIDER_LIST.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
+            <ProviderOptions current={config.provider} />
           </select>
         </Field>
 
@@ -118,6 +116,7 @@ export function ConfigPanel({
           className="w-full accent-[var(--highlight)]"
         />
       </Field>
+      <HostedNote provider={config.provider} />
     </div>
   );
 }

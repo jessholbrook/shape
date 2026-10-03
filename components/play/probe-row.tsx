@@ -135,7 +135,9 @@ export function ProbeRow({
               )}
               {result.costUsd != null && (
                 <span className="text-ink">
-                  {result.costUsd < 0.01
+                  {result.costUsd === 0
+                    ? "Free"
+                    : result.costUsd < 0.01
                     ? "<$0.01"
                     : `$${result.costUsd.toFixed(3)}`}
                 </span>

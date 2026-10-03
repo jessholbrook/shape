@@ -247,7 +247,9 @@ function TurnOutput({
             )}
             {output.costUsd != null && (
               <span className="text-ink">
-                {output.costUsd < 0.01
+                {output.costUsd === 0
+                  ? "Free"
+                  : output.costUsd < 0.01
                   ? "<$0.01"
                   : `$${output.costUsd.toFixed(3)}`}
               </span>

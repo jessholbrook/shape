@@ -6,12 +6,14 @@ import { geminiChat, pingGemini } from "./gemini";
 import { cerebrasChat, pingCerebras } from "./cerebras";
 import { customChat, pingCustom } from "./custom";
 import { webllmChat } from "./webllm";
+import { hostedChat } from "./hosted";
 import type { ChatCall, ChatEvent } from "./types";
 
 export type { ChatCall, ChatEvent, ChatMessage, ChatUsage, ToolCall, ToolSpec } from "./types";
 
 function dispatch(call: ChatCall): AsyncIterable<ChatEvent> {
   if (call.provider === "webllm") return webllmChat(call);
+  if (call.provider === "shape-free") return hostedChat(call);
   if (call.provider === "anthropic") return anthropicChat(call);
   if (call.provider === "gemini") return geminiChat(call);
   if (call.provider === "cerebras") return cerebrasChat(call);
@@ -42,7 +44,7 @@ export async function testConnection(
   providerId: ProviderId,
   apiKey: string,
 ): Promise<TestResult> {
-  if (providerId === "webllm") return { ok: true };
+  if (providerId === "webllm" || providerId === "shape-free") return { ok: true };
   const provider = PROVIDERS[providerId];
   const defaultModel = provider.defaultModel;
   try {

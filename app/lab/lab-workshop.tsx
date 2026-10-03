@@ -7,6 +7,7 @@ import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { useDefaultProvider } from "@/lib/hooks/use-default-provider";
 import { useUnsavedWork } from "@/lib/hooks/use-unsaved-work";
 import { useLens } from "@/lib/hooks/use-lens";
+import { useHostedStatus } from "@/lib/hooks/use-hosted-status";
 import { useHydrated } from "@/lib/hooks/use-local-store";
 import { getTemplate, templateFor, DEFAULT_TEMPLATE_ID } from "@/lib/experiments/templates";
 import { TemplatePicker } from "@/components/lab/template-picker";
@@ -43,6 +44,7 @@ function designKey(e: Experiment): string {
 
 function runnerFor(provider: ProviderId): Runner {
   if (provider === "webllm") return "webllm";
+  if (provider === "shape-free") return "hosted";
   if (provider === "custom") return "custom";
   return "byok";
 }
@@ -57,6 +59,7 @@ export function LabWorkshop() {
   const [experiment, setExperiment] = useState<Experiment>(() => getTemplate(DEFAULT_TEMPLATE_ID)!.build(INITIAL_MODEL, 0));
   const [templateId, setTemplateId] = useState<string | null>(initialDraftId ? null : DEFAULT_TEMPLATE_ID);
   const { lens } = useLens();
+  const hosted = useHostedStatus();
   const hydrated2 = useHydrated();
   const templateApplied = useRef(false);
   const [ranDesign, setRanDesign] = useState<string | null>(null);
@@ -154,7 +157,9 @@ export function LabWorkshop() {
         (m.kind === "rate" && !m.rubric.trim()) ||
         (m.kind === "regex" && !m.pattern.trim()),
     );
-  const canRun = hydrated && !missing && !running && !incomplete;
+  // The free tier's daily allowance: an experiment it can't finish shouldn't start.
+  const overQuota = estimate.hostedCalls > 0 && hosted.resolved && estimate.hostedCalls > hosted.remaining;
+  const canRun = hydrated && !missing && !running && !incomplete && !overQuota;
   const stale = e.runs.length > 0 && ranDesign !== null && ranDesign !== designKey(e);
   const done = e.runs.filter((r) => r.status === "done" || r.status === "error").length;
 
@@ -298,9 +303,21 @@ export function LabWorkshop() {
             {e.conditions.length} conditions × {Math.max(1, e.items.length)} {e.items.length === 1 ? "item" : "items"} × {Math.min(e.n, maxRuns)} runs →{" "}
             <span className="text-ink">{estimate.calls} calls</span>
             {" · "}
-            {estimate.free ? "free, one at a time" : estimate.usd < 0.01 ? "under 1¢" : `about $${estimate.usd.toFixed(2)}`}
+            {estimate.free
+              ? estimate.hostedCalls > 0
+                ? `${estimate.hostedCalls} of your free runs`
+                : "free, one at a time"
+              : estimate.usd < 0.01
+                ? "under 1¢"
+                : `about $${estimate.usd.toFixed(2)}`}
           </p>
         </div>
+        {overQuota && (
+          <p className="font-sans text-[13px] text-warning" data-testid="lab-over-quota">
+            This needs {estimate.hostedCalls} free runs and you have {hosted.remaining} left today. Lower the runs per cell,
+            remove a condition or item, or add your own key in Settings.
+          </p>
+        )}
         {incomplete && (
           <p className="font-sans text-[13px] text-warning">
             Fill in the question, and every judge measure&apos;s question or rubric, before running.

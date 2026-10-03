@@ -1,7 +1,8 @@
 "use client";
 
+import { ProviderOptions } from "@/components/play/provider-options";
 import { useMemo } from "react";
-import { PROVIDER_LIST, PROVIDERS, type ProviderId } from "@/lib/providers";
+import { PROVIDERS, type ProviderId } from "@/lib/providers";
 import { MIN_SEATS, type Seat, type Stance } from "@/lib/roundtable";
 import { composePersonaPrompt } from "@/lib/persona";
 import { useDrafts } from "@/lib/hooks/use-drafts";
@@ -170,11 +171,7 @@ export function SeatPanel({
                   aria-label={`Seat ${i + 1} provider`}
                   className="bg-canvas border border-line rounded-[10px] px-3 py-2 font-mono text-[12px] text-ink focus:border-ink focus:outline-none disabled:opacity-60"
                 >
-                  {PROVIDER_LIST.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
+                  <ProviderOptions current={seat.provider} />
                 </select>
                 <ModelSelect
                   provider={seat.provider}

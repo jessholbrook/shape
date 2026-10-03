@@ -1,6 +1,7 @@
 "use client";
 
-import { PROVIDER_LIST, PROVIDERS, type ProviderId } from "@/lib/providers";
+import { ProviderOptions } from "@/components/play/provider-options";
+import { PROVIDERS, type ProviderId } from "@/lib/providers";
 import type { Writers } from "@/lib/judge";
 import { ModelSelect } from "./model-select";
 import { InfoTip } from "@/components/info-tip";
@@ -54,11 +55,7 @@ export function WritersPanel({
                 aria-label={`Writer ${side.toUpperCase()} provider`}
                 className="bg-canvas border border-line rounded-[10px] px-3 py-2 font-mono text-[12px] text-ink focus:border-ink focus:outline-none disabled:opacity-60"
               >
-                {PROVIDER_LIST.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
+                <ProviderOptions current={w.provider} />
               </select>
               <ModelSelect
                 provider={w.provider}

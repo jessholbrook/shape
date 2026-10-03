@@ -469,7 +469,7 @@ function ConversationCard({
             <span>in {reply.inputTokens} tok</span>
             <span>out {reply.outputTokens} tok</span>
             <span className="text-ink">
-              {reply.costUsd < 0.01 ? "<$0.01" : `$${reply.costUsd.toFixed(3)}`}
+              {reply.costUsd === 0 ? "Free" : reply.costUsd < 0.01 ? "<$0.01" : `$${reply.costUsd.toFixed(3)}`}
             </span>
             {elapsed && <span>{elapsed}</span>}
           </div>
