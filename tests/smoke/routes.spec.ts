@@ -425,3 +425,63 @@ test("/start offers hosted Claude when the free tier is up, and keeps an in-brow
 
   expect(errors).toEqual([]);
 });
+
+/**
+ * Sharing. CI has no database, so the /e/ page shows its "can't load" state
+ * for a well-formed link and a 404 for a malformed one; the lab's Share panel
+ * is driven against mocked endpoints.
+ */
+test("/e/ pages: unavailable without the database, 404 for a malformed link", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/e/abcDEF2345", { waitUntil: "networkidle" });
+  await expect(page.getByTestId("shared-unavailable")).toBeVisible();
+  const res = await page.goto("/e/not-a-slug");
+  expect(res?.status()).toBe(404);
+  expect(errors).toEqual([]);
+});
+
+test("/lab hides Share when sharing is off, and publishes and deletes a link when it's on", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+
+  await page.goto("/lab", { waitUntil: "networkidle" });
+  await expect(page.getByRole("button", { name: "Run experiment" })).toBeVisible();
+  await expect(page.getByTestId("share-panel")).toHaveCount(0);
+
+  let published: { experiment?: { title?: string; runs?: unknown[] }; runner?: string } | null = null;
+  let deletedWith: string | null = null;
+  await page.route("**/api/share", (route) =>
+    route.request().method() === "GET"
+      ? route.fulfill({ json: { enabled: true } })
+      : (published = route.request().postDataJSON(),
+        route.fulfill({ status: 201, json: { slug: "abcDEF2345", deleteToken: "0123456789abcdef0123456789abcdef", manifestHash: "a".repeat(64) } })),
+  );
+  await page.route("**/api/share/abcDEF2345", (route) => {
+    deletedWith = route.request().headers()["x-delete-token"] ?? null;
+    return route.fulfill({ status: 204, body: "" });
+  });
+
+  await page.reload({ waitUntil: "networkidle" });
+  const panel = page.getByTestId("share-panel");
+  await expect(panel).toContainText("No results yet");
+  const publish = panel.getByRole("button", { name: /Publish the design/ });
+  await expect(publish).toBeDisabled();
+  await panel.getByLabel(/Nothing in these prompts/).check();
+  await publish.click();
+
+  await expect(panel.getByTestId("share-link")).toBeVisible();
+  await expect(panel.getByLabel("Shared link")).toHaveValue(/\/e\/abcDEF2345$/);
+  expect(published!.runner).toBe("webllm");
+  expect(published!.experiment?.runs).toEqual([]);
+  expect(published!.experiment?.title).toBeTruthy();
+
+  // The delete key stays in this browser, and deleting sends it.
+  await expect(panel).toContainText("Shared from this browser (1)");
+  page.once("dialog", (d) => d.accept());
+  await panel.getByRole("button", { name: "Delete" }).click();
+  await expect(panel).not.toContainText("Shared from this browser");
+  expect(deletedWith).toBe("0123456789abcdef0123456789abcdef");
+
+  expect(errors).toEqual([]);
+});

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   buildManifest,
+  ranAtOf,
   isClear,
   manifestHash,
   summarize,
@@ -274,7 +275,7 @@ export function ManifestPanel({ experiment: e, runner }: { experiment: Experimen
     () =>
       buildManifest(e, {
         appVersion: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ?? "local",
-        ranAt: new Date(e.runs.reduce((t, r) => Math.max(t, r.startedAt ?? 0), 0) || e.updatedAt).toISOString(),
+        ranAt: ranAtOf(e),
         runner,
       }),
     [e, runner],
