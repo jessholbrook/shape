@@ -1,5 +1,6 @@
 import { getCustomEndpoint, type CustomEndpoint } from "./custom-endpoint";
 export type ProviderId =
+  | "shape-free"
   | "webllm"
   | "anthropic"
   | "openai"
@@ -50,6 +51,29 @@ export type ModelMeta = {
 };
 
 export const PROVIDERS: Record<ProviderId, Provider> = {
+  // Shape's hosted free tier: Claude Haiku 4.5 on Shape's key, a few dozen
+  // runs a day per visitor (lib/hosted.ts). Priced at zero here because the
+  // numbers in this catalog are what the *reader* pays. Hidden from pickers
+  // whenever the server says the tier is off (lib/hooks/use-hosted-status.ts).
+  "shape-free": {
+    id: "shape-free",
+    name: "Free (hosted Claude Haiku)",
+    keyPrefixes: [],
+    keyMinLength: 0,
+    signupUrl: "",
+    consoleUrl: "",
+    defaultModel: "claude-haiku-4-5",
+    models: [
+      {
+        id: "claude-haiku-4-5",
+        name: "Claude Haiku 4.5",
+        inputPer1M: 0,
+        outputPer1M: 0,
+        tier: "fast",
+        blurb: "Free · hosted by Shape · limited runs per day",
+      },
+    ],
+  },
   webllm: {
     id: "webllm",
     name: "Free (in browser)",
@@ -250,10 +274,15 @@ export const PROVIDERS: Record<ProviderId, Provider> = {
 
 export const PROVIDER_LIST: Provider[] = Object.values(PROVIDERS);
 
-/** Providers that require an API key. WebLLM is excluded. */
+/** Providers that run on the reader's own key. The two free options are excluded. */
 export const BYOK_PROVIDERS: Provider[] = PROVIDER_LIST.filter(
-  (p) => p.id !== "webllm",
+  (p) => p.id !== "webllm" && p.id !== "shape-free",
 );
+
+/** No key, no download — runs on Shape's server. */
+export function isHosted(provider: ProviderId): boolean {
+  return provider === "shape-free";
+}
 
 export function getModel(providerId: ProviderId, modelId: string): ModelMeta | undefined {
   return PROVIDERS[providerId].models.find((m) => m.id === modelId);
@@ -267,7 +296,7 @@ export function providerNeedsKey(
   provider: ProviderId,
   endpoint: CustomEndpoint | null = getCustomEndpoint(),
 ): boolean {
-  if (provider === "webllm") return false;
+  if (provider === "webllm" || provider === "shape-free") return false;
   // A custom endpoint marked keyless — a local LM Studio or Ollama — is the
   // other provider that runs with nothing saved.
   if (provider === "custom") return !endpoint?.keyless;
@@ -283,11 +312,14 @@ export function providerNeedsKey(
 export function preferredProvider(
   keys: Partial<Record<ProviderId, string>>,
   endpoint: CustomEndpoint | null = getCustomEndpoint(),
+  hostedEnabled = false,
 ): ProviderId {
   for (const p of BYOK_PROVIDERS) {
     if (keys[p.id]) return p.id;
   }
   // A keyless local endpoint is set up without a key; it still beats the in-browser model.
   if (endpoint?.keyless) return "custom";
+  // The hosted tier beats the in-browser model: no download, no GPU, a real model.
+  if (hostedEnabled) return "shape-free";
   return "webllm";
 }

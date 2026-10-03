@@ -25,6 +25,8 @@ import { ConfigPanel, type ConfigState } from "@/components/play/config-panel";
 import { TemperatureNote } from "@/components/play/temperature-note";
 import { TurnRow } from "@/components/play/turn-row";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
+import { OpenAsExperiment } from "@/components/play/open-as-experiment";
+import { fromDiff } from "@/lib/experiments/from-playground";
 import { ReflectionCard } from "@/components/play/reflection-card";
 import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
 
@@ -647,6 +649,16 @@ export function DiffMode() {
         status={saveStatus}
         draftId={draftId}
         onSave={handleSaveDraft}
+      />
+
+      <OpenAsExperiment
+        disabled={running || !(turns[turns.length - 1]?.userMessage ?? pendingMessage).trim()}
+        hint="Was that difference real, or one lucky run? Run A and B many times each and find out."
+        build={() =>
+          fromDiff(configA, configB, turns[turns.length - 1]?.userMessage ?? pendingMessage, {
+            conversation: mode === "conversation" && turns.length > 1,
+          })
+        }
       />
     </div>
   );

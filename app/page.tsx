@@ -6,6 +6,8 @@ import {
   PersonaPreview,
   TonePreview,
 } from "@/components/home/playground-previews";
+import { LensBridges } from "@/components/home/lens-bridges";
+import { CORE } from "@/lib/lenses";
 
 export default function Home() {
   return (
@@ -19,10 +21,7 @@ export default function Home() {
         </h1>
 
         <p className="font-sans text-[18px] md:text-[22px] leading-[1.5] text-ink-muted mt-8 max-w-2xl">
-          A hands-on playground for UX designers and researchers to learn a new
-          craft: designing how an AI behaves — its tone, persona, and
-          boundaries. It&apos;s not about using AI to do your work; it&apos;s
-          about learning to direct the model itself.
+          {CORE.hero.lede}
         </p>
 
         <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -62,7 +61,7 @@ export default function Home() {
           <StepCard
             num="01"
             title="Start free."
-            body="A small open model runs right in your browser — no key required. Bring an Anthropic, OpenAI, or Google key when you want bigger models."
+            body="No key required — pick a free way to run and open a playground. Bring an Anthropic, OpenAI, or Google key when you want bigger models."
           />
           <StepCard
             num="02"
@@ -80,36 +79,9 @@ export default function Home() {
       <Divider />
 
       {/* BRIDGE */}
-      <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
+      <section id="lenses" className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
         <SectionNumber>03</SectionNumber>
-        <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
-          You already think like a <span className="italic">behavior designer</span>.
-        </h2>
-        <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-5 max-w-2xl">
-          The skills you use every day are the foundation of shaping AI.
-          This site helps you make the connections and try it out.
-        </p>
-
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <BridgeCard
-            kicker="You define personas."
-            statement="Now design one for the model itself."
-            chip="/play/persona"
-            href="/play/persona"
-          />
-          <BridgeCard
-            kicker="You write microcopy."
-            statement="Now write the system prompt that produces it."
-            chip="/play/tone"
-            href="/play/tone"
-          />
-          <BridgeCard
-            kicker="You run A/B tests."
-            statement="Now diff two prompts side-by-side."
-            chip="/play/diff"
-            href="/play/diff"
-          />
-        </div>
+        <LensBridges />
       </section>
 
       <Divider />
@@ -173,37 +145,6 @@ function Divider() {
     <div className="mx-auto max-w-[1280px] px-6 md:px-12">
       <div className="border-t border-line" />
     </div>
-  );
-}
-
-function BridgeCard({
-  kicker,
-  statement,
-  chip,
-  href,
-}: {
-  kicker: string;
-  statement: string;
-  chip: string;
-  href: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group block bg-surface border border-line rounded-[16px] p-6 md:p-8 shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-shadow"
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="inline-flex items-center font-mono text-[12px] bg-highlight-soft text-highlight-ink rounded-full px-3 py-1">
-          {chip}
-        </span>
-        <span className="font-mono text-[12px] text-ink-quiet group-hover:text-highlight transition-colors">
-          →
-        </span>
-      </div>
-      <p className="font-display text-[22px] md:text-[26px] leading-[1.2] text-ink mt-6">
-        <span className="text-ink-quiet">{kicker}</span> {statement}
-      </p>
-    </Link>
   );
 }
 

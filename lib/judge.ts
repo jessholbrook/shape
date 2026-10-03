@@ -1,5 +1,6 @@
 import { type ProviderId } from "./providers";
 import { resolveModel } from "./live-models";
+import type { SeedPack } from "./seeds";
 
 /**
  * Judge Lab automates the scoring you did by hand in Eval Lab — and then
@@ -327,6 +328,100 @@ export const SEED_PAIRS: Pair[] = [
     humanPick: "a",
   },
 ];
+
+// --- Lens packs --------------------------------------------------------------
+
+export type JudgeSeed = { criteria: string; pairs: Pair[] };
+
+/**
+ * Every pack keeps the seed's rule: in each pair the shorter answer is the
+ * better one. A judge that rewards length then has somewhere visible to fail.
+ * The original seed is the UX pack; the general pack swaps its empty-state
+ * microcopy for an explanation anyone can judge.
+ */
+export const JUDGE_PACK: SeedPack<JudgeSeed> = {
+  core: {
+    criteria: SEED_CRITERIA,
+    pairs: [
+      SEED_PAIRS[0],
+      {
+        id: "pair_median",
+        label: "Explain a median",
+        prompt: "Explain what a median is to someone who has forgotten school maths.",
+        a: "Line the numbers up from smallest to largest and take the one in the middle. With 2, 3, 9, the median is 3 — and unlike an average, one huge number can't drag it around.",
+        b: "That's a great question, and it's completely normal to have forgotten! The median is one of several ways that statisticians and mathematicians use to describe the centre or typical value of a set of numbers, alongside other measures such as the mean and the mode. To find it, you would generally begin by arranging all of the values in your dataset in order, and then you would identify the value that sits in the middle position. There are some additional considerations when the dataset contains an even number of values, which can make things slightly more involved.",
+        humanPick: "a",
+      },
+      SEED_PAIRS[2],
+    ],
+  },
+  ux: { criteria: SEED_CRITERIA, pairs: SEED_PAIRS },
+  policy: {
+    criteria: `Accuracy — matches the rule as written, no more and no less.
+Actionability — the reader knows what to do next.
+Plain language — no jargon a resident would have to look up.`,
+    pairs: [
+      {
+        id: "pair_shed",
+        label: "Permit question",
+        prompt:
+          "Rule: accessory structures under 120 sq ft are exempt from building permits but must sit at least 5 ft from property lines. A resident asks: do I need a permit for a 100 sq ft shed?",
+        a: "No permit needed — sheds under 120 sq ft are exempt. You do still need to place it at least 5 feet from your property lines.",
+        b: "Thank you for your question about building permits. The permitting requirements for accessory structures such as sheds can vary depending on a number of factors, including the size of the structure, its intended use, and its location on the property. In general, smaller structures may be eligible for certain exemptions under the municipal code. We would recommend reviewing the applicable sections of the code or contacting the permitting office directly, as there may be other requirements, such as setbacks, that apply in your situation.",
+        humanPick: "a",
+      },
+      {
+        id: "pair_rule_change",
+        label: "Rule-change summary",
+        prompt:
+          "Summarize for small-business owners: starting March 1, food trucks must hold a commissary agreement to renew their permit.",
+        a: "From March 1, you can't renew a food-truck permit without a signed commissary agreement. If you don't have one, arrange it before your renewal date.",
+        b: "We are writing to inform you of an important upcoming change to the regulatory framework governing mobile food vending operations within the city. Effective March 1, the permit renewal process for food trucks will incorporate a new requirement relating to commissary agreements. This change reflects the city's ongoing commitment to public health and food safety, and is the result of extensive stakeholder consultation. Business owners are encouraged to familiarize themselves with the new requirement and to take any steps they consider appropriate in advance of their renewal.",
+        humanPick: "a",
+      },
+      {
+        id: "pair_records",
+        label: "Late records request",
+        prompt:
+          "A records request is past its 10-business-day deadline because the documents need legal review. Write the reply to the requester.",
+        a: "Your request is late — sorry. The records need legal review before release, which we expect to finish by May 12. You'll get them, or a written reason for anything withheld, by then.",
+        b: "Thank you for your patience regarding your public records request. Please be advised that our office processes a high volume of requests, and certain requests may require additional time due to their complexity or the need for further review. Your request is currently being processed in accordance with our standard procedures and all applicable laws and regulations. We appreciate your understanding and will be in touch with further information as soon as it becomes available. Should you have any questions in the meantime, please do not hesitate to contact our office.",
+        humanPick: "a",
+      },
+    ],
+  },
+  philosophy: {
+    criteria: `Charity — states the view as its best defenders would.
+Precision — says exactly what is claimed, no more.
+Brevity — nothing that doesn't do work.`,
+    pairs: [
+      {
+        id: "pair_utilitarianism",
+        label: "Objection to utilitarianism",
+        prompt: "State the strongest objection to utilitarianism in a few sentences.",
+        a: "Utilitarianism can require terrible acts whenever they maximize total welfare — framing an innocent person to stop a riot, say. If a theory licenses that, it has missed something: that persons have claims which can't simply be outweighed by summing benefits to others.",
+        b: "Utilitarianism, the ethical theory most famously associated with thinkers such as Jeremy Bentham and John Stuart Mill, holds that the right action is the one that produces the greatest good for the greatest number. While this theory has many attractive features and has been enormously influential, it has also faced a wide range of objections over the years. Some critics argue that it is too demanding, others that happiness is difficult to measure, and others that it fails to respect individual rights. Each of these objections raises important questions, and philosophers continue to debate which is the most serious.",
+        humanPick: "a",
+      },
+      {
+        id: "pair_is_ought",
+        label: "Is–ought gap",
+        prompt: "Explain Hume's is–ought gap in one short paragraph.",
+        a: "Hume noticed that arguments often slide from what is the case to what ought to be done without saying how. No list of facts alone entails a conclusion about obligation; some evaluative premise has to be added, and that premise is where the real argument lives.",
+        b: "The is–ought gap, also known as Hume's Law or Hume's guillotine, is a very important and influential idea in moral philosophy that was introduced by the Scottish Enlightenment philosopher David Hume in his famous work A Treatise of Human Nature. It concerns the relationship between descriptive statements, which describe how things are, and prescriptive or normative statements, which describe how things ought to be. This idea has been discussed and debated by countless philosophers over the centuries, and it remains highly relevant to contemporary debates in metaethics and beyond.",
+        humanPick: "a",
+      },
+      {
+        id: "pair_duress",
+        label: "Promise under duress",
+        prompt: "Is a promise made under duress binding? Answer briefly.",
+        a: "Most views say no. A promise binds because it was freely given; a threat removes exactly that. Some argue a residual duty remains if keeping it costs little — but the coercer, at least, can't claim to be owed anything.",
+        b: "This is a fascinating and complex question that philosophers have considered from many different angles. On the one hand, promises are generally considered to create moral obligations, and keeping one's word is widely regarded as an important virtue. On the other hand, the circumstances under which a promise is made can certainly affect how we think about it. Duress is a significant factor that many would say changes things considerably. Ultimately, whether such a promise is binding may depend on the specific details of the situation and the ethical framework one adopts.",
+        humanPick: "a",
+      },
+    ],
+  },
+};
 
 // --- Length bias: pad the shorter answer ---------------------------------------
 

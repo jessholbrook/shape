@@ -5,6 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { useKeys } from "@/lib/hooks/use-keys";
 import { useDraftEditing } from "@/lib/hooks/use-draft-editing";
 import { useDefaultProvider } from "@/lib/hooks/use-default-provider";
+import { useLensSeed } from "@/lib/hooks/use-lens-seed";
+import { seedFor } from "@/lib/seeds";
+import { SeedPackPicker } from "@/components/play/seed-pack-picker";
 import { useUnsavedWork } from "@/lib/hooks/use-unsaved-work";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage, calcCost } from "@/lib/usage";
@@ -20,9 +23,8 @@ import {
 import {
   DEFAULT_RUNS_PER_MODEL,
   RUNS_PER_MODEL,
-  SEED_ASSERTIONS,
-  SEED_MESSAGE,
-  SEED_SYSTEM,
+  PORTABILITY_PACK,
+  type PortabilitySeed,
   WEBLLM_RUNS_PER_MODEL,
   buildPortabilityReport,
   estimateMatrixCost,
@@ -36,6 +38,8 @@ import { ModelRoster } from "@/components/play/model-roster";
 import { PortabilityMatrix } from "@/components/play/portability-matrix";
 import { PortabilityLane } from "@/components/play/portability-lane";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
+import { OpenAsExperiment } from "@/components/play/open-as-experiment";
+import { fromPortability } from "@/lib/experiments/from-playground";
 import { ReflectionCard } from "@/components/play/reflection-card";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
@@ -63,10 +67,10 @@ export function PortabilityMode() {
   const initialDraftId = searchParams.get("draft");
 
   const [refs, setRefs] = useState<ModelRef[]>(initialRefs);
-  const [system, setSystem] = useState(SEED_SYSTEM);
-  const [userMessage, setUserMessage] = useState(SEED_MESSAGE);
+  const [system, setSystem] = useState(PORTABILITY_PACK.core.system);
+  const [userMessage, setUserMessage] = useState(PORTABILITY_PACK.core.message);
   const [temperature, setTemperature] = useState(0.7);
-  const [assertions, setAssertions] = useState<Assertion[]>(SEED_ASSERTIONS);
+  const [assertions, setAssertions] = useState<Assertion[]>(PORTABILITY_PACK.core.assertions);
   const [runsPerModel, setRunsPerModel] = useState(WEBLLM_RUNS_PER_MODEL);
   const [lanes, setLanes] = useState<LaneResult[]>([]);
   const [running, setRunning] = useState(false);
@@ -113,6 +117,27 @@ export function PortabilityMode() {
     enabled: !initialDraftId,
     onResolve: handleResolveProvider,
   });
+
+  const applySeed = useCallback((seed: PortabilitySeed) => {
+    setSystem(seed.system);
+    setUserMessage(seed.message);
+    setAssertions(seed.assertions);
+    setLanes([]);
+    setDirty(false);
+    setReflectionDismissed(false);
+  }, []);
+  const { active: activePack, choose: choosePack } = useLensSeed({
+    enabled: !initialDraftId,
+    pack: PORTABILITY_PACK,
+    apply: applySeed,
+  });
+  const activeSeed = activePack ? seedFor(PORTABILITY_PACK, activePack) : undefined;
+  const seedEdited =
+    dirty ||
+    !activeSeed ||
+    system !== activeSeed.system ||
+    userMessage !== activeSeed.message ||
+    assertions !== activeSeed.assertions;
 
   const missingProvider = refs.find(
     (r) => providerNeedsKey(r.provider) && !keys[r.provider],
@@ -267,6 +292,14 @@ export function PortabilityMode() {
       />
       <WebLLMUnsupportedBanner show={usesWebLLM} />
 
+      <SeedPackPicker
+        pack={PORTABILITY_PACK}
+        active={activePack}
+        onChoose={choosePack}
+        hasChanges={seedEdited}
+        disabled={running}
+      />
+
       {webllmCount > 1 && (
         <div className="bg-highlight-soft border border-highlight/40 rounded-[12px] p-4">
           <p className="font-sans text-[14px] leading-[1.5] text-ink">
@@ -396,7 +429,7 @@ export function PortabilityMode() {
           {costEstimate > 0 && (
             <>
               {" · ≈ "}
-              {costEstimate < 0.01 ? "<$0.01" : `$${costEstimate.toFixed(3)}`}
+              {costEstimate === 0 ? "Free" : costEstimate < 0.01 ? "<$0.01" : `$${costEstimate.toFixed(3)}`}
             </>
           )}
         </span>
@@ -456,6 +489,12 @@ export function PortabilityMode() {
         onSave={handleSave}
         disabled={lanes.length === 0}
         artifact="Portability Report"
+      />
+
+      <OpenAsExperiment
+        disabled={running}
+        hint="Run the spec on each model many times, with intervals — so a clause that 'breaks' on one model isn't just one bad run."
+        build={() => fromPortability(refs, system, userMessage, temperature, assertions)}
       />
     </div>
   );

@@ -21,9 +21,9 @@ export function KeyPrivacyNote() {
       <ul className="mt-4 flex flex-col gap-3">
         <Point>
           <strong>Saved locally, never on our servers.</strong> Your key lives
-          in this browser&apos;s localStorage. Shape has no accounts and no
-          database — there&apos;s nowhere on our side for it to land. Remove it
-          in one click from Keys.
+          in this browser&apos;s localStorage. Shape has no accounts, and
+          nothing on our side stores keys — there&apos;s nowhere for it to
+          land. Remove it in one click from Keys.
         </Point>
         <Point>
           <strong>Anthropic and Google go direct.</strong> Calls to Anthropic

@@ -25,10 +25,10 @@ export const MODULES: CurriculumModule[] = [
   {
     num: "00",
     slug: "start",
-    title: "Get your key",
+    title: "Choose how to run",
     kicker: "Setup",
     blurb:
-      "Bring your own model access. Five minutes to set up, then every playground is yours.",
+      "Run free with no key, or bring your own for bigger models. A minute to set up, then every playground is yours.",
     playground: { label: "Setup", href: "/start" },
     artifact: "First successful call",
     href: "/start",
@@ -42,7 +42,7 @@ export const MODULES: CurriculumModule[] = [
     italic: "as design",
     kicker: "Concept",
     blurb:
-      "A prompt is a design variable. Treat it like a brand-voice swatch, not a magic spell.",
+      "A prompt is a variable you can change and test — not a magic spell.",
     playground: { label: "Diff Mode", href: "/play/diff" },
     artifact: "Diff Log",
     href: "/learn/prompts-as-design",
@@ -115,7 +115,7 @@ export const MODULES: CurriculumModule[] = [
     italic: "Evaluation",
     kicker: "Concept",
     blurb:
-      "Rubrics + sample sets. Score behavior the same way you score a usability study.",
+      "Rubrics + sample sets. Make “good” measurable — then find out what your rubric actually rewards.",
     description:
       "A rubric turns “good” from a feeling into a spec. Define what good looks like, then score against it.",
     playground: { label: "Eval Lab", href: "/play/evals" },

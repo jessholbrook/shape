@@ -5,7 +5,7 @@ import { StartFlow } from "./start-flow";
 export const metadata = {
   title: "Start",
   description:
-    "The first five minutes of Shape. Free in your browser, or bring your own key for bigger models.",
+    "The first five minutes of Shape. Run free with no key, or bring your own for bigger models.",
 };
 
 export default function StartPage() {
@@ -19,9 +19,9 @@ export default function StartPage() {
         </h1>
 
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-8 max-w-xl">
-          Free in this browser — no key needed. Bring an Anthropic,
-          OpenAI, Google, or Cerebras key when you want bigger models.
-          Either way, everything stays on your machine.
+          Choose how to run. Two ways are free and need no key; bring an
+          Anthropic, OpenAI, Google, or Cerebras key when you want bigger
+          models. Each option says where your prompts go.
         </p>
 
         <div className="mt-16">

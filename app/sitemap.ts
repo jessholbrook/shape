@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { MODULES } from "@/lib/curriculum";
 import { PLAYGROUNDS } from "@/lib/playgrounds";
+import { LENS_IDS } from "@/lib/lenses";
 
 /**
  * Public routes for crawlers. Learn routes come from the curriculum and play
@@ -21,7 +22,7 @@ function origin(): string {
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = origin().replace(/\/$/, "");
 
-  const staticRoutes = ["", "/learn", "/play", "/start"].map((path) => ({
+  const staticRoutes = ["", "/learn", "/play", "/lab", "/start"].map((path) => ({
     url: `${base}${path}`,
     changeFrequency: "weekly" as const,
     priority: path === "" ? 1 : 0.8,
@@ -43,5 +44,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }),
   );
 
-  return [...staticRoutes, ...learnRoutes, ...playRoutes];
+  const lensRoutes = LENS_IDS.map((id) => ({
+    url: `${base}/for/${id}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
+  return [...staticRoutes, ...lensRoutes, ...learnRoutes, ...playRoutes];
 }

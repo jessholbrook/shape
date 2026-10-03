@@ -39,7 +39,7 @@ export const LIVE_MODELS_EVENT = "shape:live-models-changed";
 
 /** Providers whose list endpoint we know how to call. WebLLM's list is the static one. */
 export function supportsLiveModels(provider: ProviderId): boolean {
-  return provider !== "webllm";
+  return provider !== "webllm" && provider !== "shape-free";
 }
 
 // --- Parsing ---------------------------------------------------------------------

@@ -16,6 +16,20 @@ import { join } from "node:path";
 import { MODULES, moduleTitle } from "../lib/curriculum";
 import { PLAYGROUNDS } from "../lib/playgrounds";
 import sitemap from "../app/sitemap";
+import { CORE, LENSES, LENS_IDS, isLensId } from "../lib/lenses";
+import { packKeys, seedFor, type SeedPack } from "../lib/seeds";
+import { LESSON_INTROS } from "../lib/lens-intros";
+import { TEMPLATES, templateFor } from "../lib/experiments/templates";
+import { REFUSAL_PACK, SEED_PROBES } from "../lib/refusal";
+import {
+  SPREAD_PACK,
+  SEED_SYSTEM as SPREAD_SEED_SYSTEM,
+  SEED_ASSERTIONS as SPREAD_SEED_ASSERTIONS,
+  assertionIsComplete,
+  type Assertion,
+} from "../lib/spread";
+import { JUDGE_PACK, SEED_PAIRS } from "../lib/judge";
+import { PORTABILITY_PACK, SEED_SYSTEM as PORTABILITY_SEED_SYSTEM } from "../lib/portability";
 
 const ROOT = join(import.meta.dirname, "..");
 const dirsIn = (p: string) =>
@@ -180,4 +194,154 @@ test("README's curriculum table has one row per lesson", () => {
   assert.ok(table, "README: curriculum table not found");
   const nums = [...table[1].matchAll(/^\| (\d+) \|/gm)].map((m) => m[1]);
   assert.deepEqual(nums, LESSONS.map((m) => m.num));
+});
+
+// ── Lenses ──────────────────────────────────────────────────────────────────
+
+const ROUTABLE = new Set([
+  "/lab",
+  ...TEMPLATES.map((t) => `/lab?template=${t.id}`),
+  ...MODULES.filter((m) => m.status === "ready").map((m) => m.href),
+  ...PLAYGROUNDS.filter((p) => p.status === "ready").map((p) => p.href),
+]);
+
+const LENS_CONTENT = [
+  ["core", CORE] as const,
+  ...LENS_IDS.map((id) => [id, LENSES[id]] as const),
+];
+
+test("every lens bridge and path entry resolves to a ready route", () => {
+  for (const [id, c] of LENS_CONTENT) {
+    for (const b of c.bridges) {
+      assert.ok(ROUTABLE.has(b.href), `${id} bridge points at ${b.href}, which is not a ready lesson or playground`);
+    }
+    assert.ok(c.path.length >= 4, `${id} path should have at least 4 steps`);
+    for (const href of c.path) {
+      assert.ok(ROUTABLE.has(href), `${id} path includes ${href}, which is not a ready lesson, playground or lab template`);
+    }
+    assert.equal(new Set(c.path).size, c.path.length, `${id} path repeats a step`);
+  }
+});
+
+test("lens ids match their keys", () => {
+  for (const id of LENS_IDS) assert.equal(LENSES[id].id, id);
+});
+
+test("the sitemap lists every lens landing page", () => {
+  const urls = sitemap().map((e) => new URL(e.url).pathname);
+  for (const id of LENS_IDS) {
+    assert.ok(urls.includes(`/for/${id}`), `/for/${id} is missing from the sitemap`);
+  }
+});
+
+test("site-wide framing is not scoped to UX — that lives in the UX lens", () => {
+  for (const file of ["app/layout.tsx", "components/og-card.tsx", "app/page.tsx", "app/learn/page.tsx", "lib/curriculum.ts"]) {
+    const src = readFileSync(join(ROOT, file), "utf8");
+    assert.doesNotMatch(src, /UX designers|behavior designer|usability study|brand-voice/i, `${file} frames the whole site for UX`);
+  }
+});
+
+// ── Seed packs ──────────────────────────────────────────────────────────────
+//
+// Each playground's seed exists to make one failure visible. A lens pack may
+// change the scenario, but not the mechanism — these checks hold every pack
+// to the lesson its playground teaches.
+
+const PACKS = {
+  refusal: REFUSAL_PACK,
+  spread: SPREAD_PACK,
+  judge: JUDGE_PACK,
+  portability: PORTABILITY_PACK,
+} as const;
+
+const entries = <T,>(pack: SeedPack<T>) =>
+  packKeys(pack).map((k) => [k, seedFor(pack, k) as T] as const);
+
+test("seed pack keys are core or a real lens", () => {
+  for (const [name, pack] of Object.entries(PACKS)) {
+    for (const key of Object.keys(pack)) {
+      assert.ok(key === "core" || isLensId(key), `${name} pack has unknown key "${key}"`);
+    }
+  }
+});
+
+test("refusal packs mix refuse, engage and partial, with unique ids", () => {
+  for (const [key, seed] of entries(REFUSAL_PACK)) {
+    const ids = seed.probes.map((p) => p.id);
+    assert.equal(new Set(ids).size, ids.length, `refusal/${key} repeats a probe id`);
+    for (const expected of ["refuse", "engage", "partial"] as const) {
+      assert.ok(
+        seed.probes.some((p) => p.expected === expected),
+        `refusal/${key} has no "${expected}" probe — the scorecard can't show that failure`,
+      );
+    }
+    assert.ok(seed.guidelines.trim().length > 0, `refusal/${key} has empty guidelines`);
+  }
+});
+
+test("judge packs: the better answer is always the shorter one", () => {
+  // Length bias is the judge's most common failure; a pair where the good
+  // answer is also the longest would hide it.
+  for (const [key, seed] of entries(JUDGE_PACK)) {
+    const ids = seed.pairs.map((p) => p.id);
+    assert.equal(new Set(ids).size, ids.length, `judge/${key} repeats a pair id`);
+    for (const pair of seed.pairs) {
+      assert.ok(pair.humanPick === "a" || pair.humanPick === "b", `judge/${key}/${pair.id} has no human pick`);
+      const pick = pair[pair.humanPick];
+      const other = pair[pair.humanPick === "a" ? "b" : "a"];
+      assert.ok(
+        pick.length < other.length,
+        `judge/${key}/${pair.id}: the human pick is not the shorter answer`,
+      );
+    }
+  }
+});
+
+test("spread and portability packs carry a prohibition, a required mention and a length cap", () => {
+  for (const [name, pack] of [["spread", SPREAD_PACK], ["portability", PORTABILITY_PACK]] as const) {
+    for (const [key, seed] of entries<{ system: string; message: string; assertions: Assertion[] }>(pack)) {
+      for (const kind of ["excludes", "contains", "maxWords"] as const) {
+        assert.ok(
+          seed.assertions.some((a) => a.kind === kind),
+          `${name}/${key} has no "${kind}" assertion`,
+        );
+      }
+      for (const a of seed.assertions) {
+        assert.ok(assertionIsComplete(a), `${name}/${key} has an incomplete assertion ${a.id}`);
+      }
+      assert.ok(seed.system.trim() && seed.message.trim(), `${name}/${key} is missing a prompt`);
+    }
+  }
+});
+
+test("legacy SEED_* exports still match the scenarios they always were", () => {
+  // Race, Context and the scoring tests import these directly.
+  assert.equal(SPREAD_PACK.ux?.system, SPREAD_SEED_SYSTEM);
+  assert.equal(SPREAD_PACK.ux?.assertions, SPREAD_SEED_ASSERTIONS);
+  assert.equal(JUDGE_PACK.ux?.pairs, SEED_PAIRS);
+  assert.equal(REFUSAL_PACK.core.probes, SEED_PROBES);
+  assert.equal(PORTABILITY_PACK.core.system, PORTABILITY_SEED_SYSTEM);
+});
+
+test("every non-UX lens has an intro for every ready lesson, and no strays", () => {
+  const lessons = LESSONS.filter((m) => m.status === "ready").map((m) => m.slug);
+  for (const [lens, intros] of Object.entries(LESSON_INTROS)) {
+    for (const slug of lessons) {
+      assert.ok(intros[slug]?.trim(), `${lens} has no intro for lesson "${slug}"`);
+    }
+    for (const slug of Object.keys(intros)) {
+      assert.ok(lessons.includes(slug), `${lens} has an intro for "${slug}", which is not a ready lesson`);
+    }
+  }
+});
+
+test("every lens path ends in an experiment, and each lens's is its own template", () => {
+  for (const [id, c] of LENS_CONTENT) {
+    const last = c.path[c.path.length - 1];
+    assert.ok(last === "/lab" || last.startsWith("/lab?template="), `${id} path should end in the lab`);
+  }
+  for (const id of LENS_IDS) {
+    const last = LENSES[id].path[LENSES[id].path.length - 1];
+    assert.equal(last, `/lab?template=${templateFor(id).id}`, `${id} path ends in a different template than the lab opens on`);
+  }
 });

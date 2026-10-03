@@ -1,7 +1,8 @@
 "use client";
 
+import { ProviderOptions } from "@/components/play/provider-options";
 import { useState } from "react";
-import { PROVIDER_LIST, PROVIDERS, type ProviderId } from "@/lib/providers";
+import { PROVIDERS, type ProviderId } from "@/lib/providers";
 import type { Writer } from "@/lib/judge";
 import { STANCE_LABEL, seatName, type Seat } from "@/lib/roundtable";
 import {
@@ -89,11 +90,7 @@ export function ReadingPanel({
               aria-label="Judge provider"
               className="bg-canvas border border-line rounded-[10px] px-3 py-2 font-mono text-[12px] text-ink focus:border-ink focus:outline-none disabled:opacity-60"
             >
-              {PROVIDER_LIST.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
+              <ProviderOptions current={judge.provider} />
             </select>
             <ModelSelect
               provider={judge.provider}

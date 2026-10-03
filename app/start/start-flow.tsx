@@ -9,6 +9,8 @@ import { testConnection } from "@/lib/providers/index";
 import { KeyPrivacyNote } from "@/components/key-privacy-note";
 import { LocalModelStorage } from "@/components/local-model-storage";
 import { WebLLMDisclosure } from "@/components/webllm-disclosure";
+import { useHostedStatus } from "@/lib/hooks/use-hosted-status";
+import { setRunPreference, type RunPreference } from "@/lib/run-preference";
 
 type TestState =
   | { status: "idle" }
@@ -76,49 +78,12 @@ function KeyEntry({
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="bg-surface border border-line rounded-[16px] p-6 md:p-8">
-        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-success inline-flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-success" />
-          Free — no key needed
-        </p>
-        <h2 className="font-display text-[28px] md:text-[34px] leading-[1.1] text-ink mt-3">
-          Start free, right in this browser.
-        </h2>
-        <p className="font-sans text-[15px] leading-[1.55] text-ink-muted mt-3 max-w-lg">
-          No account, no key, nothing to paste. A small open model runs on
-          your own device via WebGPU — the first run downloads it once
-          (~1GB), then it&apos;s instant. This is the recommended way to
-          start.
-        </p>
-        <div className="mt-5 flex flex-wrap items-center gap-4">
-          <Link
-            href="/play/diff"
-            className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] hover:bg-ink/90 transition-colors"
-          >
-            Open Diff Mode free
-            <span className="text-highlight">→</span>
-          </Link>
-          <Link
-            href="/play"
-            className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
-          >
-            All playgrounds →
-          </Link>
-        </div>
-
-        <div className="mt-6 pt-5 border-t border-line">
-          <WebLLMDisclosure />
-        </div>
-
-        <div className="mt-4">
-          <LocalModelStorage />
-        </div>
-      </div>
+      <FreeOptions />
 
       <div className="flex items-center gap-4">
         <div className="flex-1 border-t border-line" />
         <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
-          Or bring a key for bigger models
+          Or use your own key
         </span>
         <div className="flex-1 border-t border-line" />
       </div>
@@ -391,5 +356,147 @@ function NextStepCard({
         {blurb}
       </p>
     </Link>
+  );
+}
+
+/**
+ * The free ways to run. Hosted Claude shows only when the free tier is up (or
+ * up but used up today, so a returning reader learns why it's gone); the
+ * in-browser model is always offered. Each card says where prompts go — the
+ * one fact a reader can't see from the outside.
+ */
+function FreeOptions() {
+  const hosted = useHostedStatus();
+
+  if (!hosted.resolved) {
+    return (
+      <div className="bg-surface border border-line rounded-[16px] p-8 min-h-[240px] hatched">
+        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
+          Checking the free options…
+        </p>
+      </div>
+    );
+  }
+
+  const showHosted = hosted.limit > 0;
+  const usedUp = showHosted && hosted.remaining <= 0;
+
+  return (
+    <div>
+      <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet mb-4">
+        {showHosted ? "Two free ways to run — pick one, switch any time" : "Free — no key needed"}
+      </p>
+      <div className={`grid grid-cols-1 gap-4 items-start ${showHosted ? "md:grid-cols-2" : ""}`}>
+        {showHosted && (
+          <RunCard
+            testId="run-hosted"
+            badge={usedUp ? null : "Recommended"}
+            title="Free Claude, hosted by Shape"
+            blurb="Claude Haiku 4.5 on Shape's account. Nothing to download or set up — open a playground and go."
+            facts={[
+              ["Model", "Claude Haiku 4.5 — small, fast, capable"],
+              ["Your prompts", "Sent to Anthropic through Shape's server to be answered. Shape doesn't store them."],
+              [
+                "Limits",
+                usedUp
+                  ? "You've used today's free runs. More at midnight UTC."
+                  : `${hosted.remaining} of ${hosted.limit} free runs left today. Resets at midnight UTC.`,
+              ],
+            ]}
+            cta="Open Diff Mode with free Claude"
+            pref="hosted"
+            disabled={usedUp}
+          />
+        )}
+        <RunCard
+          testId="run-local"
+          badge={showHosted ? null : "Recommended"}
+          title="Private, in your browser"
+          blurb="A small open model runs on your own device via WebGPU. The first run downloads it once (about 1GB); after that it's instant."
+          facts={[
+            ["Model", "A small open model — rougher answers than Claude"],
+            ["Your prompts", "Never leave your machine."],
+            ["Limits", "None. Needs a recent desktop browser with WebGPU."],
+          ]}
+          cta="Open Diff Mode in your browser"
+          pref="local"
+        >
+          <div className="mt-5 pt-4 border-t border-line">
+            <WebLLMDisclosure />
+          </div>
+          <div className="mt-3">
+            <LocalModelStorage />
+          </div>
+        </RunCard>
+      </div>
+      <p className="mt-3 font-sans text-[13px] leading-[1.5] text-ink-muted">
+        Every playground has a model picker, so you can change your mind later.{" "}
+        <Link href="/play" className="text-ink underline decoration-highlight underline-offset-4 decoration-2">
+          All playgrounds →
+        </Link>
+      </p>
+    </div>
+  );
+}
+
+function RunCard({
+  testId,
+  badge,
+  title,
+  blurb,
+  facts,
+  cta,
+  pref,
+  disabled,
+  children,
+}: {
+  testId: string;
+  badge: string | null;
+  title: string;
+  blurb: string;
+  facts: [string, string][];
+  cta: string;
+  pref: RunPreference;
+  disabled?: boolean;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div data-testid={testId} className="bg-surface border border-line rounded-[16px] p-6 md:p-7 flex flex-col">
+      {badge ? (
+        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-success inline-flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-success" />
+          {badge} · Free
+        </p>
+      ) : (
+        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">Free</p>
+      )}
+      <h2 className="font-display text-[26px] md:text-[30px] leading-[1.1] text-ink mt-3">{title}</h2>
+      <p className="font-sans text-[15px] leading-[1.55] text-ink-muted mt-3">{blurb}</p>
+      <dl className="mt-5 flex flex-col gap-2.5">
+        {facts.map(([k, v]) => (
+          <div key={k} className="grid grid-cols-[96px_1fr] gap-3">
+            <dt className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet pt-[3px]">{k}</dt>
+            <dd className="font-sans text-[13px] leading-[1.5] text-ink">{v}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="mt-6">
+        {disabled ? (
+          <span className="inline-flex items-center gap-2 bg-ink/40 text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] cursor-not-allowed">
+            {cta}
+          </span>
+        ) : (
+          <Link
+            href="/play/diff"
+            onClick={() => setRunPreference(pref)}
+            className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] hover:bg-ink/90 transition-colors"
+          >
+            {cta}
+            <span className="text-highlight">→</span>
+          </Link>
+        )}
+      </div>
+      {children}
+    </div>
   );
 }

@@ -35,17 +35,17 @@ export function CostMeter() {
   if (!hasAnyKey) {
     return (
       <Link
-        href="/settings/keys"
+        href="/start"
         className="block group bg-surface border border-line rounded-[12px] p-3 hover:border-ink transition-colors"
       >
         <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet">
-          No key yet
+          No key needed
         </div>
         <div className="font-display text-[16px] leading-[1.2] text-ink mt-1">
-          Bring a key →
+          How to run →
         </div>
         <div className="font-sans text-[11px] text-ink-muted mt-1">
-          Set up to run playgrounds.
+          Run free, or bring a key for bigger models.
         </div>
       </Link>
     );

@@ -82,8 +82,8 @@ export function OgCard() {
             maxWidth: "880px",
           }}
         >
-          A hands-on playground for UX designers and researchers to learn the
-          craft — tone, persona, and boundaries.
+          A hands-on lab for understanding how AI models behave — and how
+          that behavior gets made.
         </div>
       </div>
 

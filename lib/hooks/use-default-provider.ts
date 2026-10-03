@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 import { PROVIDERS, preferredProvider, type ProviderId } from "@/lib/providers";
 import { useKeys } from "./use-keys";
+import { useHostedStatus } from "./use-hosted-status";
+import { getRunPreference } from "@/lib/run-preference";
 
 /**
  * On first load of a fresh playground, default the provider/model to a BYOK
@@ -23,15 +25,19 @@ export function useDefaultProvider({
   onResolve: (provider: ProviderId, model: string) => void;
 }) {
   const { keys, hydrated } = useKeys();
+  const hosted = useHostedStatus();
   const applied = useRef(false);
 
   useEffect(() => {
-    if (applied.current || !enabled || !hydrated) return;
+    // Wait for the free tier's answer too: defaulting to the in-browser model
+    // and then switching a beat later would read as a glitch.
+    if (applied.current || !enabled || !hydrated || !hosted.resolved) return;
     applied.current = true;
-    const pref = preferredProvider(keys);
+    // A reader who chose the in-browser model on /start keeps it.
+    const pref = preferredProvider(keys, undefined, hosted.enabled && getRunPreference() !== "local");
     // webllm is already the initial default; only switch when a key exists.
     if (pref !== "webllm") {
       onResolve(pref, PROVIDERS[pref].defaultModel);
     }
-  }, [enabled, hydrated, keys, onResolve]);
+  }, [enabled, hydrated, hosted.resolved, hosted.enabled, keys, onResolve]);
 }

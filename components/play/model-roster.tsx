@@ -1,6 +1,7 @@
 "use client";
 
-import { PROVIDER_LIST, PROVIDERS, type ProviderId } from "@/lib/providers";
+import { ProviderOptions } from "@/components/play/provider-options";
+import { PROVIDERS, type ProviderId } from "@/lib/providers";
 import { ModelSelect } from "@/components/play/model-select";
 import {
   MAX_MODELS,
@@ -74,11 +75,7 @@ export function ModelRoster({
                 aria-label={`Provider for model ${i + 1}`}
                 className="bg-canvas border border-line rounded-[10px] px-3 py-2 font-mono text-[12px] text-ink focus:border-ink focus:outline-none"
               >
-                {PROVIDER_LIST.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
+                <ProviderOptions current={ref.provider} />
               </select>
               <ModelSelect
                 provider={ref.provider}

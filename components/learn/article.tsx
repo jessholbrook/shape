@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SectionNumber } from "@/components/section-number";
 import type { CurriculumModule } from "@/lib/curriculum";
+import { LensIntro } from "./lens-intro";
 
 /**
  * The standard article meta header: ← Learn back link, module-number badge,
@@ -48,6 +49,8 @@ export function ArticleHeader({ module: mod }: { module: CurriculumModule }) {
           </>
         )}
       </p>
+
+      <LensIntro slug={mod.slug} />
     </>
   );
 }

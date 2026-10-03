@@ -1,6 +1,7 @@
 import { test, expect, type ConsoleMessage } from "@playwright/test";
 import { MODULES } from "../../lib/curriculum";
 import { PLAYGROUNDS } from "../../lib/playgrounds";
+import { LENS_IDS } from "../../lib/lenses";
 
 /**
  * A build that succeeds still says nothing about whether a page runs: a bad
@@ -14,9 +15,11 @@ const ROUTES = [
   "/",
   "/learn",
   "/play",
+  "/lab",
   "/start",
   "/notebook",
   "/settings/keys",
+  ...LENS_IDS.map((id) => `/for/${id}`),
   ...MODULES.filter((m) => m.status === "ready" && m.href.startsWith("/learn/")).map(
     (m) => m.href,
   ),
@@ -75,7 +78,7 @@ test("the primary nav is a navigation landmark and reaches every section", async
   // Landmark, not just a list of links: the desktop nav lived in a bare <aside>
   // until this test went looking for it by role.
   const nav = page.getByRole("navigation", { name: "Main" }).first();
-  for (const label of ["Home", "Learn", "Play", "Notebook"]) {
+  for (const label of ["Home", "Learn", "Play", "Lab", "Notebook"]) {
     await expect(nav.getByRole("link", { name: label })).toBeVisible();
   }
 });
@@ -248,5 +251,177 @@ test("/play/tools relay mode seeds a retrieved document and offers the provenanc
   await page.getByRole("button", { name: "Solo", exact: true }).click();
   await page.getByRole("button", { name: "Relay", exact: true }).click();
   expect((await values("Scenario name")).filter((v) => v === "Retrieved notes")).toHaveLength(1);
+  expect(errors).toEqual([]);
+});
+
+/**
+ * Lens packs. A ?lens= link must land on that lens's scenario and stick, the
+ * picker must swap scenarios without a key, and a saved draft must never be
+ * overwritten by the lens — the draft owns its content.
+ */
+test("/play/refusal?lens=policy opens on the policy probe panel", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/play/refusal?lens=policy", { waitUntil: "networkidle" });
+
+  const picker = page.getByRole("group", { name: "Example scenario" });
+  await expect(picker.getByRole("button", { name: "Policy" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText("Sounds adversarial, isn't")).toBeVisible();
+
+  // The lens sticks: a plain visit to another playground uses it too.
+  await page.goto("/play/portability", { waitUntil: "networkidle" });
+  const textareas = page.locator("textarea");
+  await expect
+    .poll(() => textareas.evaluateAll((els) => els.some((e) => (e as HTMLTextAreaElement).value.includes("claimant handbook"))))
+    .toBe(true);
+
+  expect(errors).toEqual([]);
+});
+
+test("/play/spread switches to the philosophy example without a key", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/play/spread", { waitUntil: "networkidle" });
+
+  const picker = page.getByRole("group", { name: "Example scenario" });
+  await expect(picker.getByRole("button", { name: "General" })).toHaveAttribute("aria-pressed", "true");
+  await picker.getByRole("button", { name: "Philosophy" }).click();
+  await expect(picker.getByRole("button", { name: "Philosophy" })).toHaveAttribute("aria-pressed", "true");
+
+  const textareas = page.locator("textarea");
+  await expect
+    .poll(() => textareas.evaluateAll((els) => els.some((e) => (e as HTMLTextAreaElement).value.includes("trolley"))))
+    .toBe(true);
+
+  expect(errors).toEqual([]);
+});
+
+test("lessons open with the reader's lens intro, and none without a lens", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+
+  await page.goto("/learn/distributions-not-outputs", { waitUntil: "networkidle" });
+  await expect(page.getByText(/^Reading as/)).toHaveCount(0);
+
+  await page.goto("/for/philosophy", { waitUntil: "networkidle" });
+  await page.goto("/learn/distributions-not-outputs", { waitUntil: "networkidle" });
+  await expect(page.getByText("Reading as philosophy & ethics")).toBeVisible();
+  await expect(page.getByText(/a distribution of verdicts/)).toBeVisible();
+
+  expect(errors).toEqual([]);
+});
+
+/**
+ * The lab opens on its starter experiment and won't run without a model to
+ * run on. With no key and no GPU (headless), the free in-browser model is
+ * unusable, so the button stays disabled rather than failing mid-run.
+ */
+test("/lab opens on the starter experiment and holds Run until a model is ready", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/lab", { waitUntil: "networkidle" });
+
+  await expect(page.getByLabel("Question", { exact: true })).toHaveValue(/shift its answer/);
+  await expect(page.getByRole("button", { name: "Run experiment" })).toBeVisible();
+  await expect(page.getByTestId("lab-preflight")).toContainText("60 calls");
+
+  // Hypothesis is editable until the first run.
+  await expect(page.getByLabel("Hypothesis", { exact: true })).not.toHaveAttribute("readonly", "");
+
+  expect(errors).toEqual([]);
+});
+
+/**
+ * Templates: a ?template= link opens on that template, a lens sends the lab
+ * to its own template, and the picker swaps templates without a key.
+ */
+test("/lab templates load from the URL, the lens, and the picker", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  const question = page.getByLabel("Question", { exact: true });
+
+  await page.goto("/lab?template=framing", { waitUntil: "networkidle" });
+  await expect(question).toHaveValue(/lives saved or lives lost/);
+
+  await page.goto("/for/education", { waitUntil: "networkidle" });
+  await page.goto("/lab", { waitUntil: "networkidle" });
+  await expect(question).toHaveValue(/AI grader/);
+  const picker = page.getByRole("group", { name: "Templates" });
+  await expect(picker.getByRole("button").first()).toContainText("for you");
+
+  await picker.getByRole("button", { name: /Do rules hold better/ }).click();
+  await expect(question).toHaveValue(/rule's rationale/);
+  await expect(picker.getByRole("button", { name: /Do rules hold better/ })).toHaveAttribute("aria-pressed", "true");
+
+  expect(errors).toEqual([]);
+});
+
+/**
+ * "Open as experiment" carries a playground's setup into the lab in a new
+ * tab — saved to the notebook, playground left untouched.
+ */
+test("/play/spread opens its setup as an experiment in a new tab", async ({ page, context }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/play/spread", { waitUntil: "networkidle" });
+
+  const [lab] = await Promise.all([
+    context.waitForEvent("page"),
+    page.getByRole("button", { name: /Open as experiment/ }).click(),
+  ]);
+  lab.on("pageerror", (e) => errors.push(String(e)));
+  await lab.waitForLoadState("networkidle");
+  expect(lab.url()).toMatch(/\/lab\?draft=/);
+
+  await expect(lab.getByLabel("System prompt", { exact: true })).toHaveValue(/community library/);
+  await expect(lab.getByLabel("Measures")).toContainText("Excludes");
+  await expect(lab.getByRole("group", { name: "Templates" })).toHaveCount(0);
+
+  // The playground stayed put, with a way back in if the tab was blocked.
+  await expect(page.getByText(/Saved to your notebook/)).toBeVisible();
+  expect(page.url()).toMatch(/\/play\/spread/);
+  expect(errors).toEqual([]);
+});
+
+/**
+ * /start offers the free ways to run. With the free tier off (no env in CI)
+ * only the in-browser model shows; with it up, hosted Claude leads, and
+ * choosing the in-browser model sticks — the playground doesn't switch the
+ * reader onto hosted Claude behind their back.
+ */
+test("/start shows only the in-browser option when the free tier is off", async ({ page }) => {
+  await page.goto("/start", { waitUntil: "networkidle" });
+  await expect(page.getByTestId("run-local")).toBeVisible();
+  await expect(page.getByTestId("run-local")).toContainText("Never leave your machine");
+  await expect(page.getByTestId("run-hosted")).toHaveCount(0);
+});
+
+test("/start offers hosted Claude when the free tier is up, and keeps an in-browser choice", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.route("**/api/hosted/status", (route) =>
+    route.fulfill({
+      json: { enabled: true, limit: 100, remaining: 87, resetsAt: "2099-01-01T00:00:00.000Z", model: "claude-haiku-4-5" },
+    }),
+  );
+
+  await page.goto("/start", { waitUntil: "networkidle" });
+  const hosted = page.getByTestId("run-hosted");
+  await expect(hosted).toContainText("Recommended");
+  await expect(hosted).toContainText("87 of 100 free runs left today");
+  await expect(hosted).toContainText("Shape doesn't store them");
+
+  // Hosted is the default in a playground…
+  await hosted.getByRole("link", { name: /free Claude/ }).click();
+  await page.waitForURL("**/play/diff");
+  await expect(page.getByTestId("hosted-note").first()).toBeVisible();
+
+  // …unless the reader picked the in-browser model.
+  await page.goto("/start", { waitUntil: "networkidle" });
+  await page.getByTestId("run-local").getByRole("link", { name: /in your browser/ }).click();
+  await page.waitForURL("**/play/diff");
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByTestId("hosted-note")).toHaveCount(0);
+
   expect(errors).toEqual([]);
 });
