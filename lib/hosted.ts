@@ -50,13 +50,13 @@ function positiveNumber(v: string | undefined, fallback: number): number {
 }
 
 /**
- * Read the free tier's settings. Off unless SHAPE_FREE_TIER is exactly "on"
+ * Read the free tier's settings. Off unless SHAPE_FREE_TIER is "on" (any case)
  * and every secret is present — a half-configured deploy is a disabled one,
  * never a broken one. The monthly cap has no default: spending money needs a
  * number someone chose.
  */
 export function readHostedConfig(env: Env): HostedConfig {
-  if (env.SHAPE_FREE_TIER !== "on") return { enabled: false, reason: "switched off" };
+  if (env.SHAPE_FREE_TIER?.trim().toLowerCase() !== "on") return { enabled: false, reason: "switched off (SHAPE_FREE_TIER is not \"on\")" };
   const missing = [
     "HOSTED_ANTHROPIC_API_KEY",
     "SUPABASE_URL",
@@ -65,7 +65,8 @@ export function readHostedConfig(env: Env): HostedConfig {
     "HOSTED_MONTHLY_CAP_USD",
   ].filter((k) => !env[k]?.trim());
   if (missing.length) return { enabled: false, reason: `missing ${missing.join(", ")}` };
-  const cap = Number(env.HOSTED_MONTHLY_CAP_USD);
+  // Forgive "$20" and "1,000": the dashboard is where this gets typed.
+  const cap = Number(env.HOSTED_MONTHLY_CAP_USD!.replace(/[$,\s]/g, ""));
   if (!Number.isFinite(cap) || cap <= 0) return { enabled: false, reason: "HOSTED_MONTHLY_CAP_USD is not a positive number" };
   return {
     enabled: true,

@@ -78,7 +78,7 @@ const EVENTS: StreamEvent[] = [
 // --- Config ---------------------------------------------------------------------------
 
 test("config: off unless switched on and fully set; the cap has no default", () => {
-  assert.deepEqual(readHostedConfig({}), { enabled: false, reason: "switched off" });
+  assert.deepEqual(readHostedConfig({}), { enabled: false, reason: 'switched off (SHAPE_FREE_TIER is not "on")' });
   assert.equal(readHostedConfig({ ...ENV, SHAPE_FREE_TIER: "yes" }).enabled, false);
   const missing = readHostedConfig({ ...ENV, HOSTED_MONTHLY_CAP_USD: "" });
   assert.equal(missing.enabled, false);
@@ -177,7 +177,7 @@ test("supabase: new secret keys go in apikey only; legacy JWT keys also as Beare
 
 test("handler: off → 503 with a way forward; cross-origin → 403", async () => {
   const { stream } = fakeStream(EVENTS);
-  const off = await createHostedHandler({ config: { enabled: false, reason: "switched off" }, rpc: null, stream })(post(GOOD));
+  const off = await createHostedHandler({ config: { enabled: false, reason: 'switched off (SHAPE_FREE_TIER is not "on")' }, rpc: null, stream })(post(GOOD));
   assert.equal(off.status, 503);
   assert.equal((await off.json()).error.message, QUOTA_MESSAGE.off);
 
@@ -293,4 +293,21 @@ test("provider: the free tier needs no key, isn't a BYOK provider, and ranks bel
   assert.equal(preferredProvider({}, null, false), "webllm");
   assert.equal(preferredProvider({ anthropic: "sk-ant-x" }, null, true), "anthropic");
   assert.equal(preferredProvider({}, { baseUrl: "http://localhost:1234/v1", keyless: true } as never, true), "custom");
+});
+
+test("config: forgives casing and a dollar sign, and names what's missing without values", () => {
+  const base = {
+    SHAPE_FREE_TIER: " On ",
+    HOSTED_ANTHROPIC_API_KEY: "k",
+    SUPABASE_URL: "https://x.supabase.co/",
+    SUPABASE_SERVICE_ROLE_KEY: "s",
+    QUOTA_HASH_SECRET: "h",
+    HOSTED_MONTHLY_CAP_USD: "$1,000",
+  };
+  const c = readHostedConfig(base);
+  assert.ok(c.enabled);
+  if (c.enabled) assert.equal(c.monthlyCapMicro, 1_000_000_000);
+  const off = readHostedConfig({ ...base, QUOTA_HASH_SECRET: "" });
+  assert.ok(!off.enabled);
+  if (!off.enabled) assert.equal(off.reason, "missing QUOTA_HASH_SECRET");
 });

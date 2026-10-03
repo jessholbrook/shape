@@ -181,7 +181,11 @@ export function createStatusHandler(deps: Omit<HostedDeps, "stream">) {
     const { day, month, resetsAt } = periodKeys(now());
     const off: HostedStatus = { enabled: false, limit: 0, remaining: 0, resetsAt, model: HOSTED_MODEL };
     const config = deps.config;
-    if (!config.enabled || !deps.rpc) return json(200, off);
+    if (!config.enabled || !deps.rpc) {
+      // Names only, never values: says which setting to fix.
+      if (!config.enabled) console.warn(`hosted: free tier off — ${config.reason}`);
+      return json(200, off);
+    }
 
     const { id, setCookie } = visitor(req);
     const who = await subjects(config.hashSecret, id, clientIp(req), day);
