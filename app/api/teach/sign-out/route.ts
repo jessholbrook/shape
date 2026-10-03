@@ -1,0 +1,7 @@
+import { signOut } from "@/lib/server/classroom-handler";
+
+export const dynamic = "force-dynamic";
+
+export async function POST(req: Request): Promise<Response> {
+  return signOut(req);
+}
