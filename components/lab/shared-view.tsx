@@ -114,10 +114,10 @@ function measureDetail(m: Measure): string {
   }
 }
 
-function Design({ experiment: e }: { experiment: Experiment }) {
+export function Design({ experiment: e, num = "02", hint }: { experiment: Experiment; num?: string; hint?: string }) {
   return (
     <section className={PANEL} aria-label="Design">
-      <PanelHeader num="02" title="How it was set up" hint={`Each version was run ${e.n} times${e.items.length ? " per item" : ""}.`} />
+      <PanelHeader num={num} title="How it was set up" hint={hint ?? `Each version was run ${e.n} times${e.items.length ? " per item" : ""}.`} />
       <dl className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-4 gap-y-3">
         <dt className={EYEBROW}>Model</dt>
         <dd className="font-sans text-[14px] text-ink">
