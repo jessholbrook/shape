@@ -177,10 +177,20 @@ export function signOut(req: Request): Response {
   return json(200, { ok: true }, { "set-cookie": clearCookie(TEACHER_COOKIE, isSecure(req)) });
 }
 
+// Once per instance: an intentionally-off feature shouldn't log on every page view.
+let warnedOff = false;
+
 /** GET /api/teach/me — is classrooms on, and who's signed in. */
 export function createMeHandler(deps: ClassDeps) {
   return async function GET(req: Request): Promise<Response> {
-    if (!deps.config.enabled) return json(200, { enabled: false, teacher: null });
+    if (!deps.config.enabled) {
+      // Names only, never values: says which setting to fix.
+      if (!warnedOff) {
+        warnedOff = true;
+        console.warn(`classroom: off — ${deps.config.reason}`);
+      }
+      return json(200, { enabled: false, teacher: null });
+    }
     const teacher = await currentTeacher(deps, readCookie(req, TEACHER_COOKIE));
     return json(200, { enabled: true, teacher: teacher ? { email: teacher.email } : null });
   };
