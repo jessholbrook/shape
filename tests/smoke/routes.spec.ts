@@ -485,3 +485,54 @@ test("/lab hides Share when sharing is off, and publishes and deletes a link whe
 
   expect(errors).toEqual([]);
 });
+
+/**
+ * Classrooms. CI has classrooms off and no database: the teacher page says
+ * so, a well-formed class code shows "can't load" and a malformed one 404s,
+ * and the lab's Make-a-class panel is driven against mocked endpoints.
+ */
+test("classroom pages render with classrooms off", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+
+  await page.goto("/teach", { waitUntil: "networkidle" });
+  await expect(page.getByTestId("teach-off")).toBeVisible();
+
+  await page.goto("/teach/confirm?token=abc", { waitUntil: "networkidle" });
+  await expect(page.getByRole("button", { name: /Sign in to Shape/ })).toBeVisible();
+
+  await page.goto("/class", { waitUntil: "networkidle" });
+  await page.getByLabel("Class code").fill("kq7-m3p");
+  await page.getByRole("button", { name: /Go to class/ }).click();
+  await page.waitForURL("**/class/KQ7M3P");
+  await expect(page.getByTestId("class-unavailable")).toBeVisible();
+
+  const res = await page.goto("/class/not-a-code");
+  expect(res?.status()).toBe(404);
+  expect(errors).toEqual([]);
+});
+
+test("/lab shows Make a class only to a signed-in teacher, and makes one", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+
+  await page.goto("/lab", { waitUntil: "networkidle" });
+  await expect(page.getByRole("button", { name: "Run experiment" })).toBeVisible();
+  await expect(page.getByTestId("make-class-panel")).toHaveCount(0);
+
+  let made: { title?: string; experiment?: { question?: string } } | null = null;
+  await page.route("**/api/teach/me", (route) => route.fulfill({ json: { enabled: true, teacher: { email: "prof@uni.edu" } } }));
+  await page.route("**/api/classes", (route) => {
+    made = route.request().postDataJSON();
+    return route.fulfill({ status: 201, json: { code: "KQ7M3P", display: "KQ7-M3P" } });
+  });
+  await page.reload({ waitUntil: "networkidle" });
+
+  const panel = page.getByTestId("make-class-panel");
+  await panel.getByRole("button", { name: /Make a class/ }).click();
+  await expect(panel.getByTestId("class-made")).toContainText("KQ7-M3P");
+  await expect(panel.getByRole("link", { name: /Open the class/ })).toHaveAttribute("href", "/teach/classes/KQ7M3P");
+  expect(made!.title).toBeTruthy();
+  expect(made!.experiment?.question).toBeTruthy();
+  expect(errors).toEqual([]);
+});
