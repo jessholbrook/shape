@@ -34,6 +34,7 @@ import { INPUT, Label, MONO_INPUT, PANEL, PanelHeader } from "@/components/lab/f
 import { ConditionsEditor, ItemsEditor, MeasuresEditor } from "@/components/lab/setup";
 import { Findings, ManifestPanel, ResultsTable, RunList } from "@/components/lab/results";
 import { SharePanel } from "@/components/lab/share-panel";
+import { MakeClassPanel } from "@/components/lab/make-class-panel";
 import { useShareStatus } from "@/lib/hooks/use-share-status";
 
 const INITIAL_MODEL: LabModel = { provider: "webllm", model: PROVIDERS.webllm.defaultModel };
@@ -389,6 +390,12 @@ export function LabWorkshop() {
           blockedReason={shareBlocked}
         />
       )}
+
+      <MakeClassPanel
+        experiment={e}
+        title={title.trim() || e.title.trim() || "Untitled experiment"}
+        blockedReason={running ? "Wait for the run to finish." : !e.question.trim() ? "Write the question before making a class." : null}
+      />
     </div>
   );
 }
