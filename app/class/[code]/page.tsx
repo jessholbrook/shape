@@ -6,6 +6,7 @@ import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
 import { Design } from "@/components/lab/shared-view";
 import { JoinForm } from "@/components/classroom/forms";
+import { ClassRunner } from "@/components/classroom/class-runner";
 import { memberCookieName, normalizeJoinCode } from "@/lib/classroom";
 import { currentMember, loadStudentClass } from "@/lib/server/classroom-handler";
 import { classDeps } from "@/lib/server/classroom-deps";
@@ -64,11 +65,7 @@ export default async function StudentClassPage({ params }: { params: Promise<{ c
                 )}
               </section>
               <Design experiment={result.data.experiment} hint={`You'll run each version ${result.data.experiment.n} times${result.data.experiment.items.length ? " per item" : ""}.`} />
-              {member && (
-                <p className="bg-highlight-soft border border-highlight/40 rounded-[12px] px-4 py-3 font-sans text-[14px] text-ink">
-                  Running it opens soon — your teacher will tell you when.
-                </p>
-              )}
+              {member && result.data.status === "open" && <ClassRunner code={code} experiment={result.data.experiment} />}
             </div>
           </>
         )}

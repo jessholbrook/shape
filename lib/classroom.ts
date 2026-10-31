@@ -1,4 +1,5 @@
-import type { Experiment } from "./experiment";
+import { canonicalJson, type Experiment, type LabModel } from "./experiment";
+import { sha256Hex } from "./sharing";
 
 /**
  * Classrooms: a teacher turns a lab experiment into a class; students join
@@ -214,4 +215,25 @@ export function linkOrigin(requestUrl: string, env: Env): string {
     // Fall through.
   }
   return canonical;
+}
+
+// --- Recorded runs ---------------------------------------------------------------------
+
+/**
+ * What a class call was asked, as a hash: the free tier stores it beside the
+ * answer it records, and the run checker recomputes it from the class's own
+ * design. A run counts as recorded by Shape only when the two match — so a
+ * reused call id can't pass off an answer to a different prompt.
+ */
+export async function promptFingerprint(p: { system: string; user: string; temperature: number }): Promise<string> {
+  return sha256Hex(canonicalJson({ system: p.system, user: p.user, temperature: p.temperature }));
+}
+
+/** The call id a run's answer is recorded under, and each of its judge replies. */
+export const runCallId = (runId: string) => runId;
+export const judgeCallId = (runId: string, measureId: string) => `${runId}:${measureId}`;
+
+/** The class's design with a student's chosen answering model. Judges stay as the teacher set them. */
+export function designFor(e: Experiment, model: LabModel): Experiment {
+  return { ...e, base: { ...e.base, model } };
 }

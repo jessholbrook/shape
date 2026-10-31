@@ -4,7 +4,9 @@ import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
+import QRCode from "qrcode";
 import { Design } from "@/components/lab/shared-view";
+import { CopyLink } from "@/components/classroom/forms";
 import { TEACHER_COOKIE, formatJoinCode } from "@/lib/classroom";
 import { currentTeacher, loadTeacherClass } from "@/lib/server/classroom-handler";
 import { classDeps } from "@/lib/server/classroom-deps";
@@ -23,6 +25,10 @@ export default async function TeacherClassPage({ params }: { params: Promise<{ c
   if (result.status === "missing") notFound();
 
   const host = (await headers()).get("host") ?? "shape-models.com";
+  const proto = host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
+  const joinUrl = result.status === "ok" ? `${proto}://${host}/class/${result.data.code}` : "";
+  // Generated here from our own URL — not user input — so rendering the SVG markup is safe.
+  const qr = joinUrl ? await QRCode.toString(joinUrl, { type: "svg", margin: 1, errorCorrectionLevel: "M" }) : "";
   return (
     <Shell>
       <section className="mx-auto max-w-[1100px] px-6 md:px-12 pt-16 md:pt-20 pb-32">
@@ -46,6 +52,21 @@ export default async function TeacherClassPage({ params }: { params: Promise<{ c
                 </p>
                 <p className={`${EYEBROW} mt-4`}>and type the code</p>
                 <p className="font-mono text-[48px] md:text-[56px] leading-none tracking-[0.12em] text-ink mt-2">{formatJoinCode(result.data.code)}</p>
+                <div className="mt-6 pt-5 border-t border-line flex flex-wrap items-center gap-5" data-testid="class-join-link">
+                  <div
+                    className="w-[120px] h-[120px] bg-white rounded-[8px] p-1 shrink-0 [&>svg]:w-full [&>svg]:h-full"
+                    role="img"
+                    aria-label={`QR code for ${joinUrl}`}
+                    dangerouslySetInnerHTML={{ __html: qr }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className={EYEBROW}>Or share the link — it skips the code</p>
+                    <p className="font-mono text-[13px] text-ink mt-1 break-all">{joinUrl}</p>
+                    <div className="mt-2">
+                      <CopyLink url={joinUrl} />
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="bg-surface border border-line rounded-[16px] p-6">
                 <p className={EYEBROW}>
@@ -56,8 +77,13 @@ export default async function TeacherClassPage({ params }: { params: Promise<{ c
                 ) : (
                   <ul className="mt-2 flex flex-wrap gap-2">
                     {result.data.members.map((m) => (
-                      <li key={m.nickname} className="font-sans text-[13px] text-ink bg-canvas border border-line rounded-full px-3 py-1">
+                      <li
+                        key={m.nickname}
+                        className="font-sans text-[13px] text-ink bg-canvas border border-line rounded-full px-3 py-1"
+                        title={m.runs ? `${m.recorded} of ${m.runs} runs recorded by Shape` : "No runs yet"}
+                      >
                         {m.nickname}
+                        <span className="text-ink-quiet"> · {m.runs ? `${m.runs} runs` : "no runs yet"}</span>
                       </li>
                     ))}
                   </ul>
@@ -69,7 +95,7 @@ export default async function TeacherClassPage({ params }: { params: Promise<{ c
             </div>
 
             <p className="mt-6 bg-highlight-soft border border-highlight/40 rounded-[12px] px-4 py-3 font-sans text-[14px] text-ink">
-              Students can join now. Running the experiment in class, and the pooled results, arrive in the next update.
+              Students can join and run the experiment now; their runs are saved to the class. The pooled results view arrives in the next update.
             </p>
 
             <div className="mt-6 flex flex-col gap-6">

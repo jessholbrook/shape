@@ -38,24 +38,28 @@ export type ClassDeps = {
   now?: () => Date;
   /** For sign-in link origins. */
   env?: Record<string, string | undefined>;
+  /** Free-tier calls a student may make per day in a class (from the free tier's config). */
+  memberDailyCalls?: number;
+  /** Whether the free tier is on — class runs on it need it. */
+  freeTier?: boolean;
 };
 
 export type Teacher = { id: string; email: string };
 
 const MEMBER_TTL_MS = 180 * 24 * 60 * 60 * 1000;
 
-function json(status: number, body: unknown, headers: Record<string, string> = {}): Response {
+export function json(status: number, body: unknown, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: { "content-type": "application/json", "cache-control": "no-store", ...headers },
   });
 }
 
-const error = (status: number, message: string, headers?: Record<string, string>) => json(status, { error: { message } }, headers);
+export const error = (status: number, message: string, headers?: Record<string, string>) => json(status, { error: { message } }, headers);
 const OFF = "Classrooms aren't available right now.";
 const isSecure = (req: Request) => new URL(req.url).protocol === "https:";
 
-async function readJson(req: Request, maxBytes: number): Promise<{ ok: true; body: Record<string, unknown> } | { ok: false; res: Response }> {
+export async function readJson(req: Request, maxBytes: number): Promise<{ ok: true; body: Record<string, unknown> } | { ok: false; res: Response }> {
   const raw = await req.text();
   if (raw.length > maxBytes) return { ok: false, res: error(413, "Request too large.") };
   try {
@@ -67,7 +71,7 @@ async function readJson(req: Request, maxBytes: number): Promise<{ ok: true; bod
   }
 }
 
-function gate(req: Request, key: string, limit: number, windowMs: number, now: number): Response | null {
+export function gate(req: Request, key: string, limit: number, windowMs: number, now: number): Response | null {
   if (!isSameOrigin(req)) return forbidden();
   const g = rateLimit(`${key}:${clientIp(req)}`, limit, windowMs, now);
   return g.ok ? null : tooManyRequests(g.retryAfter);
@@ -283,7 +287,7 @@ export type TeacherClass = {
   daily_calls: number;
   created_at: string;
   closed_at: string | null;
-  members: { nickname: string; joined_at: string }[];
+  members: { nickname: string; joined_at: string; runs: number; recorded: number }[];
 };
 
 export type StudentClass = { id: string; code: string; title: string; status: "open" | "closed"; experiment: Experiment };

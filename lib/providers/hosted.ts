@@ -21,12 +21,15 @@ export async function* hostedChat(call: ChatCall): AsyncIterable<ChatEvent> {
       temperature: call.temperature,
       maxTokens: call.maxTokens,
       tools: call.tools?.map((t) => ({ name: t.name, description: t.description, input_schema: t.parameters })) ?? [],
+      ...(call.classCall ? { class: call.classCall } : {}),
     }),
   });
 
+  // A class call reports the class's allowance, not this reader's own free runs.
+  const classScope = res.headers.get("x-shape-quota-scope") === "class";
   const remaining = Number(res.headers.get("x-shape-quota-remaining"));
   const limit = Number(res.headers.get("x-shape-quota-limit"));
-  if (Number.isFinite(remaining) && Number.isFinite(limit) && limit > 0) noteHostedQuota(remaining, limit);
+  if (!classScope && Number.isFinite(remaining) && Number.isFinite(limit) && limit > 0) noteHostedQuota(remaining, limit);
 
   if (!res.ok) {
     let message = `Free tier error (${res.status}).`;
@@ -38,7 +41,7 @@ export async function* hostedChat(call: ChatCall): AsyncIterable<ChatEvent> {
     } catch {
       /* keep the generic message */
     }
-    if (reason === "daily" || reason === "monthly" || reason === "off" || reason === "network") closeHosted();
+    if (!classScope && (reason === "daily" || reason === "monthly" || reason === "off" || reason === "network")) closeHosted();
     throw new Error(message);
   }
 

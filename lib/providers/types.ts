@@ -41,6 +41,11 @@ export type ChatCall = {
   apiKey?: string;
   /** Native tool definitions. Not supported by the in-browser models. */
   tools?: ToolSpec[];
+  /**
+   * A call made inside a class: the free tier meters it against the class and
+   * records the answer under `callId`. Other providers ignore it.
+   */
+  classCall?: { code: string; callId: string };
 };
 
 export type ChatUsage = {

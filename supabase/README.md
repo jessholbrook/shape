@@ -17,6 +17,22 @@ function security, or grant anything to `anon` or `authenticated`. Existing
 function revokes and RLS-with-no-policies remain in place. Normal Supabase
 setup supplies `USAGE` on the `public` schema. There are no sequences to grant.
 
+Classrooms follow the same rules. `20261031000000_explicit_classroom_grants.sql`
+adds forward grants for the part-1 classroom tables and nine RPCs (written
+before automatic grants stopped), and `20261101000000_class_runs.sql` grants
+exactly what its own functions use:
+
+- `teacher_allowlist`: `SELECT` (rows are managed by the site owner, not the server).
+- `teachers`, `teacher_login_tokens`, `class_calls`: `SELECT`, `INSERT`, `UPDATE`.
+- `classes`, `class_members`: `SELECT`, `INSERT`.
+- `class_runs`: `SELECT`, `INSERT`, `DELETE` (a resubmission replaces a student's runs).
+- Every classroom RPC: `EXECUTE` for `service_role` only.
+
+`tests/database-classrooms.test.ts` replays every migration on a fresh
+database with no automatic grants and runs the whole classroom flow as a
+non-owner `service_role`: sign-in, make a class, join, class metering,
+recording, submitting, and the teacher's view.
+
 For future migrations, include explicit grants for only the roles and
 operations actually used. Do not restore automatic grants for all new objects
 or change functions to `SECURITY DEFINER` to work around a permission error.

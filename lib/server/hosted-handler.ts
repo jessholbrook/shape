@@ -12,6 +12,8 @@ import {
   type QuotaReason,
 } from "../hosted";
 import { isVisitorId, newVisitorId, readCookie, subjects, visitorCookie, VISITOR_COOKIE } from "./identity";
+import { isToken, memberCookieName, promptFingerprint } from "../classroom";
+import { sha256Hex } from "../sharing";
 import type { Rpc } from "./supabase";
 
 /**
@@ -63,6 +65,28 @@ function visitor(req: Request): { id: string; setCookie: Record<string, string> 
   return { id, setCookie: { "set-cookie": visitorCookie(id, secure) } };
 }
 
+const MAX_RECORDED_CHARS = 40_000;
+
+const CLASS_MESSAGE: Record<string, string> = {
+  not_member: "Join the class before running its experiment.",
+  closed: "This class is closed.",
+  class_daily: "This class has used today's free runs. They reset at midnight UTC.",
+  member_daily: "You've used your free runs in this class for today. They reset at midnight UTC.",
+  monthly: QUOTA_MESSAGE.monthly,
+};
+
+function classRefusal(status: number, reason: string | undefined): Response {
+  const r = reason && reason in CLASS_MESSAGE ? reason : "off";
+  return json(status, { error: { message: CLASS_MESSAGE[r] ?? QUOTA_MESSAGE.off, reason: r } }, { "x-shape-quota-scope": "class" });
+}
+
+/** The user turn, as the run checker will rebuild it: the text of a single user message. */
+function userText(r: HostedRequest): string {
+  const text = (m: HostedRequest["messages"][number]) =>
+    typeof m.content === "string" ? m.content : m.content.map((b) => (b.type === "text" ? b.text : "")).join("");
+  return r.messages.length === 1 && r.messages[0].role === "user" ? text(r.messages[0]) : JSON.stringify(r.messages);
+}
+
 function sse(event: StreamEvent): string {
   return `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`;
 }
@@ -91,30 +115,64 @@ export function createHostedHandler(deps: HostedDeps) {
     if (!v.ok) return json(v.status, { error: { message: v.message } });
     const request = v.request;
 
-    const { id, setCookie } = visitor(req);
     const { day, month } = periodKeys(now());
-    const who = await subjects(config.hashSecret, id, ip, day);
     const reserve = reserveMicroUsd(request);
-
+    let setCookie: Record<string, string> = {};
     let quota: { ok: boolean; remaining?: number; reason?: string };
-    try {
-      quota = await deps.rpc("consume_quota", {
-        p_visitor: who.visitor,
-        p_network: who.network,
-        p_day: day,
-        p_visitor_limit: config.dailyCalls,
-        p_network_limit: config.networkCalls,
-        p_month: month,
-        p_reserve_micro: reserve,
-        p_cap_micro: config.monthlyCapMicro,
-      });
-    } catch (err) {
-      console.error("hosted: quota check failed", err instanceof Error ? err.message : err);
-      return refusal(503, "off", setCookie);
-    }
-    if (!quota.ok) {
-      const reason: QuotaReason = quota.reason === "daily" || quota.reason === "network" || quota.reason === "monthly" ? quota.reason : "off";
-      return refusal(429, reason, { ...setCookie, "x-shape-quota-remaining": "0", "x-shape-quota-limit": String(config.dailyCalls) });
+    // Set for a call made inside a class: whose it is, and what it was asked.
+    let classCtx: { classId: string; memberId: string; callId: string; promptHash: string } | null = null;
+
+    if (v.classCall) {
+      // A class call draws on the class's allowance, not this visitor's or
+      // network's — but only for a member of that class, by their cookie.
+      const token = readCookie(req, memberCookieName(v.classCall.code));
+      if (!isToken(token, 16)) return classRefusal(403, "not_member");
+      let r: { ok: boolean; reason?: string; remaining?: number; class_id?: string; member_id?: string };
+      try {
+        r = await deps.rpc("consume_class_quota", {
+          p_code: v.classCall.code,
+          p_member_hash: await sha256Hex(token),
+          p_day: day,
+          p_member_limit: config.classMemberDailyCalls,
+          p_month: month,
+          p_reserve_micro: reserve,
+          p_cap_micro: config.monthlyCapMicro,
+        });
+      } catch (err) {
+        console.error("hosted: class quota check failed", err instanceof Error ? err.message : err);
+        return refusal(503, "off");
+      }
+      if (!r.ok || !r.class_id || !r.member_id) return classRefusal(r.reason === "closed" ? 409 : r.reason === "not_member" ? 403 : 429, r.reason);
+      quota = { ok: true, remaining: r.remaining };
+      classCtx = {
+        classId: r.class_id,
+        memberId: r.member_id,
+        callId: v.classCall.callId,
+        promptHash: await promptFingerprint({ system: request.system, user: userText(request), temperature: request.temperature }),
+      };
+    } else {
+      const visitorId = visitor(req);
+      setCookie = visitorId.setCookie;
+      const who = await subjects(config.hashSecret, visitorId.id, ip, day);
+      try {
+        quota = await deps.rpc("consume_quota", {
+          p_visitor: who.visitor,
+          p_network: who.network,
+          p_day: day,
+          p_visitor_limit: config.dailyCalls,
+          p_network_limit: config.networkCalls,
+          p_month: month,
+          p_reserve_micro: reserve,
+          p_cap_micro: config.monthlyCapMicro,
+        });
+      } catch (err) {
+        console.error("hosted: quota check failed", err instanceof Error ? err.message : err);
+        return refusal(503, "off", setCookie);
+      }
+      if (!quota.ok) {
+        const reason: QuotaReason = quota.reason === "daily" || quota.reason === "network" || quota.reason === "monthly" ? quota.reason : "off";
+        return refusal(429, reason, { ...setCookie, "x-shape-quota-remaining": "0", "x-shape-quota-limit": String(config.dailyCalls) });
+      }
     }
 
     const rpc = deps.rpc;
@@ -123,6 +181,8 @@ export function createHostedHandler(deps: HostedDeps) {
       async start(controller) {
         let inputTokens = 0;
         let outputTokens = 0;
+        // A class call's answer, kept so a submitted run can be checked against it.
+        let text = "";
         try {
           for await (const event of deps.stream({ apiKey: config.anthropicKey, request, signal: req.signal })) {
             if (event.type === "message_start") {
@@ -132,6 +192,9 @@ export function createHostedHandler(deps: HostedDeps) {
             } else if (event.type === "message_delta") {
               const usage = event.usage as { output_tokens?: number } | undefined;
               if (usage?.output_tokens != null) outputTokens = usage.output_tokens;
+            } else if (classCtx && event.type === "content_block_delta") {
+              const delta = event.delta as { type?: string; text?: string } | undefined;
+              if (delta?.type === "text_delta" && typeof delta.text === "string" && text.length < MAX_RECORDED_CHARS) text += delta.text;
             }
             controller.enqueue(encoder.encode(sse(event)));
           }
@@ -153,6 +216,23 @@ export function createHostedHandler(deps: HostedDeps) {
           } catch (err) {
             console.error("hosted: settle failed", err instanceof Error ? err.message : err);
           }
+          if (classCtx) {
+            try {
+              await rpc("record_class_call", {
+                p_class_id: classCtx.classId,
+                p_member_id: classCtx.memberId,
+                p_call_id: classCtx.callId,
+                p_model: HOSTED_MODEL,
+                p_prompt_hash: classCtx.promptHash,
+                p_text: text.slice(0, MAX_RECORDED_CHARS),
+                p_input: inputTokens,
+                p_output: outputTokens,
+              });
+            } catch (err) {
+              // The student still has their answer; the run will count as reported, not recorded.
+              console.error("hosted: recording a class call failed", err instanceof Error ? err.message : err);
+            }
+          }
           controller.close();
         }
       },
@@ -165,7 +245,8 @@ export function createHostedHandler(deps: HostedDeps) {
         "cache-control": "no-store",
         "x-shape-model": HOSTED_MODEL,
         "x-shape-quota-remaining": String(quota.remaining ?? 0),
-        "x-shape-quota-limit": String(config.dailyCalls),
+        "x-shape-quota-limit": String(classCtx ? config.classMemberDailyCalls : config.dailyCalls),
+        ...(classCtx ? { "x-shape-quota-scope": "class" } : {}),
         ...setCookie,
       },
     });
