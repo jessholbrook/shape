@@ -61,8 +61,12 @@ export function OgCard() {
 
       {/* Headline */}
       <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+        {/* Satori needs flex on any element with more than one child, so the
+            highlighted word sits in a wrapping flex row. */}
         <div
           style={{
+            display: "flex",
+            flexWrap: "wrap",
             fontSize: "82px",
             fontWeight: 700,
             lineHeight: 1.05,
@@ -71,8 +75,12 @@ export function OgCard() {
             maxWidth: "960px",
           }}
         >
-          Design how an AI{" "}
-          <span style={{ color: HIGHLIGHT }}>behaves</span>.
+          <span>Design how an AI&nbsp;</span>
+          {/* One unit, so the full stop never wraps on its own. */}
+          <span style={{ display: "flex" }}>
+            <span style={{ color: HIGHLIGHT }}>behaves</span>
+            <span>.</span>
+          </span>
         </div>
         <div
           style={{
