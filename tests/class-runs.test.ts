@@ -139,7 +139,8 @@ test("a class call that fails upstream records nothing, and a rate limit reads a
   const body = await res.text();
   assert.match(body, /free tier is busy/);
   assert.doesNotMatch(body, /contact sales/);
-  assert.deepEqual(calls.map((c) => c.fn), ["consume_class_quota", "settle_spend"], "settled, but no recorded answer");
+  assert.deepEqual(calls.map((c) => c.fn), ["consume_class_quota", "settle_spend", "refund_calls"], "settled and refunded, but no recorded answer");
+  assert.deepEqual(calls[2].args, { p_day: "2026-11-01", p_subjects: ["c:class-1", "m:member-1"] }, "the class's and the student's counts come back");
 });
 
 test("class refusals say why, in words a student can act on", async () => {

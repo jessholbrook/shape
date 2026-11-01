@@ -207,3 +207,39 @@ export function CopyLink({ url }: { url: string }) {
     </button>
   );
 }
+
+/** The teacher closes or reopens a class. Closing keeps the results; it only stops new runs. */
+export function ClassStatusButton({ code, status }: { code: string; status: "open" | "closed" }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const next = status === "open" ? "closed" : "open";
+
+  async function change() {
+    if (
+      next === "closed" &&
+      !window.confirm("Close this class? Students won't be able to run the experiment or send runs. Everyone can still see the results, and you can reopen it.")
+    ) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    const r = await post(`/api/teach/classes/${code}/status`, { status: next });
+    setBusy(false);
+    if (r.ok) router.refresh();
+    else setError(r.message);
+  }
+
+  return (
+    <span className="inline-flex flex-wrap items-center gap-3">
+      <button type="button" onClick={change} disabled={busy} className={LINK_BUTTON} data-testid="class-status-button">
+        {busy ? "Saving…" : next === "closed" ? "Close class" : "Reopen class"}
+      </button>
+      {error && (
+        <span role="alert" className="font-sans text-[13px] text-danger">
+          {error}
+        </span>
+      )}
+    </span>
+  );
+}

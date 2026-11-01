@@ -19,19 +19,30 @@ setup supplies `USAGE` on the `public` schema. There are no sequences to grant.
 
 Classrooms follow the same rules. `20261031000000_explicit_classroom_grants.sql`
 adds forward grants for the part-1 classroom tables and nine RPCs (written
-before automatic grants stopped), and `20261101000000_class_runs.sql` grants
-exactly what its own functions use:
+before automatic grants stopped); `20261101000000_class_runs.sql` and
+`20261102000000_class_results.sql` grant exactly what their own functions use:
 
 - `teacher_allowlist`: `SELECT` (rows are managed by the site owner, not the server).
 - `teachers`, `teacher_login_tokens`, `class_calls`: `SELECT`, `INSERT`, `UPDATE`.
-- `classes`, `class_members`: `SELECT`, `INSERT`.
+- `classes`: `SELECT`, `INSERT`, `UPDATE` (a teacher closes or reopens a class).
+- `class_members`: `SELECT`, `INSERT`.
 - `class_runs`: `SELECT`, `INSERT`, `DELETE` (a resubmission replaces a student's runs).
 - Every classroom RPC: `EXECUTE` for `service_role` only.
+
+Browser roles get nothing. `20261102010000_revoke_browser_table_grants.sql`
+removes every `anon`/`authenticated` privilege from the server-only tables
+(projects created before Supabase dropped automatic grants had them by
+default; RLS with no policies already hid every row) and changes the default
+privileges for objects `postgres` creates, so a new table, sequence or
+function starts with no browser access — grant `service_role` explicitly.
+`tests/database-browser-grants.test.ts` replays every migration under the live
+project's old defaults and checks the browser roles end with nothing.
 
 `tests/database-classrooms.test.ts` replays every migration on a fresh
 database with no automatic grants and runs the whole classroom flow as a
 non-owner `service_role`: sign-in, make a class, join, class metering,
-recording, submitting, and the teacher's view.
+recording, submitting, pooled results (anonymous for students), refunds,
+closing, and the teacher's view.
 
 For future migrations, include explicit grants for only the roles and
 operations actually used. Do not restore automatic grants for all new objects

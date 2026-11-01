@@ -7,9 +7,11 @@ import { SectionNumber } from "@/components/section-number";
 import { Design } from "@/components/lab/shared-view";
 import { JoinForm } from "@/components/classroom/forms";
 import { ClassRunner } from "@/components/classroom/class-runner";
+import { ClassResults } from "@/components/classroom/class-results";
 import { memberCookieName, normalizeJoinCode } from "@/lib/classroom";
 import { currentMember, loadStudentClass } from "@/lib/server/classroom-handler";
 import { classDeps } from "@/lib/server/classroom-deps";
+import { loadClassResults } from "@/lib/server/class-results";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Class", robots: { index: false, follow: false } };
@@ -23,8 +25,11 @@ export default async function StudentClassPage({ params }: { params: Promise<{ c
   const deps = classDeps();
   const result = await loadStudentClass(deps, code);
   if (result.status === "missing") notFound();
-  const member =
-    result.status === "ok" ? await currentMember(deps, code, (await cookies()).get(memberCookieName(code))?.value ?? null) : null;
+  const cookie = result.status === "ok" ? ((await cookies()).get(memberCookieName(code))?.value ?? null) : null;
+  const [member, pooled] = await Promise.all([
+    result.status === "ok" ? currentMember(deps, code, cookie) : null,
+    result.status === "ok" ? loadClassResults(deps, code, cookie) : null,
+  ]);
 
   return (
     <Shell>
@@ -66,6 +71,7 @@ export default async function StudentClassPage({ params }: { params: Promise<{ c
               </section>
               <Design experiment={result.data.experiment} hint={`You'll run each version ${result.data.experiment.n} times${result.data.experiment.items.length ? " per item" : ""}.`} />
               {member && result.data.status === "open" && <ClassRunner code={code} experiment={result.data.experiment} />}
+              {member && pooled?.status === "ok" && <ClassResults experiment={result.data.experiment} rows={pooled.data} view="student" />}
             </div>
           </>
         )}
