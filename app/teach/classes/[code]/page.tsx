@@ -6,10 +6,12 @@ import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
 import QRCode from "qrcode";
 import { Design } from "@/components/lab/shared-view";
-import { CopyLink } from "@/components/classroom/forms";
+import { ClassStatusButton, CopyLink } from "@/components/classroom/forms";
+import { ClassResults } from "@/components/classroom/class-results";
 import { TEACHER_COOKIE, formatJoinCode } from "@/lib/classroom";
 import { currentTeacher, loadTeacherClass } from "@/lib/server/classroom-handler";
 import { classDeps } from "@/lib/server/classroom-deps";
+import { loadTeacherRuns } from "@/lib/server/class-results";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Class", robots: { index: false, follow: false } };
@@ -21,7 +23,7 @@ export default async function TeacherClassPage({ params }: { params: Promise<{ c
   const deps = classDeps();
   const teacher = await currentTeacher(deps, (await cookies()).get(TEACHER_COOKIE)?.value ?? null);
   if (!teacher) redirect("/teach");
-  const result = await loadTeacherClass(deps, teacher, code);
+  const [result, runs] = await Promise.all([loadTeacherClass(deps, teacher, code), loadTeacherRuns(deps, teacher, code)]);
   if (result.status === "missing") notFound();
 
   const host = (await headers()).get("host") ?? "shape-models.com";
@@ -94,9 +96,32 @@ export default async function TeacherClassPage({ params }: { params: Promise<{ c
               </div>
             </div>
 
-            <p className="mt-6 bg-highlight-soft border border-highlight/40 rounded-[12px] px-4 py-3 font-sans text-[14px] text-ink">
-              Students can join and run the experiment now; their runs are saved to the class. The pooled results view arrives in the next update.
-            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3" data-testid="class-actions">
+              <p className="font-sans text-[14px] text-ink-muted">
+                {result.data.status === "open"
+                  ? "Open: students can join and run the experiment."
+                  : `Closed${result.data.closed_at ? ` on ${new Date(result.data.closed_at).toLocaleDateString("en", { day: "numeric", month: "short", year: "numeric" })}` : ""}: no new runs. Everyone can still see the results.`}
+              </p>
+              <ClassStatusButton code={result.data.code} status={result.data.status} />
+              <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
+                Download every run:{" "}
+                <a href={`/api/teach/classes/${result.data.code}/export?format=csv`} className="text-ink underline decoration-highlight underline-offset-4" download>
+                  CSV
+                </a>{" "}
+                ·{" "}
+                <a href={`/api/teach/classes/${result.data.code}/export?format=json`} className="text-ink underline decoration-highlight underline-offset-4" download>
+                  JSON
+                </a>
+              </span>
+            </div>
+
+            <div className="mt-6">
+              {runs.status === "ok" ? (
+                <ClassResults experiment={result.data.experiment} rows={runs.data} view="teacher" />
+              ) : (
+                <p className="font-sans text-[14px] text-ink-muted">Couldn&apos;t load the class&apos;s runs right now. Refresh in a minute.</p>
+              )}
+            </div>
 
             <div className="mt-6 flex flex-col gap-6">
               <section className="bg-surface border border-line rounded-[16px] p-5 md:p-6">

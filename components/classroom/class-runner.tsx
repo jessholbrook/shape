@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { analyze, type Experiment, type ExperimentRun, type LabModel } from "@/lib/experiment";
 import { designFor } from "@/lib/classroom";
 import { estimateExperimentCost, planRuns, runExperiment } from "@/lib/lab-runner";
@@ -45,6 +46,7 @@ function save(code: string, s: Saved) {
  */
 export function ClassRunner({ code, experiment }: { code: string; experiment: Experiment }) {
   const { keys, hydrated } = useKeys();
+  const router = useRouter();
   const [model, setModel] = useState<LabModel>(experiment.base.model);
   const [runs, setRuns] = useState<ExperimentRun[]>([]);
   const [running, setRunning] = useState(false);
@@ -102,6 +104,8 @@ export function ClassRunner({ code, experiment }: { code: string; experiment: Ex
       if (!res.ok) throw new Error(body?.error?.message ?? "Couldn't save your runs to the class.");
       setSubmitted(body);
       save(code, { model, runs: finished, submitted: body });
+      // Pull the class's pooled results again, now with these runs in them.
+      router.refresh();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Couldn't save your runs to the class.");
       save(code, { model, runs: finished, submitted: null });

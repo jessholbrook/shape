@@ -256,6 +256,37 @@ test("handler: an upstream failure mid-stream is reported and still settled", as
   assert.equal(settle!.args.p_actual_micro, actualMicroUsd({ inputTokens: 120, outputTokens: 1 }));
 });
 
+test("handler: refunds today's count only when the model failed before answering", async () => {
+  const subjectsOf = (calls: { fn: string; args: Record<string, unknown> }[]) => calls.find((c) => c.fn === "consume_quota")!.args;
+
+  // Rate-limited before any text: the visitor's and network's counts come back.
+  const before = fakeRpc({ consume_quota: { ok: true, remaining: 3 }, settle_spend: null, refund_calls: null });
+  const limited: Streamer = async function* () {
+    throw Object.assign(new Error("429 rate_limit_error"), { status: 429 });
+  };
+  await (await createHostedHandler({ config: ON, rpc: before.rpc, stream: limited, now: NOW })(post(GOOD))).text();
+  const refund = before.calls.find((c) => c.fn === "refund_calls");
+  assert.ok(refund, "refunded");
+  const q = subjectsOf(before.calls);
+  assert.deepEqual(refund!.args, { p_day: q.p_day, p_subjects: [q.p_visitor, q.p_network] }, "the same counters, on the same day");
+
+  // Cut off after text reached the reader: the call counts.
+  const midway = fakeRpc({ consume_quota: { ok: true, remaining: 3 }, settle_spend: null, refund_calls: null });
+  await (await createHostedHandler({ config: ON, rpc: midway.rpc, stream: fakeStream(EVENTS, { failAfter: 2 }).stream, now: NOW })(post(GOOD))).text();
+  assert.equal(midway.calls.some((c) => c.fn === "refund_calls"), false, "a partial answer is still an answer");
+
+  // The reader cancelled: the call counts, or cancelling would make calls free.
+  const cancelled = fakeRpc({ consume_quota: { ok: true, remaining: 3 }, settle_spend: null, refund_calls: null });
+  const ac = new AbortController();
+  const aborting: Streamer = async function* () {
+    ac.abort();
+    throw new Error("aborted");
+  };
+  const req = new Request(post(GOOD), { signal: ac.signal });
+  await (await createHostedHandler({ config: ON, rpc: cancelled.rpc, stream: aborting, now: NOW })(req)).text().catch(() => "");
+  assert.equal(cancelled.calls.some((c) => c.fn === "refund_calls"), false, "no refund for a cancelled call");
+});
+
 test("handler: oversized and malformed bodies are refused before any quota is spent", async () => {
   const { stream } = fakeStream(EVENTS);
   const { rpc, calls } = fakeRpc({ consume_quota: { ok: true, remaining: 1 } });

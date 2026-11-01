@@ -23,13 +23,17 @@ const functions = [
   "public.record_class_call(uuid,uuid,text,text,text,text,integer,integer)",
   "public.get_class_calls(text,text,text[])",
   "public.submit_class_runs(text,text,jsonb)",
+  "public.get_class_results(text,text)",
+  "public.get_teacher_class_runs(uuid,text)",
+  "public.set_class_status(uuid,text,text)",
+  "public.refund_calls(date,text[])",
 ];
 
 const tables: Record<string, string[]> = {
   teacher_allowlist: ["SELECT"],
   teachers: ["SELECT", "INSERT", "UPDATE"],
   teacher_login_tokens: ["SELECT", "INSERT", "UPDATE"],
-  classes: ["SELECT", "INSERT"],
+  classes: ["SELECT", "INSERT", "UPDATE"],
   class_members: ["SELECT", "INSERT"],
   class_calls: ["SELECT", "INSERT", "UPDATE"],
   class_runs: ["SELECT", "INSERT", "DELETE"],
@@ -174,10 +178,44 @@ test("the classroom flow runs end to end as service_role on a fresh replay", asy
         [["Ada", 2, 1], ["Bo", 0, 0]],
       );
       assert.deepEqual(await value(db, "select public.submit_class_runs('KQ7M3P', $1, '[]') as result", [H("9")]), { ok: false, reason: "not_member" });
+
+      // Pooled results: members see every run, anonymous, with text only for
+      // recorded runs (and their own); the teacher sees everything, by name.
+      await value(db, "select public.submit_class_runs('KQ7M3P', $1, $2) as result", [H("2"), JSON.stringify([{ ...run("f", false), text: "Bo's own words" }])]);
+      type Row = { run_id: string; text: string | null; mine: boolean; recorded: boolean; nickname?: string };
+      const forBo = await value<Row[]>(db, "select public.get_class_results('KQ7M3P', $1) as result", [H("2")]);
+      assert.deepEqual(forBo.map((r) => [r.run_id, r.recorded, r.mine, r.text]), [
+        ["d", true, false, "x"],
+        ["e", false, false, null],
+        ["f", false, true, "Bo's own words"],
+      ]);
+      assert.ok(forBo.every((r) => !("nickname" in r)), "members never see who submitted what");
+      assert.equal(await value(db, "select public.get_class_results('KQ7M3P', $1) as result", [H("9")]), null, "not a member");
+      const all = await value<Row[]>(db, "select public.get_teacher_class_runs($1, 'KQ7M3P') as result", [teacher.id]);
+      assert.deepEqual(all.map((r) => [r.nickname, r.run_id, r.text]), [["Ada", "d", "x"], ["Ada", "e", "x"], ["Bo", "f", "Bo's own words"]]);
+      assert.equal(await value(db, "select public.get_teacher_class_runs($1, 'KQ7M3P') as result", ["00000000-0000-0000-0000-000000000000"]), null, "not their class");
+
+      // Refunds give back one counted call, never below zero.
+      await db.query("select public.refund_calls('2026-11-01', array[$1, $2, 'v:nobody'])", [`c:${first.class_id}`, `m:${first.member_id}`]);
+      assert.equal(await value(db, "select calls as result from public.usage_daily where subject = $1", [`m:${first.member_id}`]), 1);
+      assert.equal(await value(db, "select calls as result from public.usage_daily where subject = $1", [`c:${first.class_id}`]), 2);
+      for (let i = 0; i < 3; i++) await db.query("select public.refund_calls('2026-11-01', array[$1])", [`m:${first.member_id}`]);
+      assert.equal(await value(db, "select calls as result from public.usage_daily where subject = $1", [`m:${first.member_id}`]), 0);
+
+      // Only the class's own teacher can close it, and only to open or closed.
+      assert.equal(await value(db, "select public.set_class_status($1, 'KQ7M3P', 'closed') as result", ["00000000-0000-0000-0000-000000000000"]), null);
+      assert.equal(await value(db, "select public.set_class_status($1, 'KQ7M3P', 'archived') as result", [teacher.id]), null);
+      const closed = await value<{ status: string; closed_at: string | null }>(db, "select public.set_class_status($1, 'KQ7M3P', 'closed') as result", [teacher.id]);
+      assert.equal(closed.status, "closed");
+      assert.ok(closed.closed_at);
+      const again = await value<{ closed_at: string }>(db, "select public.set_class_status($1, 'KQ7M3P', 'closed') as result", [teacher.id]);
+      assert.equal(again.closed_at, closed.closed_at, "closing twice keeps the first close time");
+      assert.deepEqual(await value(db, "select public.set_class_status($1, 'KQ7M3P', 'open') as result", [teacher.id]), { status: "open", closed_at: null });
+      await value(db, "select public.set_class_status($1, 'KQ7M3P', 'closed') as result", [teacher.id]);
+      assert.equal((await value<Row[]>(db, "select public.get_class_results('KQ7M3P', $1) as result", [H("2")])).length, 3, "results stay readable once closed");
     });
 
     // A closed class takes no more calls or runs.
-    await db.exec("update public.classes set status = 'closed'");
     await asService(db, async () => {
       assert.deepEqual(
         await value(db, "select public.consume_class_quota('KQ7M3P', $1, '2026-11-02', 2, '2026-11-01', 100, 1000) as result", [H("2")]),

@@ -19,19 +19,21 @@ setup supplies `USAGE` on the `public` schema. There are no sequences to grant.
 
 Classrooms follow the same rules. `20261031000000_explicit_classroom_grants.sql`
 adds forward grants for the part-1 classroom tables and nine RPCs (written
-before automatic grants stopped), and `20261101000000_class_runs.sql` grants
-exactly what its own functions use:
+before automatic grants stopped); `20261101000000_class_runs.sql` and
+`20261102000000_class_results.sql` grant exactly what their own functions use:
 
 - `teacher_allowlist`: `SELECT` (rows are managed by the site owner, not the server).
 - `teachers`, `teacher_login_tokens`, `class_calls`: `SELECT`, `INSERT`, `UPDATE`.
-- `classes`, `class_members`: `SELECT`, `INSERT`.
+- `classes`: `SELECT`, `INSERT`, `UPDATE` (a teacher closes or reopens a class).
+- `class_members`: `SELECT`, `INSERT`.
 - `class_runs`: `SELECT`, `INSERT`, `DELETE` (a resubmission replaces a student's runs).
 - Every classroom RPC: `EXECUTE` for `service_role` only.
 
 `tests/database-classrooms.test.ts` replays every migration on a fresh
 database with no automatic grants and runs the whole classroom flow as a
 non-owner `service_role`: sign-in, make a class, join, class metering,
-recording, submitting, and the teacher's view.
+recording, submitting, pooled results (anonymous for students), refunds,
+closing, and the teacher's view.
 
 For future migrations, include explicit grants for only the roles and
 operations actually used. Do not restore automatic grants for all new objects

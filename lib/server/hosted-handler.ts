@@ -131,6 +131,8 @@ export function createHostedHandler(deps: HostedDeps) {
     let quota: { ok: boolean; remaining?: number; reason?: string };
     // Set for a call made inside a class: whose it is, and what it was asked.
     let classCtx: { classId: string; memberId: string; callId: string; promptHash: string } | null = null;
+    // The daily counters this call was charged to, given back if the model never answers.
+    let charged: string[] = [];
 
     if (v.classCall) {
       // A class call draws on the class's allowance, not this visitor's or
@@ -160,10 +162,12 @@ export function createHostedHandler(deps: HostedDeps) {
         callId: v.classCall.callId,
         promptHash: await promptFingerprint({ system: request.system, user: userText(request), temperature: request.temperature }),
       };
+      charged = [`c:${r.class_id}`, `m:${r.member_id}`];
     } else {
       const visitorId = visitor(req);
       setCookie = visitorId.setCookie;
       const who = await subjects(config.hashSecret, visitorId.id, ip, day);
+      charged = [who.visitor, who.network];
       try {
         quota = await deps.rpc("consume_quota", {
           p_visitor: who.visitor,
@@ -194,6 +198,8 @@ export function createHostedHandler(deps: HostedDeps) {
         // A class call's answer, kept so a submitted run can be checked against it.
         let text = "";
         let failed = false;
+        // Whether any answer text reached the reader before a failure.
+        let answered = false;
         try {
           for await (const event of deps.stream({ apiKey: config.anthropicKey, request, signal: req.signal })) {
             if (event.type === "message_start") {
@@ -203,9 +209,10 @@ export function createHostedHandler(deps: HostedDeps) {
             } else if (event.type === "message_delta") {
               const usage = event.usage as { output_tokens?: number } | undefined;
               if (usage?.output_tokens != null) outputTokens = usage.output_tokens;
-            } else if (classCtx && event.type === "content_block_delta") {
+            } else if (event.type === "content_block_delta") {
+              answered = true;
               const delta = event.delta as { type?: string; text?: string } | undefined;
-              if (delta?.type === "text_delta" && typeof delta.text === "string" && text.length < MAX_RECORDED_CHARS) text += delta.text;
+              if (classCtx && delta?.type === "text_delta" && typeof delta.text === "string" && text.length < MAX_RECORDED_CHARS) text += delta.text;
             }
             controller.enqueue(encoder.encode(sse(event)));
           }
@@ -227,6 +234,17 @@ export function createHostedHandler(deps: HostedDeps) {
             });
           } catch (err) {
             console.error("hosted: settle failed", err instanceof Error ? err.message : err);
+          }
+          // A call the model never answered doesn't count against today. Only
+          // an upstream failure before any text: a reader who cancels, or a
+          // reply cut off midway, keeps the count — otherwise cancelling just
+          // before the end would make calls free.
+          if (failed && !answered && !req.signal.aborted && charged.length) {
+            try {
+              await rpc("refund_calls", { p_day: day, p_subjects: charged });
+            } catch (err) {
+              console.error("hosted: refund failed", err instanceof Error ? err.message : err);
+            }
           }
           // A failed call has no answer to vouch for: record nothing, so the
           // run can't pass as recorded on a partial reply.
