@@ -298,3 +298,14 @@ test("join: sets a per-class member cookie; the database sees only its hash; cle
   const badCode = await createJoinHandler({ config: ON, rpc, now: NOW })(req("POST", "/api/classes/nope/join", { nickname: "Ada" }), "nope");
   assert.equal(badCode.status, 404);
 });
+
+test("retention: the date people are told matches the database's schedule", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { CLASS_RETENTION_DAYS, deletionDate, formatDay } = await import("../lib/classroom");
+  const sql = await readFile(new URL("../supabase/migrations/20261103000000_class_retention.sql", import.meta.url), "utf8");
+  assert.match(sql, new RegExp(`now\\(\\) - interval '${CLASS_RETENTION_DAYS} days'`), "the cron job uses the same number of days");
+  assert.equal(deletionDate("2026-11-02T15:00:00Z")!.toISOString(), "2027-01-31T15:00:00.000Z");
+  assert.equal(formatDay(deletionDate("2026-11-02T15:00:00Z")!), "31 Jan 2027");
+  assert.equal(deletionDate(null), null);
+  assert.equal(deletionDate("not a date"), null);
+});

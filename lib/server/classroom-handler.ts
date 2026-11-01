@@ -290,7 +290,7 @@ export type TeacherClass = {
   members: { nickname: string; joined_at: string; runs: number; recorded: number }[];
 };
 
-export type StudentClass = { id: string; code: string; title: string; status: "open" | "closed"; experiment: Experiment };
+export type StudentClass = { id: string; code: string; title: string; status: "open" | "closed"; experiment: Experiment; closed_at?: string | null };
 
 export type Load<T> = { status: "ok"; data: T } | { status: "missing" } | { status: "unavailable" };
 

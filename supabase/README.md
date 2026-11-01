@@ -38,6 +38,16 @@ function starts with no browser access — grant `service_role` explicitly.
 `tests/database-browser-grants.test.ts` replays every migration under the live
 project's old defaults and checks the browser roles end with nothing.
 
+Retention: `20261103000000_class_retention.sql` adds `purge_closed_classes`,
+which deletes a class closed more than 90 days ago with everything of its
+(members, recorded calls, runs, daily counters). No role can call it — not
+`service_role`, not the browser — only a daily `pg_cron` job inside the
+database (`shape-purge-closed-classes`, 04:17 UTC), which the migration enables
+and schedules where `pg_cron` is available. Check it with
+`select * from cron.job` and `select * from cron.job_run_details order by start_time desc limit 5`.
+The 90 days must match `CLASS_RETENTION_DAYS` in `lib/classroom.ts`; a test
+checks.
+
 `tests/database-classrooms.test.ts` replays every migration on a fresh
 database with no automatic grants and runs the whole classroom flow as a
 non-owner `service_role`: sign-in, make a class, join, class metering,
