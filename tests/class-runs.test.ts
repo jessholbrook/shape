@@ -124,6 +124,24 @@ test("a class call draws on the class allowance (not the visitor's or network's)
   assert.equal(rec.p_prompt_hash, await promptFingerprint({ system: "Be brief.", user: "Is it fair?", temperature: 0.7 }));
 });
 
+test("a class call that fails upstream records nothing, and a rate limit reads as busy, not 'contact sales'", async () => {
+  const { rpc, calls } = fakeRpc({
+    consume_class_quota: { ok: true, remaining: 7, class_id: "class-1", member_id: "member-1" },
+    settle_spend: null,
+    record_class_call: null,
+  });
+  const limited: Streamer = async function* () {
+    yield { type: "message_start", message: { usage: { input_tokens: 0, output_tokens: 0 } } };
+    throw Object.assign(new Error('429 {"error":{"message":"contact sales"}}'), { status: 429 });
+  };
+  const h = createHostedHandler({ config: HOSTED, rpc, stream: limited, now: NOW });
+  const res = await h(req("/api/hosted/anthropic", { messages: [{ role: "user", content: "hi" }], class: { code: "KQ7M3P", callId: "run_9" } }, { cookie: COOKIE }));
+  const body = await res.text();
+  assert.match(body, /free tier is busy/);
+  assert.doesNotMatch(body, /contact sales/);
+  assert.deepEqual(calls.map((c) => c.fn), ["consume_class_quota", "settle_spend"], "settled, but no recorded answer");
+});
+
 test("class refusals say why, in words a student can act on", async () => {
   for (const [reason, status, words] of [
     ["class_daily", 429, /class has used today/],

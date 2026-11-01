@@ -12,7 +12,11 @@ import type { Streamer, StreamEvent } from "./hosted-handler";
  * which the playgrounds depend on.
  */
 export const anthropicStream: Streamer = async function* ({ apiKey, request, signal }) {
-  const client = new Anthropic({ apiKey, maxRetries: 1 });
+  // Shape's key is shared by every free-tier reader, so its rate limits
+  // (requests, tokens, concurrent connections) are hit by bursts, not abuse.
+  // The SDK backs off with jitter and honours retry-after; retries happen
+  // before the first byte streams, so a reply is never duplicated.
+  const client = new Anthropic({ apiKey, maxRetries: 4 });
   const stream = client.messages.stream(
     {
       model: HOSTED_MODEL,

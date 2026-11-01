@@ -75,6 +75,16 @@ const CLASS_MESSAGE: Record<string, string> = {
   monthly: QUOTA_MESSAGE.monthly,
 };
 
+/**
+ * What the reader sees when Anthropic says no. A rate limit on Shape's shared
+ * key isn't the reader's fault, and the raw API error says "contact sales".
+ */
+export function upstreamMessage(err: unknown): string {
+  const status = (err as { status?: number } | null)?.status;
+  if (status === 429 || status === 529) return "The free tier is busy right now. Wait a minute and run the failed ones again.";
+  return err instanceof Error ? err.message : "The model call failed.";
+}
+
 function classRefusal(status: number, reason: string | undefined): Response {
   const r = reason && reason in CLASS_MESSAGE ? reason : "off";
   return json(status, { error: { message: CLASS_MESSAGE[r] ?? QUOTA_MESSAGE.off, reason: r } }, { "x-shape-quota-scope": "class" });
@@ -183,6 +193,7 @@ export function createHostedHandler(deps: HostedDeps) {
         let outputTokens = 0;
         // A class call's answer, kept so a submitted run can be checked against it.
         let text = "";
+        let failed = false;
         try {
           for await (const event of deps.stream({ apiKey: config.anthropicKey, request, signal: req.signal })) {
             if (event.type === "message_start") {
@@ -200,8 +211,9 @@ export function createHostedHandler(deps: HostedDeps) {
           }
         } catch (err) {
           // The client sees why; the logs see only that it happened.
-          const message = err instanceof Error ? err.message : "The model call failed.";
-          console.error("hosted: upstream failed");
+          failed = true;
+          const message = upstreamMessage(err);
+          console.error("hosted: upstream failed", err instanceof Error ? err.message.slice(0, 120) : "");
           controller.enqueue(encoder.encode(sse({ type: "error", error: { type: "upstream_error", message } })));
         } finally {
           // Settle before closing: a serverless function can be frozen the
@@ -216,7 +228,9 @@ export function createHostedHandler(deps: HostedDeps) {
           } catch (err) {
             console.error("hosted: settle failed", err instanceof Error ? err.message : err);
           }
-          if (classCtx) {
+          // A failed call has no answer to vouch for: record nothing, so the
+          // run can't pass as recorded on a partial reply.
+          if (classCtx && !failed) {
             try {
               await rpc("record_class_call", {
                 p_class_id: classCtx.classId,

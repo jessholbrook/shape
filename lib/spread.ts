@@ -71,13 +71,20 @@ export const DEFAULT_RUNS = 5;
 /** Firing 10 requests at once trips per-minute limits on entry-tier keys. */
 export const BYOK_CONCURRENCY = 4;
 export const WEBLLM_CONCURRENCY = 1;
+/**
+ * The free tier runs on one shared key: every reader's parallel calls count
+ * against the same concurrent-connection limit, so each reader takes fewer.
+ */
+export const HOSTED_CONCURRENCY = 2;
 
 export function maxRunsFor(provider: ProviderId): number {
   return provider === "webllm" ? WEBLLM_MAX_RUNS : 10;
 }
 
 export function concurrencyFor(provider: ProviderId): number {
-  return provider === "webllm" ? WEBLLM_CONCURRENCY : BYOK_CONCURRENCY;
+  if (provider === "webllm") return WEBLLM_CONCURRENCY;
+  if (provider === "shape-free") return HOSTED_CONCURRENCY;
+  return BYOK_CONCURRENCY;
 }
 
 export function newId(prefix: string): string {
