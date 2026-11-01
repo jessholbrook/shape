@@ -1,3 +1,4 @@
+import { normalizeJoinCode } from "./classroom";
 /**
  * Shape's hosted free tier: Claude Haiku 4.5 on Shape's own key, so a visitor
  * can run every playground and the lab without bringing one.
@@ -38,6 +39,8 @@ export type HostedConfig =
       hashSecret: string;
       dailyCalls: number;
       networkCalls: number;
+      /** Free-tier calls one student may make per day inside a class. */
+      classMemberDailyCalls: number;
       monthlyCapMicro: number;
     }
   | { enabled: false; reason: string };
@@ -78,6 +81,9 @@ export function readHostedConfig(env: Env): HostedConfig {
     // A classroom shares one network; this is a backstop against scripting,
     // not a per-room allowance.
     networkCalls: Math.floor(positiveNumber(env.HOSTED_NETWORK_DAILY_CALLS, 1500)),
+    // Enough for three full runs of a 60-call experiment; the class's own
+    // allowance is the larger limit.
+    classMemberDailyCalls: Math.floor(positiveNumber(env.CLASS_MEMBER_DAILY_CALLS, 200)),
     monthlyCapMicro: Math.round(cap * 1_000_000),
   };
 }
@@ -100,7 +106,18 @@ export type HostedRequest = {
   tools: HostedTool[];
 };
 
-export type Validated = { ok: true; request: HostedRequest } | { ok: false; status: number; message: string };
+/**
+ * A call made inside a class: metered against the class's allowance, and its
+ * answer recorded under the student's call id so a submitted run can be
+ * checked against it. Never sent to Anthropic.
+ */
+export type ClassCall = { code: string; callId: string };
+
+export type Validated =
+  | { ok: true; request: HostedRequest; classCall?: ClassCall }
+  | { ok: false; status: number; message: string };
+
+const CALL_ID_RE = /^[A-Za-z0-9_:.-]{1,120}$/;
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 const bad = (message: string): Validated => ({ ok: false, status: 400, message });
@@ -162,8 +179,19 @@ export function validateHostedRequest(body: unknown): Validated {
     }
   }
 
+  let classCall: ClassCall | undefined;
+  if (body.class !== undefined) {
+    const c = body.class;
+    const code = isObj(c) ? normalizeJoinCode(c.code) : null;
+    if (!isObj(c) || !code || typeof c.callId !== "string" || !CALL_ID_RE.test(c.callId)) {
+      return bad("Invalid class call.");
+    }
+    classCall = { code, callId: c.callId };
+  }
+
   return {
     ok: true,
+    classCall,
     request: {
       system,
       messages: messages as HostedMessage[],

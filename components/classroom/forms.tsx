@@ -194,3 +194,16 @@ export function JoinCodeForm() {
     </form>
   );
 }
+
+export function CopyLink({ url }: { url: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => navigator.clipboard?.writeText(url).then(() => setCopied(true))}
+      className={LINK_BUTTON}
+    >
+      {copied ? "Copied" : "Copy link"}
+    </button>
+  );
+}

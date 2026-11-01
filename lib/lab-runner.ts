@@ -2,6 +2,7 @@ import type { ProviderId } from "./providers";
 import { getModel } from "./providers";
 import type { ChatCall, ChatEvent } from "./providers/types";
 import { concurrencyFor, newId, runPool } from "./spread";
+import { judgeCallId, runCallId } from "./classroom";
 import {
   composeClassifier,
   composeRater,
@@ -34,6 +35,12 @@ export type RunDeps = {
   record?: (u: { provider: ProviderId; model: string; inputTokens: number; outputTokens: number }) => void;
   /** Override the base provider's concurrency (tests). */
   concurrency?: number;
+  /**
+   * Running inside a class: every call is tagged with the class code and a
+   * call id (the run's id, or run id + measure id for a judge), so the free
+   * tier can record each answer for checking when the runs are submitted.
+   */
+  classCode?: string;
 };
 
 /** Judges read; they don't write. A short, cold reply is all that's parsed. */
@@ -82,6 +89,7 @@ async function judge(
   m: Extract<Measure, { kind: "classify" | "rate" }>,
   text: string,
   deps: RunDeps,
+  runId: string,
 ): Promise<{ score: boolean | number | null; raw: string }> {
   const prompt = m.kind === "classify" ? composeClassifier(m, text) : composeRater(m, text);
   const reply = await collect(
@@ -94,6 +102,7 @@ async function judge(
       temperature: 0,
       maxTokens: JUDGE_MAX_TOKENS,
       apiKey: deps.keyFor(m.judge.provider),
+      ...(deps.classCode ? { classCall: { code: deps.classCode, callId: judgeCallId(runId, m.id) } } : {}),
     }),
   );
   deps.record?.({
@@ -125,7 +134,11 @@ export async function runExperiment(e: Experiment, runs: ExperimentRun[], deps: 
     deps.onRun(run);
 
     const reply = await collect(
-      deps.runChat({ ...call, apiKey: deps.keyFor(call.provider) }),
+      deps.runChat({
+        ...call,
+        apiKey: deps.keyFor(call.provider),
+        ...(deps.classCode ? { classCall: { code: deps.classCode, callId: runCallId(planned.id) } } : {}),
+      }),
       (text) => {
         run = { ...run, text };
         deps.onRun(run);
@@ -151,7 +164,7 @@ export async function runExperiment(e: Experiment, runs: ExperimentRun[], deps: 
           scores[m.id] = null;
           continue;
         }
-        const j = await judge(m, reply.text, deps);
+        const j = await judge(m, reply.text, deps, planned.id);
         scores[m.id] = j.score;
         judgeRaw[m.id] = j.raw;
       } else {
