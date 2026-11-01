@@ -18,7 +18,6 @@ import {
   tooManyRequests,
 } from "@/lib/api-guard";
 
-export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
