@@ -29,6 +29,15 @@ before automatic grants stopped); `20261101000000_class_runs.sql` and
 - `class_runs`: `SELECT`, `INSERT`, `DELETE` (a resubmission replaces a student's runs).
 - Every classroom RPC: `EXECUTE` for `service_role` only.
 
+Browser roles get nothing. `20261102010000_revoke_browser_table_grants.sql`
+removes every `anon`/`authenticated` privilege from the server-only tables
+(projects created before Supabase dropped automatic grants had them by
+default; RLS with no policies already hid every row) and changes the default
+privileges for objects `postgres` creates, so a new table, sequence or
+function starts with no browser access — grant `service_role` explicitly.
+`tests/database-browser-grants.test.ts` replays every migration under the live
+project's old defaults and checks the browser roles end with nothing.
+
 `tests/database-classrooms.test.ts` replays every migration on a fresh
 database with no automatic grants and runs the whole classroom flow as a
 non-owner `service_role`: sign-in, make a class, join, class metering,
