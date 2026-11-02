@@ -106,6 +106,8 @@ export type ExperimentRun = {
   scores: Record<string, boolean | number | null>;
   /** measureId → the judge's raw reply, kept so a score can be checked by eye. */
   judgeRaw?: Record<string, string>;
+  /** Queued for a free slot on Shape's free tier; cleared when it starts answering. Never stored. */
+  waiting?: boolean;
 };
 
 export type BaseConfig = {

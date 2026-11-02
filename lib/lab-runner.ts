@@ -66,6 +66,7 @@ export function planRuns(e: Experiment): ExperimentRun[] {
 async function collect(
   stream: AsyncIterable<ChatEvent>,
   onText?: (text: string) => void,
+  onWaiting?: () => void,
 ): Promise<{ text: string; error?: string; inputTokens: number; outputTokens: number }> {
   let text = "";
   let error: string | undefined;
@@ -80,6 +81,8 @@ async function collect(
       outputTokens = event.usage.outputTokens;
     } else if (event.type === "error") {
       error = event.message;
+    } else if (event.type === "waiting") {
+      onWaiting?.();
     }
   }
   return { text, error, inputTokens, outputTokens };
@@ -103,6 +106,7 @@ async function judge(
       maxTokens: JUDGE_MAX_TOKENS,
       apiKey: deps.keyFor(m.judge.provider),
       ...(deps.classCode ? { classCall: { code: deps.classCode, callId: judgeCallId(runId, m.id) } } : {}),
+      ...(deps.signal ? { signal: deps.signal } : {}),
     }),
   );
   deps.record?.({
@@ -138,12 +142,18 @@ export async function runExperiment(e: Experiment, runs: ExperimentRun[], deps: 
         ...call,
         apiKey: deps.keyFor(call.provider),
         ...(deps.classCode ? { classCall: { code: deps.classCode, callId: runCallId(planned.id) } } : {}),
+        ...(deps.signal ? { signal: deps.signal } : {}),
       }),
       (text) => {
-        run = { ...run, text };
+        run = { ...run, text, waiting: undefined };
+        deps.onRun(run);
+      },
+      () => {
+        run = { ...run, waiting: true };
         deps.onRun(run);
       },
     );
+    run = { ...run, waiting: undefined };
     deps.record?.({
       provider: call.provider,
       model: call.model,

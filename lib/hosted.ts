@@ -41,6 +41,8 @@ export type HostedConfig =
       networkCalls: number;
       /** Free-tier calls one student may make per day inside a class. */
       classMemberDailyCalls: number;
+      /** Model calls in flight at once across every server instance: the shared key's concurrency. */
+      maxConcurrent: number;
       monthlyCapMicro: number;
     }
   | { enabled: false; reason: string };
@@ -84,6 +86,9 @@ export function readHostedConfig(env: Env): HostedConfig {
     // Enough for three full runs of a 60-call experiment; the class's own
     // allowance is the larger limit.
     classMemberDailyCalls: Math.floor(positiveNumber(env.CLASS_MEMBER_DAILY_CALLS, 200)),
+    // Anthropic limits concurrent connections per key, and the limit depends
+    // on the account's tier. Raise this when the tier goes up.
+    maxConcurrent: Math.floor(positiveNumber(env.HOSTED_MAX_CONCURRENT, 4)),
     monthlyCapMicro: Math.round(cap * 1_000_000),
   };
 }
@@ -247,7 +252,7 @@ export function periodKeys(now: Date): { day: string; month: string; resetsAt: s
 
 // --- Messages for people ------------------------------------------------------------
 
-export type QuotaReason = "daily" | "network" | "monthly" | "off";
+export type QuotaReason = "daily" | "network" | "monthly" | "off" | "busy";
 
 /** What the reader sees when the free tier says no — always with a way forward. */
 export const QUOTA_MESSAGE: Record<QuotaReason, string> = {
@@ -255,4 +260,5 @@ export const QUOTA_MESSAGE: Record<QuotaReason, string> = {
   network: "Your network has used today's free runs (common in classrooms). Add your own key in Settings, or use the in-browser model.",
   monthly: "The free tier has reached its budget for this month. Add your own key in Settings, or use the in-browser model.",
   off: "The free tier isn't available right now. Add your own key in Settings, or use the in-browser model.",
+  busy: "The free tier is busy. Waiting for a free slot…",
 };
