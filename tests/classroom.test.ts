@@ -309,3 +309,10 @@ test("retention: the date people are told matches the database's schedule", asyn
   assert.equal(deletionDate(null), null);
   assert.equal(deletionDate("not a date"), null);
 });
+
+test("idle classes: the days teachers are told match the database's schedule", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { CLASS_IDLE_DAYS } = await import("../lib/classroom");
+  const sql = await readFile(new URL("../supabase/migrations/20261104000000_close_idle_classes.sql", import.meta.url), "utf8");
+  assert.match(sql, new RegExp(`close_idle_classes\\(now\\(\\) - interval '${CLASS_IDLE_DAYS} days'\\)`));
+});

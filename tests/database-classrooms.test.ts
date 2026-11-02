@@ -314,3 +314,67 @@ test("retention: a class closed over 90 days ago is purged with everything of it
     await db.close();
   }
 });
+
+test("idle classes: an open class with no activity for 60 days closes itself; activity or a reopen keeps it open", async () => {
+  const db = await fresh();
+  try {
+    await db.exec("insert into public.teacher_allowlist (email) values ('prof@uni.edu')");
+    let teacherId = "";
+    await asService(db, async () => {
+      await db.query("select public.request_teacher_login('prof@uni.edu', $1, now() + interval '15 min')", [H("a")]);
+      teacherId = (await value<{ id: string }>(db, "select public.verify_teacher_login($1) as result", [H("a")])).id;
+      for (const code of ["KQ7M3P", "AC3479", "DEFHJK", "MNPQRT", "UVWXY3"]) {
+        await value(db, "select public.create_class($1, $2, 'A class', '{}', 100) as result", [teacherId, code]);
+      }
+      // AC3479: a student ran it 10 days ago. MNPQRT: a student joined 5 days ago.
+      await value(db, "select public.join_class('AC3479', 'Ada', $1) as result", [H("1")]);
+      await value(db, "select public.submit_class_runs('AC3479', $1, $2) as result", [
+        H("1"),
+        JSON.stringify([{ run_id: "r", condition_id: "c0", item_id: null, idx: 0, provider: "shape-free", model: "m", status: "done", text: "x", scores: {}, recorded: true }]),
+      ]);
+      await value(db, "select public.join_class('MNPQRT', 'Bo', $1) as result", [H("2")]);
+    });
+    // Everything was made 100 days ago; then backdate the activity.
+    await db.exec(`
+      update public.classes set created_at = now() - interval '100 days';
+      update public.class_members set joined_at = now() - interval '100 days' where nickname = 'Ada';
+      update public.class_runs set submitted_at = now() - interval '10 days';
+      update public.class_members set joined_at = now() - interval '5 days' where nickname = 'Bo';
+      update public.classes set status = 'closed', closed_at = now() - interval '30 days' where code = 'UVWXY3';
+    `);
+    // DEFHJK: closed long ago, then reopened by its teacher just now.
+    await asService(db, async () => {
+      await db.exec(`update public.classes set status = 'closed', closed_at = now() - interval '70 days' where code = 'DEFHJK'`);
+      await value(db, "select public.set_class_status($1, 'DEFHJK', 'open') as result", [teacherId]);
+    });
+
+    assert.equal(await value(db, "select public.close_idle_classes(now() - interval '60 days') as result"), 1);
+    const rows = (await db.query<{ code: string; status: string; closed_at: string | null }>(
+      "select code, status, closed_at::text from public.classes order by code",
+    )).rows;
+    const by = Object.fromEntries(rows.map((r) => [r.code, r]));
+    assert.equal(by.KQ7M3P.status, "closed", "no activity for 100 days: closed");
+    assert.ok(by.KQ7M3P.closed_at, "and its deletion clock starts now");
+    assert.equal(by.AC3479.status, "open", "a run 10 days ago keeps it open");
+    assert.equal(by.MNPQRT.status, "open", "a join 5 days ago keeps it open");
+    assert.equal(by.DEFHJK.status, "open", "reopened today: not closed again tonight");
+    const before = by.UVWXY3.closed_at;
+    assert.equal(by.UVWXY3.status, "closed");
+    assert.equal(await value(db, "select public.close_idle_classes(now() - interval '60 days') as result"), 0, "nothing left to close");
+    assert.equal(
+      await value(db, "select closed_at::text as result from public.classes where code = 'UVWXY3'"),
+      before,
+      "an already-closed class keeps its close time (its deletion date doesn't move)",
+    );
+
+    for (const role of ["service_role", "anon", "authenticated"]) {
+      assert.equal(
+        await value(db, "select has_function_privilege($1, 'public.close_idle_classes(timestamptz)', 'EXECUTE') as result", [role]),
+        false,
+        `${role} cannot close classes in bulk`,
+      );
+    }
+  } finally {
+    await db.close();
+  }
+});

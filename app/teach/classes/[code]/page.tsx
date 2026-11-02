@@ -8,7 +8,7 @@ import QRCode from "qrcode";
 import { Design } from "@/components/lab/shared-view";
 import { ClassStatusButton, CopyLink } from "@/components/classroom/forms";
 import { ClassResults } from "@/components/classroom/class-results";
-import { TEACHER_COOKIE, deletionDate, formatDay, formatJoinCode } from "@/lib/classroom";
+import { CLASS_IDLE_DAYS, TEACHER_COOKIE, deletionDate, formatDay, formatJoinCode } from "@/lib/classroom";
 import { currentTeacher, loadTeacherClass } from "@/lib/server/classroom-handler";
 import { classDeps } from "@/lib/server/classroom-deps";
 import { loadTeacherRuns } from "@/lib/server/class-results";
@@ -107,7 +107,7 @@ export default async function TeacherClassPage({ params }: { params: Promise<{ c
             <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3" data-testid="class-actions">
               <p className="font-sans text-[14px] text-ink-muted">
                 {result.data.status === "open"
-                  ? "Open: students can join and run the experiment."
+                  ? `Open: students can join and run the experiment. It closes on its own after ${CLASS_IDLE_DAYS} days with no joins or runs.`
                   : closedText(result.data.closed_at)}
               </p>
               <ClassStatusButton code={result.data.code} status={result.data.status} />
