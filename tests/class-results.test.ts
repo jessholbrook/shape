@@ -193,3 +193,103 @@ test("export: the teacher's class as a CSV or JSON download; anyone else gets no
   const none = { config: ON, rpc: fakeRpc({ get_teacher: TEACHER, get_teacher_class: null, get_teacher_class_runs: null }).rpc, now: NOW };
   assert.equal((await createExportHandler(none)(req("GET", "/x", undefined, { cookie }), "KQ7M3P")).status, 404);
 });
+
+// --- Publishing ----------------------------------------------------------------------------
+
+import { classSnapshot, MAX_PUBLISHED_RUNS } from "../lib/class-results";
+import { createPublishClassHandler, createUnpublishClassHandler } from "../lib/server/class-results";
+
+const CLS = { title: "Week 3: Does the model cave?", experiment: { ...E, hypothesis: "It caves.", hypothesisLockedAt: 5 } };
+const HAIKU = "shape-free/claude-haiku-4-5";
+
+test("snapshot: one model, recorded runs only, no nicknames — the class's design, title and locked hypothesis travel with it", () => {
+  const rows = [
+    row({ run_id: "a", nickname: "Ada", submitted_at: "2026-11-02T10:00:00Z" }),
+    row({ run_id: "a", nickname: "Bo", submitted_at: "2026-11-02T11:00:00Z" }),
+    row({ run_id: "b", nickname: "Bo", recorded: false, text: "typed by Bo" }),
+    row({ run_id: "c", nickname: "Cy", provider: "anthropic", model: "claude-sonnet-5-5", recorded: false }),
+  ];
+  const s = classSnapshot(CLS, rows, HAIKU, 1);
+  assert.ok(s.ok);
+  if (!s.ok) return;
+  const e = s.experiment;
+  assert.equal(e.runs.length, 2, "Bo's reported run and Cy's other-model run are left out");
+  assert.deepEqual(e.classPool, { students: 2, runs: 2, recordedBy: "shape" });
+  assert.equal(e.title, CLS.title);
+  assert.equal(e.hypothesis, "It caves.");
+  assert.equal(e.hypothesisLockedAt, 5);
+  assert.deepEqual(e.base.model, { provider: "shape-free", model: "claude-haiku-4-5" });
+  assert.equal(e.updatedAt, Date.parse("2026-11-02T11:00:00Z"));
+  const json = JSON.stringify(e);
+  for (const name of ["Ada", "Bo", "Cy", "typed by Bo"]) assert.equal(json.includes(name), false, `no trace of ${name}`);
+  assert.equal(new Set(e.runs.map((r) => r.id)).size, 2, "ids stay unique when run ids repeat across students");
+});
+
+test("snapshot: refuses a mix of models, a model with nothing recorded, and more than a page holds", () => {
+  assert.equal(classSnapshot(CLS, [row({})], ALL, 1).ok, false);
+  const none = classSnapshot(CLS, [row({ recorded: false })], HAIKU, 1);
+  assert.ok(!none.ok && /recorded by Shape/.test(none.message));
+  const many = Array.from({ length: MAX_PUBLISHED_RUNS + 1 }, (_, i) => row({ run_id: `r${i}`, nickname: "Ada" }));
+  const big = classSnapshot(CLS, many, HAIKU, 1);
+  assert.ok(!big.ok && /CSV/.test(big.message));
+});
+
+test("publish: the teacher's own class, built on the server, counted against their daily allowance", async () => {
+  const cookie = await teacherCookie();
+  const cls = { id: "c1", code: "KQ7M3P", title: CLS.title, status: "closed", experiment: CLS.experiment, daily_calls: 3000, created_at: "x", closed_at: null, members: [] };
+  const runs = [row({ run_id: "a", nickname: "Ada" }), row({ run_id: "b", nickname: "Bo", recorded: false })];
+  const ok = fakeRpc({ get_teacher: TEACHER, get_teacher_class: cls, get_teacher_class_runs: runs, publish_class_results: { ok: true } });
+  const deps = { config: ON, rpc: ok.rpc, now: NOW, sharing: { enabled: true, dailyPublishes: 20 }, appVersion: "abc123" };
+  const res = await createPublishClassHandler(deps)(req("POST", "/x", { model: HAIKU }, { cookie }), "kq7-m3p");
+  assert.equal(res.status, 201);
+  const body = await res.json();
+  assert.match(body.slug, /^[1-9A-HJ-NP-Za-km-z]{10}$/);
+  assert.equal(body.runs, 1);
+  const call = ok.calls.find((c) => c.fn === "publish_class_results")!;
+  assert.equal(call.args.p_teacher_id, TEACHER.id);
+  assert.equal(call.args.p_code, "KQ7M3P");
+  assert.equal(call.args.p_limit, 20);
+  assert.equal((call.args.p_manifest as { runner: string; appVersion: string }).runner, "hosted");
+  assert.equal(JSON.stringify(call.args.p_experiment).includes("Ada"), false, "no nickname reaches the stored page");
+
+  const off = createPublishClassHandler({ ...deps, sharing: { enabled: false, dailyPublishes: 0 } });
+  assert.equal((await off(req("POST", "/x", { model: HAIKU }, { cookie }), "KQ7M3P")).status, 503);
+  assert.equal((await createPublishClassHandler(deps)(req("POST", "/x", { model: HAIKU }), "KQ7M3P")).status, 401);
+  assert.equal((await createPublishClassHandler(deps)(req("POST", "/x", { model: HAIKU }, { cookie, origin: "https://evil.example" }), "KQ7M3P")).status, 403);
+  assert.equal((await createPublishClassHandler(deps)(req("POST", "/x", { model: "all" }, { cookie }), "KQ7M3P")).status, 400);
+
+  const limited = fakeRpc({ get_teacher: TEACHER, get_teacher_class: cls, get_teacher_class_runs: runs, publish_class_results: { ok: false, reason: "limit" } });
+  assert.equal((await createPublishClassHandler({ ...deps, rpc: limited.rpc })(req("POST", "/x", { model: HAIKU }, { cookie }), "KQ7M3P")).status, 429);
+  const notTheirs = fakeRpc({ get_teacher: TEACHER, get_teacher_class: null, get_teacher_class_runs: null });
+  assert.equal((await createPublishClassHandler({ ...deps, rpc: notTheirs.rpc })(req("POST", "/x", { model: HAIKU }, { cookie }), "KQ7M3P")).status, 404);
+});
+
+test("unpublish: only by the class's teacher, only a real slug", async () => {
+  const cookie = await teacherCookie();
+  const yes = fakeRpc({ get_teacher: TEACHER, unpublish_class_results: true });
+  const h = createUnpublishClassHandler({ config: ON, rpc: yes.rpc, now: NOW });
+  assert.equal((await h(req("DELETE", "/x", undefined, { cookie }), "KQ7M3P", "123456789A")).status, 204);
+  assert.deepEqual(yes.calls.at(-1), { fn: "unpublish_class_results", args: { p_teacher_id: TEACHER.id, p_code: "KQ7M3P", p_slug: "123456789A" } });
+  assert.equal((await h(req("DELETE", "/x", undefined, { cookie }), "KQ7M3P", "../etc")).status, 404);
+  assert.equal((await h(req("DELETE", "/x"), "KQ7M3P", "123456789A")).status, 401);
+  const no = fakeRpc({ get_teacher: TEACHER, unpublish_class_results: false });
+  assert.equal((await createUnpublishClassHandler({ config: ON, rpc: no.rpc, now: NOW })(req("DELETE", "/x", undefined, { cookie }), "KQ7M3P", "123456789A")).status, 404);
+});
+
+test("a rerun of a published class result doesn't carry the class's provenance", async () => {
+  const { forkExperiment } = await import("../lib/sharing");
+  const s = classSnapshot(CLS, [row({ nickname: "Ada" })], HAIKU, 1);
+  assert.ok(s.ok);
+  if (!s.ok) return;
+  const fork = forkExperiment({ slug: "123456789A", manifestHash: "h", experiment: s.experiment }, 2);
+  assert.equal(fork.classPool, undefined);
+  assert.equal(fork.runs.length, 0);
+});
+
+test("an ordinary share can't claim to be a class's checked result", async () => {
+  const { validateShareRequest } = await import("../lib/sharing");
+  const forged = { ...E, title: "Totally real", question: "q?", classPool: { students: 30, runs: 900, recordedBy: "shape" } };
+  const v = validateShareRequest({ experiment: forged, runner: "byok" });
+  assert.ok(v.ok);
+  if (v.ok) assert.equal(v.request.experiment.classPool, undefined, "stripped before it's stored");
+});

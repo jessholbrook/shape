@@ -134,6 +134,12 @@ export type Experiment = {
   measures: Measure[];
   runs: ExperimentRun[];
   forkedFrom?: { slug: string; manifestHash: string };
+  /**
+   * Set on a class's published results: the runs are pooled from this many
+   * students, and every one was answered through Shape and checked against
+   * the server's record (see lib/class-results.ts, classSnapshot).
+   */
+  classPool?: { students: number; runs: number; recordedBy: "shape" };
   createdAt: number;
   updatedAt: number;
 };

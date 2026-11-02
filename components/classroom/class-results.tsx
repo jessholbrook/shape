@@ -6,6 +6,8 @@ import type { Experiment } from "@/lib/experiment";
 import { ALL, defaultFilter, filterRows, modelLabel, modelsIn, pooled, studentsIn, type ClassRunRow, type ResultFilter } from "@/lib/class-results";
 import { Findings, ResultsTable, RunList } from "@/components/lab/results";
 import { INPUT, LINK_BUTTON, Label, PANEL, PanelHeader } from "@/components/lab/fields";
+import type { Publication } from "@/lib/server/class-results";
+import { PublishPanel } from "./publish-panel";
 
 /**
  * The class's results, pooled. The teacher sees every run by name and can
@@ -15,7 +17,18 @@ import { INPUT, LINK_BUTTON, Label, PANEL, PanelHeader } from "@/components/lab/
  * Starts on the most-run model: pooling is sound within one model and
  * misleading across several, so "all models" is offered but labelled mixed.
  */
-export function ClassResults({ experiment, rows, view }: { experiment: Experiment; rows: ClassRunRow[]; view: "teacher" | "student" }) {
+export function ClassResults({
+  experiment,
+  rows,
+  view,
+  publish,
+}: {
+  experiment: Experiment;
+  rows: ClassRunRow[];
+  view: "teacher" | "student";
+  /** Teacher only: publish the model on screen as a shared page. */
+  publish?: { code: string; sharing: boolean; publications: Publication[] };
+}) {
   const router = useRouter();
   const [filter, setFilter] = useState<ResultFilter>(() => defaultFilter(rows));
   const models = useMemo(() => modelsIn(rows), [rows]);
@@ -138,6 +151,10 @@ export function ClassResults({ experiment, rows, view }: { experiment: Experimen
             </p>
           )}
         </>
+      )}
+
+      {view === "teacher" && publish && (
+        <PublishPanel code={publish.code} rows={rows} model={f.model} sharing={publish.sharing} publications={publish.publications} />
       )}
     </div>
   );

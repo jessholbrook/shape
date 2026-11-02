@@ -148,6 +148,7 @@ export function JoinForm({ code }: { code: string }) {
       <p className="font-sans text-[12px] leading-[1.5] text-ink-quiet">
         Something your teacher will recognise — it doesn&apos;t need to be your real name. Shape keeps no email or account for you;
         this browser remembers you. Your nickname and runs are deleted {CLASS_RETENTION_DAYS} days after your teacher closes the class.
+        Your teacher can publish the class&apos;s results without anyone&apos;s nickname; that page stays up until they take it down.
       </p>
       <div>
         <button type="submit" disabled={busy || !nickname.trim()} className={PRIMARY}>
@@ -220,7 +221,7 @@ export function ClassStatusButton({ code, status }: { code: string; status: "ope
     if (
       next === "closed" &&
       !window.confirm(
-        `Close this class? Students won't be able to run the experiment or send runs, and everyone can still see the results.\n\n${CLASS_RETENTION_DAYS} days after closing, the class and every run in it are deleted for good — download them first if you want to keep them. Reopening before then stops the clock.`,
+        `Close this class? Students won't be able to run the experiment or send runs, and everyone can still see the results.\n\n${CLASS_RETENTION_DAYS} days after closing, the class and every run in it are deleted for good — download them first if you want to keep them. Reopening before then stops the clock. Results you've published stay up until you take them down.`,
       )
     ) {
       return;

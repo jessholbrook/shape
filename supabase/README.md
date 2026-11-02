@@ -38,6 +38,13 @@ function starts with no browser access — grant `service_role` explicitly.
 `tests/database-browser-grants.test.ts` replays every migration under the live
 project's old defaults and checks the browser roles end with nothing.
 
+Published class results: `20261107000000_class_publications.sql` links a
+shared experiment to its class (`class_id`, set null when the class is
+purged, so the page outlives it) and adds `publish_class_results`,
+`list_class_publications` and `unpublish_class_results` — each checks the
+class is the calling teacher's. The snapshot is built on the server from
+recorded runs only, with no nicknames.
+
 Free-tier queue: `20261106000000_hosted_slots.sql` adds `hosted_slots` and
 `acquire_hosted_slot` / `release_hosted_slot`, so at most
 `HOSTED_MAX_CONCURRENT` calls reach Anthropic at once across every server

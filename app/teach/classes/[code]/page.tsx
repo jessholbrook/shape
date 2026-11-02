@@ -11,7 +11,7 @@ import { ClassResults } from "@/components/classroom/class-results";
 import { CLASS_IDLE_DAYS, TEACHER_COOKIE, deletionDate, formatDay, formatJoinCode } from "@/lib/classroom";
 import { currentTeacher, loadTeacherClass } from "@/lib/server/classroom-handler";
 import { classDeps } from "@/lib/server/classroom-deps";
-import { loadTeacherRuns } from "@/lib/server/class-results";
+import { loadClassPublications, loadTeacherRuns } from "@/lib/server/class-results";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Class", robots: { index: false, follow: false } };
@@ -31,7 +31,11 @@ export default async function TeacherClassPage({ params }: { params: Promise<{ c
   const deps = classDeps();
   const teacher = await currentTeacher(deps, (await cookies()).get(TEACHER_COOKIE)?.value ?? null);
   if (!teacher) redirect("/teach");
-  const [result, runs] = await Promise.all([loadTeacherClass(deps, teacher, code), loadTeacherRuns(deps, teacher, code)]);
+  const [result, runs, publications] = await Promise.all([
+    loadTeacherClass(deps, teacher, code),
+    loadTeacherRuns(deps, teacher, code),
+    loadClassPublications(deps, teacher, code),
+  ]);
   if (result.status === "missing") notFound();
 
   const host = (await headers()).get("host") ?? "shape-models.com";
@@ -125,7 +129,16 @@ export default async function TeacherClassPage({ params }: { params: Promise<{ c
 
             <div className="mt-6">
               {runs.status === "ok" ? (
-                <ClassResults experiment={result.data.experiment} rows={runs.data} view="teacher" />
+                <ClassResults
+                  experiment={result.data.experiment}
+                  rows={runs.data}
+                  view="teacher"
+                  publish={{
+                    code: result.data.code,
+                    sharing: !!deps.sharing?.enabled,
+                    publications: publications.status === "ok" ? publications.data : [],
+                  }}
+                />
               ) : (
                 <p className="font-sans text-[14px] text-ink-muted">Couldn&apos;t load the class&apos;s runs right now. Refresh in a minute.</p>
               )}

@@ -1,5 +1,8 @@
 import { isToken, normalizeJoinCode, TEACHER_COOKIE } from "../classroom";
-import { toCsv, type ClassRunRow } from "../class-results";
+import { classSnapshot, toCsv, type ClassRunRow } from "../class-results";
+import { buildManifest, manifestHash, ranAtOf } from "../experiment";
+import { periodKeys } from "../hosted";
+import { isSlug, newDeleteToken, newSlug } from "../sharing";
 import { slugify } from "../download";
 import { clientIp, rateLimit, tooManyRequests } from "../api-guard";
 import { sha256Hex } from "../sharing";
@@ -106,5 +109,100 @@ export function createExportHandler(deps: ClassDeps) {
     return new Response(toCsv(c.experiment, runs.data), {
       headers: { ...headers, "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename="${name}.csv"` },
     });
+  };
+}
+
+// --- Publishing ---------------------------------------------------------------------------
+
+export type Publication = { slug: string; title: string; model: string | null; runs: number; created_at: string };
+
+/** The teacher's published results for a class, newest first. */
+export async function loadClassPublications(deps: ClassDeps, teacher: Teacher, rawCode: string): Promise<Load<Publication[]>> {
+  const code = normalizeJoinCode(rawCode);
+  if (!code) return { status: "missing" };
+  if (!deps.config.enabled || !deps.rpc) return { status: "unavailable" };
+  try {
+    const rows = await deps.rpc<Publication[] | null>("list_class_publications", { p_teacher_id: teacher.id, p_code: code });
+    return rows ? { status: "ok", data: rows } : { status: "missing" };
+  } catch (err) {
+    console.error("classroom: list publications failed", err instanceof Error ? err.message : err);
+    return { status: "unavailable" };
+  }
+}
+
+const SHARING_OFF = "Publishing needs sharing, which is switched off right now.";
+
+/**
+ * POST /api/teach/classes/<code>/publish {model} — publish the class's results
+ * for one model as an unlisted shared page. The snapshot is built here from
+ * the class's records (classSnapshot): recorded runs only, no nicknames.
+ */
+export function createPublishClassHandler(deps: ClassDeps) {
+  const now = deps.now ?? (() => new Date());
+  return async function POST(req: Request, rawCode: string): Promise<Response> {
+    if (!deps.config.enabled || !deps.rpc) return error(503, OFF);
+    if (!deps.sharing?.enabled) return error(503, SHARING_OFF);
+    const blocked = gate(req, "class-publish", 10, 60 * 60 * 1000, now().getTime());
+    if (blocked) return blocked;
+    const teacher = await currentTeacher(deps, readCookie(req, TEACHER_COOKIE));
+    if (!teacher) return error(401, "Sign in as a teacher first.");
+    const code = normalizeJoinCode(rawCode);
+    if (!code) return error(404, "No class has that code.");
+    const parsed = await readJson(req, 1_000);
+    if (!parsed.ok) return parsed.res;
+    const model = typeof parsed.body.model === "string" ? parsed.body.model : "";
+
+    const [cls, runs] = await Promise.all([loadTeacherClass(deps, teacher, code), loadTeacherRuns(deps, teacher, code)]);
+    if (cls.status === "missing" || runs.status === "missing") return error(404, "No class of yours has that code.");
+    if (cls.status !== "ok" || runs.status !== "ok") return error(503, "Couldn't load the class right now. Try again in a minute.");
+
+    const snap = classSnapshot(cls.data, runs.data, model, now().getTime());
+    if (!snap.ok) return error(400, snap.message);
+    const experiment = snap.experiment;
+    const manifest = buildManifest(experiment, { appVersion: deps.appVersion ?? "local", ranAt: ranAtOf(experiment), runner: "hosted" });
+    const slug = newSlug(deps.random);
+    try {
+      const r = await deps.rpc<{ ok: boolean; reason?: string } | null>("publish_class_results", {
+        p_teacher_id: teacher.id,
+        p_code: code,
+        p_slug: slug,
+        p_title: experiment.title,
+        p_lens: experiment.lens ?? null,
+        p_experiment: experiment,
+        p_manifest: manifest,
+        p_hash: await manifestHash(manifest),
+        // Taken down from the class page by the teacher, so the token itself is never needed.
+        p_delete_hash: await sha256Hex(newDeleteToken(deps.random)),
+        p_day: periodKeys(now()).day,
+        p_limit: deps.sharing.dailyPublishes,
+      });
+      if (!r) return error(404, "No class of yours has that code.");
+      if (!r.ok) return error(429, `You've published ${deps.sharing.dailyPublishes} results today, the daily limit. Try again tomorrow.`);
+      return json(201, { slug, runs: experiment.runs.length, students: experiment.classPool?.students ?? 0 });
+    } catch (err) {
+      console.error("classroom: publish failed", err instanceof Error ? err.message : err);
+      return error(503, "Couldn't publish right now. Try again in a minute.");
+    }
+  };
+}
+
+/** DELETE /api/teach/classes/<code>/publications/<slug> — take a published result down. */
+export function createUnpublishClassHandler(deps: ClassDeps) {
+  const now = deps.now ?? (() => new Date());
+  return async function DELETE(req: Request, rawCode: string, slug: string): Promise<Response> {
+    if (!deps.config.enabled || !deps.rpc) return error(503, OFF);
+    const blocked = gate(req, "class-unpublish", 30, 60 * 60 * 1000, now().getTime());
+    if (blocked) return blocked;
+    const teacher = await currentTeacher(deps, readCookie(req, TEACHER_COOKIE));
+    if (!teacher) return error(401, "Sign in as a teacher first.");
+    const code = normalizeJoinCode(rawCode);
+    if (!code || !isSlug(slug)) return error(404, "No such published result.");
+    try {
+      const gone = await deps.rpc<boolean>("unpublish_class_results", { p_teacher_id: teacher.id, p_code: code, p_slug: slug });
+      return gone ? new Response(null, { status: 204 }) : error(404, "No such published result, or it's already gone.");
+    } catch (err) {
+      console.error("classroom: unpublish failed", err instanceof Error ? err.message : err);
+      return error(503, "Couldn't take it down right now. Try again in a minute.");
+    }
   };
 }

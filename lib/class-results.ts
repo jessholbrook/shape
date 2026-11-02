@@ -1,5 +1,7 @@
 import { analyze, type Analysis, type Experiment, type ExperimentRun } from "./experiment";
+import { newId } from "./spread";
 import { PROVIDERS, type ProviderId } from "./providers";
+import { designFor } from "./classroom";
 
 /**
  * A class's pooled results: every student's runs of the same experiment,
@@ -178,4 +180,55 @@ export function toCsv(e: Experiment, rows: ClassRunRow[]): string {
   }
   // CRLF and a byte-order mark: what spreadsheet apps expect for UTF-8 CSV.
   return `﻿${lines.join("\r\n")}\r\n`;
+}
+
+// --- Publishing ---------------------------------------------------------------------------
+
+/** A published class result holds at most this many runs (the shared-page limit). */
+export const MAX_PUBLISHED_RUNS = 2000;
+
+export type Snapshot = { ok: true; experiment: Experiment } | { ok: false; message: string };
+
+/**
+ * The class's results as a shared experiment, built on the server from the
+ * class's own records: one answering model, only runs recorded by Shape (a
+ * reported run's answer came from a browser, so it can't be vouched for in
+ * public), no nicknames. The teacher's design, title and locked hypothesis
+ * travel with it, so a reader can check the manifest and rerun it.
+ */
+export function classSnapshot(
+  cls: { title: string; experiment: Experiment },
+  rows: ClassRunRow[],
+  model: string,
+  now: number,
+): Snapshot {
+  const slash = model.indexOf("/");
+  if (slash < 1) return { ok: false, message: "Pick a model to publish." };
+  const recorded = rows.filter((r) => r.recorded && modelKey(r) === model && (r.status === "done" || r.status === "error"));
+  if (!recorded.length) {
+    return {
+      ok: false,
+      message: "No runs for that model were recorded by Shape. Only runs answered through Shape's free tier can be published.",
+    };
+  }
+  if (recorded.length > MAX_PUBLISHED_RUNS) {
+    return { ok: false, message: `That's ${recorded.length} runs; a published result holds at most ${MAX_PUBLISHED_RUNS}. Download the CSV instead.` };
+  }
+  const students = new Set(recorded.map((r) => r.nickname ?? "")).size;
+  const latest = Math.max(...recorded.map((r) => (r.submitted_at ? Date.parse(r.submitted_at) : 0)));
+  const design = designFor(cls.experiment, { provider: model.slice(0, slash) as ProviderId, model: model.slice(slash + 1) });
+  // Ids are positional: run ids repeat across students, and nicknames stay out.
+  const runs = toExperimentRuns(recorded.map((r) => ({ ...r, nickname: undefined })));
+  return {
+    ok: true,
+    experiment: {
+      ...design,
+      id: newId("exp"),
+      title: cls.title,
+      runs,
+      forkedFrom: undefined,
+      classPool: { students, runs: runs.length, recordedBy: "shape" },
+      updatedAt: Number.isFinite(latest) && latest > 0 ? latest : now,
+    },
+  };
 }
