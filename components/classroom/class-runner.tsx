@@ -91,6 +91,8 @@ export function ClassRunner({ code, experiment }: { code: string; experiment: Ex
   const closed = status?.status === "closed";
   const canRun = hydrated && !running && !missing && !freeOff && !overQuota && !closed;
   const done = runs.filter((r) => r.status === "done" || r.status === "error").length;
+  // Shape's free tier runs a fixed number of calls at once; in a busy class the rest queue.
+  const waiting = runs.filter((r) => r.waiting).length;
 
   async function submit(model: LabModel, finished: ExperimentRun[]) {
     setSubmitError(null);
@@ -218,6 +220,7 @@ export function ClassRunner({ code, experiment }: { code: string; experiment: Ex
               </button>
               <span className="font-mono text-[12px] tabular-nums text-ink-muted" aria-live="polite">
                 {done} / {runs.length} answers
+                {waiting > 0 && ` · ${waiting} waiting for a free slot`}
               </span>
             </>
           )}

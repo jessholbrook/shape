@@ -46,6 +46,8 @@ export type ChatCall = {
    * records the answer under `callId`. Other providers ignore it.
    */
   classCall?: { code: string; callId: string };
+  /** Cancels the call, including any wait for a free slot on Shape's free tier. */
+  signal?: AbortSignal;
 };
 
 export type ChatUsage = {
@@ -58,7 +60,12 @@ export type ChatEvent =
   /** A complete tool call, once its arguments have finished streaming. */
   | { type: "tool_call"; call: ToolCall }
   | { type: "done"; usage: ChatUsage }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  /**
+   * Shape's free tier is at capacity and the call is queued; it starts on its
+   * own when a slot frees. Sent once per wait. Other providers never send it.
+   */
+  | { type: "waiting" };
 
 /** Parse a tool call's argument text, tolerating the empty and the malformed. */
 export function parseToolArgs(args: string): Record<string, unknown> {

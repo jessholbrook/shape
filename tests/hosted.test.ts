@@ -48,7 +48,8 @@ function fakeRpc(answers: Record<string, unknown | Error>) {
   const calls: { fn: string; args: Record<string, unknown> }[] = [];
   const rpc: Rpc = async <T,>(fn: string, args: Record<string, unknown>) => {
     calls.push({ fn, args });
-    const a = answers[fn];
+    // Every call takes a concurrency slot first; tests that care override these.
+    const a = fn in answers ? answers[fn] : fn === "acquire_hosted_slot" ? "slot-1" : fn === "release_hosted_slot" ? null : undefined;
     if (a instanceof Error) throw a;
     return a as T;
   };
@@ -341,4 +342,66 @@ test("config: forgives casing and a dollar sign, and names what's missing withou
   const off = readHostedConfig({ ...base, QUOTA_HASH_SECRET: "" });
   assert.ok(!off.enabled);
   if (!off.enabled) assert.equal(off.reason, "missing QUOTA_HASH_SECRET");
+});
+
+// --- Concurrency slots -------------------------------------------------------------------------
+
+test("slots: with every slot taken the call is refused as busy — nothing charged, nothing sent upstream", async () => {
+  const { stream, seen } = fakeStream(EVENTS);
+  const { rpc, calls } = fakeRpc({ acquire_hosted_slot: null });
+  const res = await createHostedHandler({ config: ON, rpc, stream, now: NOW })(post(GOOD));
+  assert.equal(res.status, 429);
+  assert.equal(res.headers.get("retry-after"), "2");
+  assert.equal((await res.json()).error.reason, "busy");
+  assert.deepEqual(calls.map((c) => c.fn), ["acquire_hosted_slot"], "no quota consumed, no slot to release");
+  assert.equal(calls[0].args.p_max, ON.maxConcurrent);
+  assert.ok((calls[0].args.p_lease_seconds as number) > 60, "the lease outlives the longest call");
+  assert.equal(seen.length, 0);
+});
+
+test("slots: the slot goes back after a streamed call, a refused one, and a failed one", async () => {
+  const released = (calls: { fn: string; args: Record<string, unknown> }[]) =>
+    calls.filter((c) => c.fn === "release_hosted_slot").map((c) => c.args.p_id);
+
+  const ok = fakeRpc({ acquire_hosted_slot: "s1", consume_quota: { ok: true, remaining: 3 }, settle_spend: null });
+  await (await createHostedHandler({ config: ON, rpc: ok.rpc, stream: fakeStream(EVENTS).stream, now: NOW })(post(GOOD))).text();
+  assert.deepEqual(released(ok.calls), ["s1"]);
+  assert.equal(ok.calls.at(-1)!.fn, "release_hosted_slot", "after the spend is settled");
+
+  const refused = fakeRpc({ acquire_hosted_slot: "s2", consume_quota: { ok: false, reason: "daily" } });
+  const r = await createHostedHandler({ config: ON, rpc: refused.rpc, stream: fakeStream(EVENTS).stream, now: NOW })(post(GOOD));
+  assert.equal(r.status, 429);
+  assert.deepEqual(released(refused.calls), ["s2"]);
+
+  const down = fakeRpc({ acquire_hosted_slot: "s3", consume_quota: new Error("db down") });
+  assert.equal((await createHostedHandler({ config: ON, rpc: down.rpc, stream: fakeStream(EVENTS).stream, now: NOW })(post(GOOD))).status, 503);
+  assert.deepEqual(released(down.calls), ["s3"]);
+
+  const failed = fakeRpc({ acquire_hosted_slot: "s4", consume_quota: { ok: true, remaining: 3 }, settle_spend: null, refund_calls: null });
+  await (await createHostedHandler({ config: ON, rpc: failed.rpc, stream: fakeStream(EVENTS, { failAfter: 0 }).stream, now: NOW })(post(GOOD))).text();
+  assert.deepEqual(released(failed.calls), ["s4"], "exactly once");
+});
+
+test("slots: if the slot check itself fails, the tier fails closed", async () => {
+  const { stream, seen } = fakeStream(EVENTS);
+  const { rpc, calls } = fakeRpc({ acquire_hosted_slot: new Error("db down") });
+  const res = await createHostedHandler({ config: ON, rpc, stream, now: NOW })(post(GOOD));
+  assert.equal(res.status, 503);
+  assert.deepEqual(calls.map((c) => c.fn), ["acquire_hosted_slot"]);
+  assert.equal(seen.length, 0);
+});
+
+test("slots: HOSTED_MAX_CONCURRENT sets how many calls run at once; 4 by default", () => {
+  const base = {
+    SHAPE_FREE_TIER: "on",
+    HOSTED_ANTHROPIC_API_KEY: "k",
+    SUPABASE_URL: "https://x.supabase.co",
+    SUPABASE_SERVICE_ROLE_KEY: "s",
+    QUOTA_HASH_SECRET: "p",
+    HOSTED_MONTHLY_CAP_USD: "5",
+  };
+  const conc = (env: Record<string, string>) => (readHostedConfig(env) as { maxConcurrent: number }).maxConcurrent;
+  assert.equal(conc(base), 4);
+  assert.equal(conc({ ...base, HOSTED_MAX_CONCURRENT: "12" }), 12);
+  assert.equal(conc({ ...base, HOSTED_MAX_CONCURRENT: "zero" }), 4);
 });

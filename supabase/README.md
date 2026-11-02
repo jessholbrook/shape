@@ -38,6 +38,13 @@ function starts with no browser access — grant `service_role` explicitly.
 `tests/database-browser-grants.test.ts` replays every migration under the live
 project's old defaults and checks the browser roles end with nothing.
 
+Free-tier queue: `20261106000000_hosted_slots.sql` adds `hosted_slots` and
+`acquire_hosted_slot` / `release_hosted_slot`, so at most
+`HOSTED_MAX_CONCURRENT` calls reach Anthropic at once across every server
+instance. A slot is a 75-second lease, so a server that dies mid-call can't
+hold one. `service_role` gets `SELECT`, `INSERT`, `DELETE` on the table and
+`EXECUTE` on both functions; `tests/database-hosted-slots.test.ts` checks it.
+
 The original hand-made `artifacts` table (unused, open to anonymous writes)
 is dropped by `20261105000000_drop_artifacts.sql`.
 

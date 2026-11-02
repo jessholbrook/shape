@@ -50,7 +50,8 @@ function fakeRpc(answers: Record<string, unknown>) {
   const calls: { fn: string; args: Record<string, unknown> }[] = [];
   const rpc: Rpc = async <T,>(fn: string, args: Record<string, unknown>) => {
     calls.push({ fn, args });
-    const a = answers[fn];
+    // Every call takes a concurrency slot first; tests that care override these.
+    const a = fn in answers ? answers[fn] : fn === "acquire_hosted_slot" ? "slot-1" : fn === "release_hosted_slot" ? null : undefined;
     if (a instanceof Error) throw a;
     return (typeof a === "function" ? (a as (x: Record<string, unknown>) => unknown)(args) : a) as T;
   };
@@ -112,12 +113,12 @@ test("a class call draws on the class allowance (not the visitor's or network's)
   assert.equal(res.headers.get("set-cookie"), null, "no visitor cookie for a class call");
   await res.text();
 
-  assert.deepEqual(calls.map((c) => c.fn), ["consume_class_quota", "settle_spend", "record_class_call"]);
-  const q = calls[0].args;
+  assert.deepEqual(calls.map((c) => c.fn), ["acquire_hosted_slot", "consume_class_quota", "settle_spend", "record_class_call", "release_hosted_slot"]);
+  const q = calls[1].args;
   assert.equal(q.p_code, "KQ7M3P");
   assert.equal(q.p_member_hash, await sha256Hex(TOKEN));
   assert.equal(q.p_member_limit, 200);
-  const rec = calls[2].args;
+  const rec = calls[3].args;
   assert.equal(rec.p_text, "the full answer");
   assert.equal(rec.p_call_id, "run_9");
   assert.equal(rec.p_member_id, "member-1");
@@ -139,8 +140,12 @@ test("a class call that fails upstream records nothing, and a rate limit reads a
   const body = await res.text();
   assert.match(body, /free tier is busy/);
   assert.doesNotMatch(body, /contact sales/);
-  assert.deepEqual(calls.map((c) => c.fn), ["consume_class_quota", "settle_spend", "refund_calls"], "settled and refunded, but no recorded answer");
-  assert.deepEqual(calls[2].args, { p_day: "2026-11-01", p_subjects: ["c:class-1", "m:member-1"] }, "the class's and the student's counts come back");
+  assert.deepEqual(
+    calls.map((c) => c.fn),
+    ["acquire_hosted_slot", "consume_class_quota", "settle_spend", "refund_calls", "release_hosted_slot"],
+    "settled and refunded, but no recorded answer — and the slot goes back",
+  );
+  assert.deepEqual(calls[3].args, { p_day: "2026-11-01", p_subjects: ["c:class-1", "m:member-1"] }, "the class's and the student's counts come back");
 });
 
 test("class refusals say why, in words a student can act on", async () => {
@@ -179,6 +184,26 @@ test("in a class, every answer and judge call carries the class code and its cal
   seen.length = 0;
   await runExperiment(one, planRuns(one), { runChat: fake, keyFor: () => undefined, onRun: () => {}, concurrency: 1 });
   assert.ok(seen.every((c) => c.classCall === undefined), "outside a class, nothing is tagged");
+});
+
+test("a queued run shows as waiting until it answers, and nothing is left marked waiting", async () => {
+  const ac = new AbortController();
+  const seenSignals: (AbortSignal | undefined)[] = [];
+  const fake = async function* (call: ChatCall): AsyncIterable<ChatEvent> {
+    seenSignals.push(call.signal);
+    yield { type: "waiting" };
+    yield { type: "text", delta: "endorses" };
+    yield { type: "done", usage: { inputTokens: 1, outputTokens: 1 } };
+  };
+  const one = { ...EXPERIMENT, n: 1, items: EXPERIMENT.items.slice(0, 1), conditions: EXPERIMENT.conditions.slice(0, 1) };
+  const updates: ExperimentRun[] = [];
+  await runExperiment(one, planRuns(one), { runChat: fake, keyFor: () => undefined, onRun: (r) => updates.push(r), signal: ac.signal, concurrency: 1 });
+  const flags = updates.map((r) => !!r.waiting);
+  assert.ok(flags.includes(true), "marked waiting while queued");
+  assert.equal(flags.indexOf(false, flags.indexOf(true)) > flags.indexOf(true), true, "cleared once text arrives");
+  assert.equal(updates.at(-1)!.status, "done");
+  assert.equal(updates.at(-1)!.waiting, undefined, "a finished run isn't waiting");
+  assert.ok(seenSignals.length > 0 && seenSignals.every((s) => s === ac.signal), "Stop reaches every call, judges included");
 });
 
 // --- What counts as recorded ---------------------------------------------------------------------

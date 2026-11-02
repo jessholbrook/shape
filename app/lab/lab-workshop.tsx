@@ -166,6 +166,7 @@ export function LabWorkshop() {
   const canRun = hydrated && !missing && !running && !incomplete && !overQuota;
   const stale = e.runs.length > 0 && ranDesign !== null && ranDesign !== designKey(e);
   const done = e.runs.filter((r) => r.status === "done" || r.status === "error").length;
+  const waiting = e.runs.filter((r) => r.waiting).length;
   const shareBlocked = running
     ? "Wait for the run to finish."
     : stale
@@ -361,6 +362,7 @@ export function LabWorkshop() {
               </button>
               <span className="font-mono text-[12px] tabular-nums text-ink-muted" aria-live="polite">
                 {done} / {e.runs.length} answers
+                {waiting > 0 && ` · ${waiting} waiting for a free slot`}
               </span>
             </>
           )}
