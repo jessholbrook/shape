@@ -25,6 +25,15 @@ export function SharedView({ shared }: { shared: SharedExperiment }) {
     <div className="flex flex-col gap-6">
       <RerunBar shared={shared} />
 
+      {e.classPool && (
+        <p className="bg-highlight-soft border border-highlight/40 rounded-[12px] px-4 py-3 font-sans text-[14px] leading-[1.55] text-ink" data-testid="class-pool">
+          <span className="font-medium">A class&apos;s pooled result.</span> {e.classPool.runs} {e.classPool.runs === 1 ? "run" : "runs"} from{" "}
+          {e.classPool.students} {e.classPool.students === 1 ? "student" : "students"}, each running the same design. Every answer here
+          was produced through Shape&apos;s free tier and checked against the server&apos;s own record — none was typed in or edited by a
+          student. Nobody is named.
+        </p>
+      )}
+
       <section className={PANEL} aria-label="Question and hypothesis">
         <PanelHeader num="01" title="The question" />
         <p className="font-sans text-[17px] leading-[1.55] text-ink">{e.question}</p>
@@ -36,7 +45,14 @@ export function SharedView({ shared }: { shared: SharedExperiment }) {
         )}
       </section>
 
-      <Design experiment={e} />
+      <Design
+        experiment={e}
+        hint={
+          e.classPool
+            ? `Each student ran each version ${e.n} ${e.n === 1 ? "time" : "times"}${e.items.length ? " per item" : ""}; the results below pool ${e.classPool.students} ${e.classPool.students === 1 ? "student" : "students"}.`
+            : undefined
+        }
+      />
 
       {hasResults ? (
         <>

@@ -1,5 +1,6 @@
 import { readClassConfig } from "../classroom";
 import { readHostedConfig } from "../hosted";
+import { readShareConfig } from "../sharing";
 import type { ClassDeps } from "./classroom-handler";
 import { resendSender } from "./email";
 import { supabaseRpc } from "./supabase";
@@ -16,5 +17,10 @@ export function classDeps(): ClassDeps {
     env: process.env,
     freeTier: hosted.enabled,
     memberDailyCalls: hosted.enabled ? hosted.classMemberDailyCalls : undefined,
+    sharing: (() => {
+      const share = readShareConfig(process.env);
+      return share.enabled ? { enabled: true, dailyPublishes: share.dailyPublishes } : { enabled: false, dailyPublishes: 0 };
+    })(),
+    appVersion: process.env.VERCEL_GIT_COMMIT_SHA ?? "local",
   };
 }

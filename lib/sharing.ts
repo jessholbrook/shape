@@ -101,7 +101,14 @@ export type ShareRequest = { experiment: Experiment; runner: Runner };
  * streaming, or never started, isn't a result), everything else as is.
  */
 export function prepareForSharing(e: Experiment): Experiment {
-  return { ...e, title: e.title.trim(), runs: e.runs.filter((r) => r.status === "done" || r.status === "error") };
+  return {
+    ...e,
+    title: e.title.trim(),
+    runs: e.runs.filter((r) => r.status === "done" || r.status === "error"),
+    // Only the server sets a class's provenance, when a teacher publishes
+    // (lib/class-results.ts): a browser can't claim its runs were recorded by Shape.
+    classPool: undefined,
+  };
 }
 
 export function validateShareRequest(body: unknown): { ok: true; request: ShareRequest } | { ok: false; message: string } {
@@ -149,6 +156,8 @@ export function forkExperiment(shared: Pick<SharedExperiment, "slug" | "manifest
     hypothesisLockedAt: undefined,
     runs: [],
     forkedFrom: { slug: shared.slug, manifestHash: shared.manifestHash },
+    // A rerun is the reader's own: it isn't a class's pooled result.
+    classPool: undefined,
     createdAt: now,
     updatedAt: now,
   };

@@ -378,3 +378,64 @@ test("idle classes: an open class with no activity for 60 days closes itself; ac
     await db.close();
   }
 });
+
+test("publications: only the class's teacher publishes, lists and takes down; a page outlives its class", async () => {
+  const db = await fresh();
+  try {
+    await db.exec("insert into public.teacher_allowlist (email) values ('prof@uni.edu'), ('other@uni.edu')");
+    let prof = "";
+    let other = "";
+    await asService(db, async () => {
+      await db.query("select public.request_teacher_login('prof@uni.edu', $1, now() + interval '15 min')", [H("a")]);
+      prof = (await value<{ id: string }>(db, "select public.verify_teacher_login($1) as result", [H("a")])).id;
+      await db.query("select public.request_teacher_login('other@uni.edu', $1, now() + interval '15 min')", [H("b")]);
+      other = (await value<{ id: string }>(db, "select public.verify_teacher_login($1) as result", [H("b")])).id;
+      await value(db, "select public.create_class($1, 'KQ7M3P', 'Week 3', '{}', 100) as result", [prof]);
+    });
+
+    const publish = (teacher: string, slug: string, limit = 2) =>
+      value<{ ok: boolean; reason?: string } | null>(
+        db,
+        `select public.publish_class_results($1, 'KQ7M3P', $2, 'Week 3', null,
+           '{"base":{"model":{"provider":"shape-free","model":"claude-haiku-4-5"}},"runs":[{},{}]}', '{}', $3, $3, '2026-11-02', $4) as result`,
+        [teacher, slug, H("e"), limit],
+      );
+    await asService(db, async () => {
+      assert.deepEqual(await publish(prof, "123456789A"), { ok: true });
+      assert.equal(await publish(other, "123456789B"), null, "not their class");
+      assert.deepEqual(await publish(prof, "123456789C"), { ok: true });
+      assert.deepEqual(await publish(prof, "123456789D"), { ok: false, reason: "limit" }, "two a day in this test");
+
+      const list = await value<{ slug: string; model: string; runs: number }[]>(db, "select public.list_class_publications($1, 'KQ7M3P') as result", [prof]);
+      assert.deepEqual(list.map((p) => p.slug).sort(), ["123456789A", "123456789C"]);
+      assert.equal(list[0].model, "claude-haiku-4-5");
+      assert.equal(list[0].runs, 2);
+      assert.equal(await value(db, "select public.list_class_publications($1, 'KQ7M3P') as result", [other]), null);
+
+      assert.equal(await value(db, "select public.unpublish_class_results($1, 'KQ7M3P', '123456789A') as result", [other]), false, "someone else's");
+      assert.equal(await value(db, "select public.unpublish_class_results($1, 'KQ7M3P', '123456789A') as result", [prof]), true);
+      assert.equal(await value(db, "select public.get_shared_experiment('123456789A') as result"), null, "gone");
+      assert.ok(await value(db, "select public.get_shared_experiment('123456789C') as result"), "the other is readable at its link");
+    });
+
+    // The class is closed and, 90 days later, purged: its page stays, unlinked.
+    await db.exec("update public.classes set status = 'closed', closed_at = now() - interval '91 days'");
+    assert.equal(await value(db, "select public.purge_closed_classes(now() - interval '90 days') as result"), 1);
+    assert.equal(await value(db, "select class_id as result from public.shared_experiments where slug = '123456789C'"), null);
+    await asService(db, async () => {
+      assert.ok(await value(db, "select public.get_shared_experiment('123456789C') as result"), "still readable after the class is deleted");
+    });
+
+    for (const role of ["anon", "authenticated"]) {
+      for (const fn of [
+        "public.publish_class_results(uuid,text,text,text,text,jsonb,jsonb,text,text,date,integer)",
+        "public.list_class_publications(uuid,text)",
+        "public.unpublish_class_results(uuid,text,text)",
+      ]) {
+        assert.equal(await value(db, "select has_function_privilege($1, $2, 'EXECUTE') as result", [role, fn]), false, `${role}: ${fn}`);
+      }
+    }
+  } finally {
+    await db.close();
+  }
+});

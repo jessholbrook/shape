@@ -42,6 +42,12 @@ export type ClassDeps = {
   memberDailyCalls?: number;
   /** Whether the free tier is on — class runs on it need it. */
   freeTier?: boolean;
+  /** Publishing class results needs sharing on (the /e/ page reads from it). */
+  sharing?: { enabled: boolean; dailyPublishes: number };
+  /** Recorded in a published result's manifest. */
+  appVersion?: string;
+  /** Tests pass fixed randomness for slugs. */
+  random?: (n: number) => Uint8Array;
 };
 
 export type Teacher = { id: string; email: string };
