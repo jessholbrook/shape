@@ -48,6 +48,13 @@ and schedules where `pg_cron` is available. Check it with
 The 90 days must match `CLASS_RETENTION_DAYS` in `lib/classroom.ts`; a test
 checks.
 
+Idle classes: `20261104000000_close_idle_classes.sql` adds
+`close_idle_classes`, run by a second daily job (`shape-close-idle-classes`,
+04:07 UTC). An open class with no activity for 60 days — no student joining,
+no free-tier call, no submitted run, not reopened — closes, which starts its
+90-day deletion clock. Same rules as the purge: no role can call it. The 60
+days must match `CLASS_IDLE_DAYS` in `lib/classroom.ts`.
+
 `tests/database-classrooms.test.ts` replays every migration on a fresh
 database with no automatic grants and runs the whole classroom flow as a
 non-owner `service_role`: sign-in, make a class, join, class metering,
