@@ -247,6 +247,14 @@ export function designFor(e: Experiment, model: LabModel): Experiment {
  */
 export const CLASS_RETENTION_DAYS = 90;
 
+/**
+ * An open class with no activity (joins, calls, runs, being reopened) for
+ * this many days closes on its own, which starts the deletion clock — so a
+ * forgotten class isn't kept forever. 20261104000000_close_idle_classes.sql
+ * runs it; a test keeps the two equal.
+ */
+export const CLASS_IDLE_DAYS = 60;
+
 /** When a class closed at `closedAt` will be deleted: on or after this moment. */
 export function deletionDate(closedAt: string | null | undefined): Date | null {
   if (!closedAt) return null;
