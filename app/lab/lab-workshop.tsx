@@ -33,6 +33,7 @@ import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-ba
 import { INPUT, Label, MONO_INPUT, PANEL, PanelHeader } from "@/components/lab/fields";
 import { ConditionsEditor, ItemsEditor, MeasuresEditor } from "@/components/lab/setup";
 import { Findings, ManifestPanel, ResultsTable, RunList } from "@/components/lab/results";
+import { PowerPlan } from "@/components/lab/power-plan";
 import { SharePanel } from "@/components/lab/share-panel";
 import { MakeClassPanel } from "@/components/lab/make-class-panel";
 import { useShareStatus } from "@/lib/hooks/use-share-status";
@@ -334,6 +335,7 @@ export function LabWorkshop() {
                 : `about $${estimate.usd.toFixed(2)}`}
           </p>
         </div>
+        <PowerPlan experiment={e} n={Math.min(e.n, maxRuns)} maxRunsPerCell={maxRuns} />
         {overQuota && (
           <p className="font-sans text-[13px] text-warning" data-testid="lab-over-quota">
             This needs {estimate.hostedCalls} free runs and you have {hosted.remaining} left today. Lower the runs per cell,
