@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { INPUT, LINK_BUTTON } from "@/components/lab/fields";
+import { CLASS_RETENTION_DAYS } from "@/lib/classroom";
 
 /** Small client forms for the /teach and /class pages. Each posts to one endpoint. */
 
@@ -146,7 +147,7 @@ export function JoinForm({ code }: { code: string }) {
       <input id="join-nickname" maxLength={24} required value={nickname} onChange={(ev) => setNickname(ev.target.value)} className={INPUT} />
       <p className="font-sans text-[12px] leading-[1.5] text-ink-quiet">
         Something your teacher will recognise — it doesn&apos;t need to be your real name. Shape keeps no email or account for you;
-        this browser remembers you.
+        this browser remembers you. Your nickname and runs are deleted {CLASS_RETENTION_DAYS} days after your teacher closes the class.
       </p>
       <div>
         <button type="submit" disabled={busy || !nickname.trim()} className={PRIMARY}>
@@ -218,7 +219,9 @@ export function ClassStatusButton({ code, status }: { code: string; status: "ope
   async function change() {
     if (
       next === "closed" &&
-      !window.confirm("Close this class? Students won't be able to run the experiment or send runs. Everyone can still see the results, and you can reopen it.")
+      !window.confirm(
+        `Close this class? Students won't be able to run the experiment or send runs, and everyone can still see the results.\n\n${CLASS_RETENTION_DAYS} days after closing, the class and every run in it are deleted for good — download them first if you want to keep them. Reopening before then stops the clock.`,
+      )
     ) {
       return;
     }

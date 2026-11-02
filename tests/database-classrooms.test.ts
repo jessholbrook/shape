@@ -238,3 +238,79 @@ test("the classroom flow runs end to end as service_role on a fresh replay", asy
     await db.close();
   }
 });
+
+test("retention: a class closed over 90 days ago is purged with everything of its; nothing else is touched", async () => {
+  const db = await fresh();
+  try {
+    await db.exec("insert into public.teacher_allowlist (email) values ('prof@uni.edu')");
+    const ids: Record<string, { class_id: string; member_id: string }> = {};
+    let teacherId = "";
+    await asService(db, async () => {
+      await db.query("select public.request_teacher_login('prof@uni.edu', $1, now() + interval '15 min')", [H("a")]);
+      teacherId = (await value<{ id: string }>(db, "select public.verify_teacher_login($1) as result", [H("a")])).id;
+      // Three classes, one student each, each with a metered call, a recorded call and a run.
+      for (const [code, member] of [["KQ7M3P", H("1")], ["AC3479", H("2")], ["DEFHJK", H("3")]]) {
+        await value(db, "select public.create_class($1, $2, 'A class', '{}', 100) as result", [teacherId, code]);
+        await value(db, "select public.join_class($1, 'Ada', $2) as result", [code, member]);
+        const q = await value<{ class_id: string; member_id: string }>(
+          db,
+          "select public.consume_class_quota($1, $2, '2026-11-02', 10, '2026-11-01', 100, 100000) as result",
+          [code, member],
+        );
+        ids[code] = q;
+        await db.query("select public.record_class_call($1, $2, 'run_1', 'm', $3, 'answer', 1, 1)", [q.class_id, q.member_id, H("f")]);
+        await value(db, "select public.submit_class_runs($1, $2, $3) as result", [
+          code,
+          member,
+          JSON.stringify([{ run_id: "run_1", condition_id: "c0", item_id: null, idx: 0, provider: "shape-free", model: "m", status: "done", text: "answer", scores: {}, recorded: true }]),
+        ]);
+      }
+    });
+    // KQ7M3P closed 91 days ago, AC3479 closed 89 days ago, DEFHJK still open. A visitor's counter too.
+    await db.exec(`
+      update public.classes set status = 'closed', closed_at = now() - interval '91 days' where code = 'KQ7M3P';
+      update public.classes set status = 'closed', closed_at = now() - interval '89 days' where code = 'AC3479';
+      insert into public.usage_daily (day, subject, calls) values ('2026-11-02', 'v:visitor', 4);
+    `);
+
+    assert.equal(await value(db, "select public.purge_closed_classes(now() - interval '90 days') as result"), 1);
+    const count = (sql: string, args: unknown[] = []) => value<number>(db, `select count(*)::int as result from ${sql}`, args);
+    assert.deepEqual((await db.query<{ code: string }>("select code from public.classes order by code")).rows.map((r) => r.code), ["AC3479", "DEFHJK"]);
+    const gone = ids.KQ7M3P;
+    assert.equal(await count("public.class_members where class_id = $1", [gone.class_id]), 0, "members cascade");
+    assert.equal(await count("public.class_calls where class_id = $1", [gone.class_id]), 0, "recorded calls cascade");
+    assert.equal(await count("public.class_runs where class_id = $1", [gone.class_id]), 0, "runs cascade");
+    assert.equal(await count("public.usage_daily where subject in ($1, $2)", [`c:${gone.class_id}`, `m:${gone.member_id}`]), 0, "its counters go");
+    for (const kept of [ids.AC3479, ids.DEFHJK]) {
+      assert.equal(await count("public.class_runs where class_id = $1", [kept.class_id]), 1);
+      assert.equal(await count("public.usage_daily where subject in ($1, $2)", [`c:${kept.class_id}`, `m:${kept.member_id}`]), 2);
+    }
+    assert.equal(await count("public.usage_daily where subject = 'v:visitor'"), 1, "other counters untouched");
+    assert.equal(await value(db, "select public.purge_closed_classes(now() - interval '90 days') as result"), 0, "nothing left to purge");
+
+    // Reopening clears the close time, so a reopened class is never purged.
+    await asService(db, async () => {
+      await value(db, "select public.set_class_status($1, 'AC3479', 'open') as result", [teacherId]);
+    });
+    assert.equal(await value(db, "select public.purge_closed_classes(now() + interval '1 year') as result"), 0);
+
+    // Students can see when a closed class goes: get_class carries the close time.
+    await asService(db, async () => {
+      await value(db, "select public.set_class_status($1, 'DEFHJK', 'closed') as result", [teacherId]);
+      const c = await value<{ status: string; closed_at: string | null }>(db, "select public.get_class('DEFHJK') as result");
+      assert.equal(c.status, "closed");
+      assert.ok(c.closed_at);
+    });
+
+    // Only the database's own job may purge: not the server, not the browser.
+    for (const role of ["service_role", "anon", "authenticated"]) {
+      assert.equal(
+        await value(db, "select has_function_privilege($1, 'public.purge_closed_classes(timestamptz)', 'EXECUTE') as result", [role]),
+        false,
+        `${role} cannot purge`,
+      );
+    }
+  } finally {
+    await db.close();
+  }
+});

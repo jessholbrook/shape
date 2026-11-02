@@ -8,7 +8,7 @@ import { Design } from "@/components/lab/shared-view";
 import { JoinForm } from "@/components/classroom/forms";
 import { ClassRunner } from "@/components/classroom/class-runner";
 import { ClassResults } from "@/components/classroom/class-results";
-import { memberCookieName, normalizeJoinCode } from "@/lib/classroom";
+import { deletionDate, formatDay, memberCookieName, normalizeJoinCode } from "@/lib/classroom";
 import { currentMember, loadStudentClass } from "@/lib/server/classroom-handler";
 import { classDeps } from "@/lib/server/classroom-deps";
 import { loadClassResults } from "@/lib/server/class-results";
@@ -57,6 +57,12 @@ export default async function StudentClassPage({ params }: { params: Promise<{ c
                 <JoinForm code={code} />
               ) : (
                 <p className="font-sans text-[15px] text-ink-muted">This class is closed.</p>
+              )}
+              {result.data.status === "closed" && deletionDate(result.data.closed_at) && (
+                <p className="font-sans text-[13px] text-ink-quiet" data-testid="class-deletion">
+                  {member ? "Your teacher closed this class. " : ""}
+                  It and every run in it will be deleted on {formatDay(deletionDate(result.data.closed_at)!)}.
+                </p>
               )}
 
               <section className="bg-surface border border-line rounded-[16px] p-5 md:p-6">

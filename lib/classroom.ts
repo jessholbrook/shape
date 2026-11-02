@@ -237,3 +237,24 @@ export const judgeCallId = (runId: string, measureId: string) => `${runId}:${mea
 export function designFor(e: Experiment, model: LabModel): Experiment {
   return { ...e, base: { ...e.base, model } };
 }
+
+// --- Retention -------------------------------------------------------------------------
+
+/**
+ * A closed class's data is deleted this many days after it closes, by a
+ * daily job in the database (20261103000000_class_retention.sql — a test
+ * keeps the two equal). Reopening a class stops the clock.
+ */
+export const CLASS_RETENTION_DAYS = 90;
+
+/** When a class closed at `closedAt` will be deleted: on or after this moment. */
+export function deletionDate(closedAt: string | null | undefined): Date | null {
+  if (!closedAt) return null;
+  const t = Date.parse(closedAt);
+  return Number.isFinite(t) ? new Date(t + CLASS_RETENTION_DAYS * 24 * 60 * 60 * 1000) : null;
+}
+
+/** "2 Feb 2027" — a date people read, not a timestamp. */
+export function formatDay(d: Date): string {
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+}

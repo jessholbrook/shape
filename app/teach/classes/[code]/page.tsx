@@ -8,7 +8,7 @@ import QRCode from "qrcode";
 import { Design } from "@/components/lab/shared-view";
 import { ClassStatusButton, CopyLink } from "@/components/classroom/forms";
 import { ClassResults } from "@/components/classroom/class-results";
-import { TEACHER_COOKIE, formatJoinCode } from "@/lib/classroom";
+import { TEACHER_COOKIE, deletionDate, formatDay, formatJoinCode } from "@/lib/classroom";
 import { currentTeacher, loadTeacherClass } from "@/lib/server/classroom-handler";
 import { classDeps } from "@/lib/server/classroom-deps";
 import { loadTeacherRuns } from "@/lib/server/class-results";
@@ -17,6 +17,14 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Class", robots: { index: false, follow: false } };
 
 const EYEBROW = "font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet";
+
+function closedText(closedAt: string | null): string {
+  const deleted = deletionDate(closedAt);
+  const closed = closedAt ? ` on ${formatDay(new Date(closedAt))}` : "";
+  return deleted
+    ? `Closed${closed}: no new runs. The class and every run in it will be deleted on ${formatDay(deleted)} — download them before then to keep them. Reopening stops the clock.`
+    : `Closed${closed}: no new runs. Everyone can still see the results.`;
+}
 
 export default async function TeacherClassPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
@@ -100,7 +108,7 @@ export default async function TeacherClassPage({ params }: { params: Promise<{ c
               <p className="font-sans text-[14px] text-ink-muted">
                 {result.data.status === "open"
                   ? "Open: students can join and run the experiment."
-                  : `Closed${result.data.closed_at ? ` on ${new Date(result.data.closed_at).toLocaleDateString("en", { day: "numeric", month: "short", year: "numeric" })}` : ""}: no new runs. Everyone can still see the results.`}
+                  : closedText(result.data.closed_at)}
               </p>
               <ClassStatusButton code={result.data.code} status={result.data.status} />
               <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
