@@ -38,6 +38,9 @@ function starts with no browser access — grant `service_role` explicitly.
 `tests/database-browser-grants.test.ts` replays every migration under the live
 project's old defaults and checks the browser roles end with nothing.
 
+The original hand-made `artifacts` table (unused, open to anonymous writes)
+is dropped by `20261105000000_drop_artifacts.sql`.
+
 Retention: `20261103000000_class_retention.sql` adds `purge_closed_classes`,
 which deletes a class closed more than 90 days ago with everything of its
 (members, recorded calls, runs, daily counters). No role can call it — not
