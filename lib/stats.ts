@@ -178,3 +178,60 @@ export function meanPairwiseDistance(texts: string[]): number | null {
   }
   return 1 - sum / pairs;
 }
+
+// --- Planning ------------------------------------------------------------------
+//
+// Before running: how many answers does each version need to reliably see a
+// given change, and what can a given number of answers reliably see?
+// "Reliably" is the textbook convention: an 80% chance that a real change of
+// that size shows up as a clear difference (a 95% interval that excludes no
+// change). Normal approximations, so these are planning numbers, not
+// guarantees — at the small sizes the lab runs, treat them as a floor.
+
+/** One-sided normal quantile for 80% power. */
+export const Z80 = 0.8416212335729143;
+
+/**
+ * Answers per version needed to reliably detect a change in a yes/no rate
+ * from p1 to p2 (two-proportion test, 95% two-sided, 80% power). Null when
+ * there's no change to detect.
+ */
+export function answersForRates(p1: number, p2: number): number | null {
+  const d = Math.abs(p2 - p1);
+  if (!(d > 0) || p1 < 0 || p1 > 1 || p2 < 0 || p2 > 1) return null;
+  const pbar = (p1 + p2) / 2;
+  const a = Z95 * Math.sqrt(2 * pbar * (1 - pbar));
+  const b = Z80 * Math.sqrt(p1 * (1 - p1) + p2 * (1 - p2));
+  return Math.ceil(((a + b) * (a + b)) / (d * d));
+}
+
+/**
+ * The smallest rise in a yes/no rate from p1 that n answers per version can
+ * reliably detect, in whole points. Null when even the largest possible rise
+ * is out of reach.
+ */
+export function detectableRateChange(n: number, p1 = 0.5): number | null {
+  if (!(n >= 1)) return null;
+  for (let pts = 1; p1 + pts / 100 <= 1 + 1e-9; pts++) {
+    const need = answersForRates(p1, Math.min(1, p1 + pts / 100));
+    if (need !== null && need <= n) return pts;
+  }
+  return null;
+}
+
+/**
+ * Answers per version needed to reliably detect a standardized shift d in a
+ * numeric measure (Cohen's d; two-sample, 95% two-sided, 80% power), with
+ * Guenther's small-sample correction.
+ */
+export function answersForMeans(d: number): number | null {
+  if (!(d > 0)) return null;
+  const z = Z95 + Z80;
+  return Math.ceil((2 * z * z) / (d * d) + (Z95 * Z95) / 4);
+}
+
+/** The smallest standardized shift (Cohen's d) n answers per version can reliably detect. */
+export function detectableShift(n: number): number | null {
+  if (!(n >= 2)) return null;
+  return (Z95 + Z80) * Math.sqrt(2 / n);
+}

@@ -536,3 +536,26 @@ test("/lab shows Make a class only to a signed-in teacher, and makes one", async
   expect(made!.experiment?.question).toBeTruthy();
   expect(errors).toEqual([]);
 });
+
+test("/lab says what the runs can detect, and what a smaller change would take", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/lab", { waitUntil: "networkidle" });
+
+  const plan = page.getByTestId("power-plan");
+  await expect(plan).toBeVisible();
+  await expect(plan).toContainText("answers");
+  await expect(plan).toContainText(/points in a\s+yes\/no measure|first\s+look/);
+
+  // Fewer runs per cell, fewer answers per version, a bigger change needed.
+  const before = await plan.textContent();
+  const runs = page.getByLabel("Runs per cell");
+  const options = await runs.locator("option").allTextContents();
+  await runs.selectOption(options[0]);
+  await expect(plan).not.toHaveText(before ?? "");
+
+  // A 10-point target is out of reach for one run of the lab: it points to a class.
+  await page.getByLabel("To reliably catch").selectOption("10");
+  await expect(page.getByTestId("power-target-text")).toContainText(/class|already have/);
+  expect(errors).toEqual([]);
+});
