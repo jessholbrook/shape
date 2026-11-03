@@ -1,5 +1,4 @@
 import { Shell } from "@/components/shell";
-import { SectionNumber } from "@/components/section-number";
 import { LearnIndex } from "@/components/learn/learn-index";
 
 export const metadata = {
@@ -12,9 +11,7 @@ export default function LearnPage() {
   return (
     <Shell>
       <section className="mx-auto max-w-[1100px] px-6 md:px-12 pt-16 md:pt-20 pb-32">
-        <SectionNumber>02</SectionNumber>
-
-        <h1 className="font-display text-[64px] md:text-[88px] leading-[0.95] tracking-tight text-ink mt-8 max-w-4xl">
+        <h1 className="font-display text-[64px] md:text-[88px] leading-[0.95] tracking-tight text-ink max-w-4xl">
           Model behavior{" "}
           <span className="italic">101 → 201</span>.
         </h1>

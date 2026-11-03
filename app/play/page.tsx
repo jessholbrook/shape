@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Shell } from "@/components/shell";
-import { SectionNumber } from "@/components/section-number";
 import { PLAYGROUNDS, type Playground } from "@/lib/playgrounds";
 
 export const metadata = {
@@ -13,9 +12,7 @@ export default function PlayPage() {
   return (
     <Shell>
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 pt-16 md:pt-20 pb-32">
-        <SectionNumber>03</SectionNumber>
-
-        <h1 className="font-display text-[64px] md:text-[88px] leading-[0.95] tracking-tight text-ink mt-8 max-w-4xl">
+        <h1 className="font-display text-[64px] md:text-[88px] leading-[0.95] tracking-tight text-ink max-w-4xl">
           Play to <span className="italic">learn</span>.
         </h1>
 

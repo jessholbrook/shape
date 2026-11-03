@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
 import { CLASS_IDLE_DAYS, CLASS_RETENTION_DAYS } from "@/lib/classroom";
+import { USAGE_COUNTER_DAYS } from "@/lib/privacy";
 
 export const metadata = {
   title: "Privacy & data",
@@ -46,7 +47,7 @@ export default function PrivacyPage() {
               <B>Shape&apos;s free tier.</B> Prompts are sent from our server to Anthropic, which runs the model. We
               don&apos;t log or store the prompts or answers. To enforce the daily limit we keep a count of calls per
               day against an opaque code: a keyed hash of a random cookie, and of your IP address salted with the
-              date. We never store your IP address itself.
+              date. We never store your IP address itself, and the counts are deleted after {USAGE_COUNTER_DAYS} days.
             </li>
             <li>
               <B>Your own key.</B> Calls to Anthropic and Google go straight from your browser to them. Calls to
@@ -76,7 +77,8 @@ export default function PrivacyPage() {
           <List>
             <li>
               <B>Teachers</B> sign in with an email link. We store the email address and when you last signed in,
-              and send sign-in emails through Resend. A sign-in lasts 30 days.
+              and send sign-in emails through Resend. A sign-in lasts 30 days. You can delete your account, with every
+              class and published result, from <A href="/teach">Teach</A>.
             </li>
             <li>
               <B>Students</B> join with a nickname they choose. No email or name is required. A cookie remembers
@@ -110,8 +112,9 @@ export default function PrivacyPage() {
 
         <Section title="Questions or deletion">
           <P>
-            To have a class, a shared page, or a teacher sign-in removed sooner, use the Feedback button and say
-            what you&apos;d like removed. Shape is open source, so you can also{" "}
+            Teachers can delete their own account and everything in it from <A href="/teach">Teach</A>. To have
+            anything else removed sooner, such as a shared page you can no longer delete from your browser, use the
+            Feedback button and say what you&apos;d like removed. Shape is open source, so you can also{" "}
             <A href="https://github.com/jessholbrook/shape" external>
               read the code
             </A>{" "}

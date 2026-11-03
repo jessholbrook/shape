@@ -123,6 +123,68 @@ export function SignOutButton() {
   );
 }
 
+/**
+ * Delete the teacher's account. Irreversible and it takes students' answers
+ * with it, so it sits behind a disclosure and asks for the email typed out.
+ */
+export function DeleteAccount({ email }: { email: string }) {
+  const router = useRouter();
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const matches = typed.trim().toLowerCase() === email.toLowerCase();
+
+  async function remove() {
+    setBusy(true);
+    setError(null);
+    const res = await fetch("/api/teach/me", { method: "DELETE" });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setError(body?.error?.message ?? "Couldn't delete your account. Try again.");
+      setBusy(false);
+      return;
+    }
+    router.refresh();
+  }
+
+  return (
+    <details className="border-t border-line pt-4" data-testid="delete-account">
+      <summary className="cursor-pointer font-sans text-[14px] text-ink-muted hover:text-ink">Delete my account</summary>
+      <div className="mt-3 flex flex-col gap-3 max-w-xl">
+        <p className="font-sans text-[14px] leading-[1.6] text-ink-muted">
+          This removes your email, every class you made, every student&apos;s nickname and answers, and every result you
+          published. It can&apos;t be undone. Export anything you want to keep first.
+        </p>
+        <label className="flex flex-col gap-1.5 font-sans text-[13px] text-ink-muted">
+          Type your email to confirm
+          <input
+            type="email"
+            value={typed}
+            onChange={(ev) => setTyped(ev.target.value)}
+            autoComplete="off"
+            className="bg-canvas border border-line rounded-[10px] px-3 py-2 font-sans text-[14px] text-ink"
+          />
+        </label>
+        <div>
+          <button
+            type="button"
+            onClick={remove}
+            disabled={!matches || busy}
+            className="rounded-[10px] bg-danger text-canvas px-4 py-2 font-sans text-[14px] disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {busy ? "Deleting…" : "Delete my account and everything in it"}
+          </button>
+        </div>
+        {error && (
+          <p role="alert" className="font-sans text-[13px] text-danger">
+            {error}
+          </p>
+        )}
+      </div>
+    </details>
+  );
+}
+
 export function JoinForm({ code }: { code: string }) {
   const router = useRouter();
   const [nickname, setNickname] = useState("");
