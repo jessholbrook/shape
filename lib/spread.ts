@@ -218,7 +218,7 @@ export function tokenSet(text: string): Set<string> {
   return new Set(words);
 }
 
-export function jaccard(a: Set<string>, b: Set<string>): number {
+export function jaccard<T>(a: Set<T>, b: Set<T>): number {
   if (a.size === 0 && b.size === 0) return 1;
   let shared = 0;
   const [small, large] = a.size <= b.size ? [a, b] : [b, a];

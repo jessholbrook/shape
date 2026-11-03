@@ -208,7 +208,17 @@ function MeasureBlock({
 
 // --- Runs ----------------------------------------------------------------------
 
-export function RunList({ experiment: e }: { experiment: Experiment }) {
+export function RunList({
+  experiment: e,
+  onOpen,
+  note,
+}: {
+  experiment: Experiment;
+  /** Called when the list is first opened, e.g. to load answers on demand. */
+  onOpen?: () => void;
+  /** Shown above the runs while open, e.g. a loading line. */
+  note?: React.ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const condLabel = (id: string) => e.conditions.find((c) => c.id === id)?.label ?? id;
   const itemLabel = (id: string | null) => (id ? e.items.find((i) => i.id === id)?.label ?? id : "");
@@ -218,11 +228,16 @@ export function RunList({ experiment: e }: { experiment: Experiment }) {
         num="Runs"
         title={`Every answer (${e.runs.length})`}
         action={
-          <button type="button" className={LINK_BUTTON} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+          <button type="button" className={LINK_BUTTON} aria-expanded={open} onClick={() => {
+              if (!open) onOpen?.();
+              setOpen(!open);
+            }}
+          >
             {open ? "Hide" : "Show"} runs
           </button>
         }
       />
+      {open && note}
       {open && (
         <ol className="flex flex-col gap-2">
           {e.runs.map((r) => (

@@ -166,8 +166,12 @@ export function hedgesG(a: number[], b: number[]): number | null {
  * typicality ranking is, so the two agree. Null below two texts.
  */
 export function meanPairwiseDistance(texts: string[]): number | null {
-  if (texts.length < 2) return null;
-  const sets = texts.map(tokenSet);
+  return meanPairwiseSetDistance(texts.map(tokenSet));
+}
+
+/** The same, over word sets already made — any stand-in for a word works, as long as equal words are equal. */
+export function meanPairwiseSetDistance<T>(sets: Set<T>[]): number | null {
+  if (sets.length < 2) return null;
   let sum = 0;
   let pairs = 0;
   for (let i = 0; i < sets.length; i++) {
