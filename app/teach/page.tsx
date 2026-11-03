@@ -29,8 +29,8 @@ export default async function TeachPage() {
           One experiment, <span className="italic">a whole class</span>.
         </h1>
         <p className="font-sans text-[15px] leading-[1.6] text-ink-muted max-w-2xl mt-5">
-          Every student runs the same experiment and the results pool together. One student&apos;s handful of runs is an
-          anecdote; thirty students&apos; is evidence — and seeing the spread is the lesson.
+          Have students run the same experiments, pool the results, compare, and discuss. Learn as a group how small
+          decisions can lead to large changes in model behaviors.
         </p>
 
         <div className="mt-12">
