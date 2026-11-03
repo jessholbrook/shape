@@ -272,16 +272,6 @@ export function LabWorkshop() {
         </div>
       )}
 
-      <DraftSaveBar
-        title={title}
-        onTitleChange={setTitle}
-        status={saveStatus}
-        draftId={draftId}
-        onSave={handleSave}
-        disabled={running}
-        artifact="Experiment"
-      />
-
       {e.forkedFrom && (
         <p className="bg-surface border border-line rounded-[12px] px-4 py-3 font-sans text-[14px] text-ink-muted" data-testid="lab-rerun-of">
           A rerun of a shared experiment.{" "}
@@ -443,6 +433,16 @@ export function LabWorkshop() {
           blockedReason={shareBlocked}
         />
       )}
+
+      <DraftSaveBar
+        title={title}
+        onTitleChange={setTitle}
+        status={saveStatus}
+        draftId={draftId}
+        onSave={handleSave}
+        disabled={running}
+        artifact="Experiment"
+      />
 
       <MakeClassPanel
         experiment={e}
