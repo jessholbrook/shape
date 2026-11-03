@@ -8,6 +8,7 @@ import QRCode from "qrcode";
 import { Design } from "@/components/lab/shared-view";
 import { ClassStatusButton, CopyLink } from "@/components/classroom/forms";
 import { ClassResults } from "@/components/classroom/class-results";
+import { lightenRows } from "@/lib/class-results";
 import { CLASS_IDLE_DAYS, TEACHER_COOKIE, deletionDate, formatDay, formatJoinCode } from "@/lib/classroom";
 import { currentTeacher, loadTeacherClass } from "@/lib/server/classroom-handler";
 import { classDeps } from "@/lib/server/classroom-deps";
@@ -131,8 +132,9 @@ export default async function TeacherClassPage({ params }: { params: Promise<{ c
               {runs.status === "ok" ? (
                 <ClassResults
                   experiment={result.data.experiment}
-                  rows={runs.data}
+                  rows={lightenRows(runs.data)}
                   view="teacher"
+                  code={result.data.code}
                   publish={{
                     code: result.data.code,
                     sharing: !!deps.sharing?.enabled,

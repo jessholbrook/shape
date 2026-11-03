@@ -1,5 +1,5 @@
-import { isToken, normalizeJoinCode, TEACHER_COOKIE } from "../classroom";
-import { classSnapshot, toCsv, type ClassRunRow } from "../class-results";
+import { isToken, memberCookieName, normalizeJoinCode, TEACHER_COOKIE } from "../classroom";
+import { answersOf, classSnapshot, toCsv, type ClassRunRow } from "../class-results";
 import { buildManifest, manifestHash, ranAtOf } from "../experiment";
 import { periodKeys } from "../hosted";
 import { isSlug, newDeleteToken, newSlug } from "../sharing";
@@ -41,6 +41,44 @@ export function loadTeacherRuns(deps: ClassDeps, teacher: Teacher, rawCode: stri
   const code = normalizeJoinCode(rawCode);
   if (!code) return Promise.resolve({ status: "missing" });
   return loadRows(deps, "get_teacher_class_runs", { p_teacher_id: teacher.id, p_code: code });
+}
+
+/**
+ * The answers behind a page's light rows (lightenRows), in the same order:
+ * text and judge replies only, for whoever may see them. A member gets the
+ * same view as get_class_results gives them; the teacher gets everything.
+ * Fetched when someone opens the run list.
+ */
+function answersResponse(load: Load<ClassRunRow[]>): Response {
+  if (load.status === "missing") return error(404, "No class you're in has that code.");
+  if (load.status !== "ok") return error(503, "Couldn't load the answers right now. Try again in a minute.");
+  return json(200, { answers: answersOf(load.data) }, { "cache-control": "no-store" });
+}
+
+/** GET /api/classes/<code>/runs — a member's view of the class's answers. */
+export function createStudentAnswersHandler(deps: ClassDeps) {
+  const now = deps.now ?? (() => new Date());
+  return async function GET(req: Request, rawCode: string): Promise<Response> {
+    if (!deps.config.enabled || !deps.rpc) return error(503, OFF);
+    const limited = rateLimit(`class-answers:${clientIp(req)}`, 120, 60 * 60 * 1000, now().getTime());
+    if (!limited.ok) return tooManyRequests(limited.retryAfter);
+    const code = normalizeJoinCode(rawCode);
+    if (!code) return error(404, "No class has that code.");
+    return answersResponse(await loadClassResults(deps, code, readCookie(req, memberCookieName(code))));
+  };
+}
+
+/** GET /api/teach/classes/<code>/answers — every answer in the teacher's class. */
+export function createTeacherAnswersHandler(deps: ClassDeps) {
+  const now = deps.now ?? (() => new Date());
+  return async function GET(req: Request, rawCode: string): Promise<Response> {
+    if (!deps.config.enabled || !deps.rpc) return error(503, OFF);
+    const limited = rateLimit(`class-answers:${clientIp(req)}`, 120, 60 * 60 * 1000, now().getTime());
+    if (!limited.ok) return tooManyRequests(limited.retryAfter);
+    const teacher = await currentTeacher(deps, readCookie(req, TEACHER_COOKIE));
+    if (!teacher) return error(401, "Sign in as a teacher first.");
+    return answersResponse(await loadTeacherRuns(deps, teacher, rawCode));
+  };
 }
 
 /** POST /api/teach/classes/<code>/status {status: "open" | "closed"} — the teacher closes or reopens their class. */

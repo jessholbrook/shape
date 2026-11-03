@@ -1,5 +1,6 @@
 import { analyze, type Analysis, type Experiment, type ExperimentRun } from "./experiment";
-import { newId } from "./spread";
+import { newId, tokenSet } from "./spread";
+import { meanPairwiseSetDistance } from "./stats";
 import { PROVIDERS, type ProviderId } from "./providers";
 import { designFor } from "./classroom";
 
@@ -27,8 +28,16 @@ export type ClassRunRow = {
   scores: Record<string, boolean | number | null>;
   /** Answered through Shape's free tier and checked against its record. */
   recorded: boolean;
-  /** Null when hidden: a classmate's reported run (its scores still count). */
+  /**
+   * Null when hidden: a classmate's reported run (its scores still count).
+   * Also null on a page's light rows (see lightenRows), where `hidden` says
+   * which and the text loads on demand.
+   */
   text: string | null;
+  /** Light rows: the viewer may not see this answer. */
+  hidden?: boolean;
+  /** Light rows: the answer's distinct words as ids, sorted and delta-encoded. */
+  words?: number[];
   /** Student view: this student's own run. */
   mine?: boolean;
   /** Teacher view only. */
@@ -88,6 +97,65 @@ export function filterRows(rows: ClassRunRow[], f: ResultFilter): ClassRunRow[] 
   );
 }
 
+/** Whether the viewer may see this answer (light or full row). */
+export function isVisible(r: ClassRunRow): boolean {
+  return r.hidden === undefined ? r.text !== null : !r.hidden;
+}
+
+/**
+ * Rows for the page. A class's answers and judge replies are most of its
+ * bytes (about 1.2 of every 1.4 KB), and the page only needs them when
+ * someone opens the run list; the scores, which every number on the page is
+ * made from, stay. Timing and token counts, which only the export uses, go. What text variance needs is each answer's set of distinct
+ * words, so that goes along as small integer ids — equal words, equal ids —
+ * which keeps the variance exact at a fraction of the size.
+ */
+export function lightenRows(rows: ClassRunRow[]): ClassRunRow[] {
+  const ids = new Map<string, number>();
+  const idOf = (w: string) => {
+    let id = ids.get(w);
+    if (id === undefined) ids.set(w, (id = ids.size));
+    return id;
+  };
+  return rows.map((r) => {
+    // Timing and token counts are for the export, which reads full rows on the server.
+    const { text, judge_raw, words, latency_ms, input_tokens, output_tokens, submitted_at, ...rest } = r;
+    void [judge_raw, words, latency_ms, input_tokens, output_tokens, submitted_at];
+    if (text === null) return { ...rest, text: null, hidden: true };
+    const sorted = [...tokenSet(text)].map(idOf).sort((a, b) => a - b);
+    return { ...rest, text: null, hidden: false, words: sorted.map((v, i) => (i === 0 ? v : v - sorted[i - 1])) };
+  });
+}
+
+function wordSet(r: ClassRunRow): Set<string | number> | null {
+  if (r.text !== null) return tokenSet(r.text);
+  if (!r.words) return null;
+  const out = new Set<number>();
+  let v = 0;
+  for (const d of r.words) out.add((v += d));
+  return out;
+}
+
+/** One answer's text and judge replies, as the answers endpoints send them, in the rows' order. */
+export type Answer = { run_id: string; text: string | null; judge_raw?: Record<string, string> | null };
+
+export function answersOf(rows: ClassRunRow[]): Answer[] {
+  return rows.map((r) => ({ run_id: r.run_id, text: r.text, ...(r.judge_raw ? { judge_raw: r.judge_raw } : {}) }));
+}
+
+/**
+ * Light rows with their answers filled back in. Null when the two don't line
+ * up — new runs arrived in between — so the caller refreshes and asks again.
+ */
+export function withAnswers(rows: ClassRunRow[], answers: Answer[]): ClassRunRow[] | null {
+  if (answers.length !== rows.length || answers.some((a, i) => a.run_id !== rows[i].run_id)) return null;
+  return rows.map((r, i) => {
+    const a = answers[i];
+    if (!isVisible(r)) return r;
+    return { ...r, text: a.text, ...(a.judge_raw ? { judge_raw: a.judge_raw } : {}) };
+  });
+}
+
 /** Rows as lab runs, so the lab's findings, table and run list work unchanged. */
 export function toExperimentRuns(rows: ClassRunRow[]): ExperimentRun[] {
   return rows.map((r, i) => ({
@@ -112,9 +180,15 @@ export function toExperimentRuns(rows: ClassRunRow[]): ExperimentRun[] {
 export function pooled(e: Experiment, rows: ClassRunRow[]): { experiment: Experiment; analysis: Analysis } {
   const experiment: Experiment = { ...e, runs: toExperimentRuns(rows) };
   const analysis = analyze(experiment);
-  if (rows.some((r) => r.text === null)) {
-    analysis.variance = analyze({ ...e, runs: toExperimentRuns(rows.filter((r) => r.text !== null)) }).variance;
-  }
+  // Same as the lab's variance, over the answers this viewer can see, from
+  // text or from light rows' word ids.
+  analysis.variance = e.conditions.map((c) => {
+    const sets = rows
+      .filter((r) => r.condition_id === c.id && r.status === "done" && isVisible(r))
+      .map(wordSet)
+      .filter((x): x is Set<string | number> => x !== null);
+    return { conditionId: c.id, distance: meanPairwiseSetDistance(sets), n: sets.length };
+  });
   return { experiment, analysis };
 }
 

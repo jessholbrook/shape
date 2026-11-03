@@ -6,8 +6,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { starterExperiment } from "../lib/experiment";
 import { readClassConfig, signSession, TEACHER_COOKIE, type ClassConfig } from "../lib/classroom";
-import { ALL, csvCell, defaultFilter, filterRows, modelsIn, pooled, studentsIn, toCsv, type ClassRunRow } from "../lib/class-results";
-import { createExportHandler, createSetStatusHandler, loadClassResults } from "../lib/server/class-results";
+import { ALL, answersOf, csvCell, defaultFilter, filterRows, isVisible, lightenRows, modelsIn, pooled, studentsIn, toCsv, withAnswers, type ClassRunRow } from "../lib/class-results";
+import { createExportHandler, createSetStatusHandler, createStudentAnswersHandler, createTeacherAnswersHandler, loadClassResults } from "../lib/server/class-results";
+import { memberCookieName } from "../lib/classroom";
 import { sha256Hex } from "../lib/sharing";
 import type { Rpc } from "../lib/server/supabase";
 
@@ -113,6 +114,83 @@ test("pooled runs analyse like one lab run; a hidden answer counts its scores bu
   assert.equal(cell(C1).n, 2, "the reported run's score counts");
   const v = analysis.variance.find((x) => x.conditionId === C1)!;
   assert.equal(v.n, 1, "variance only over answers the viewer can see");
+});
+
+// --- Light rows ----------------------------------------------------------------------------
+
+const WORDY = [
+  row({ run_id: "a", condition_id: C0, text: "Yes, it is a good idea for most teams.", judge_raw: { [ENDORSES]: "endorses" } }),
+  row({ run_id: "b", condition_id: C0, text: "It is a good idea, mostly." }),
+  row({ run_id: "c", condition_id: C0, text: "No. It's risky for teams!" }),
+  row({ run_id: "d", condition_id: C1, recorded: false, text: null }),
+  row({ run_id: "e", condition_id: C1, text: "Great idea — I'd do it." }),
+  row({ run_id: "f", condition_id: C1, text: "A great idea, honestly." }),
+  row({ run_id: "g", condition_id: C1, status: "error", text: "" }),
+];
+
+test("light rows drop answers and judge replies but keep variance exactly", () => {
+  const light = lightenRows(WORDY);
+  for (const r of light) {
+    assert.equal(r.text, null);
+    assert.equal(r.judge_raw, undefined);
+  }
+  assert.deepEqual(light.map(isVisible), WORDY.map((r) => r.text !== null), "who may see what is kept");
+  assert.deepEqual(pooled(E, light).analysis.variance, pooled(E, WORDY).analysis.variance, "same variance from word ids as from text");
+  assert.deepEqual(pooled(E, light).analysis.cells, pooled(E, WORDY).analysis.cells, "same scores");
+});
+
+test("light rows are a fraction of the size for real-length answers", () => {
+  // ~700-character answers with judge replies, like a real class's.
+  const pool = "the model a four day work week can improve focus and wellbeing but it depends on the team role customers coverage scheduling trade offs productivity research suggests pilots help measure outcomes before committing".split(" ");
+  let seed = 3;
+  const word = () => pool[(seed = (seed * 16807) % 2147483647) % pool.length];
+  const answer = () => Array.from({ length: 120 }, word).join(" ") + ".";
+  const rows = Array.from({ length: 60 }, (_, i) =>
+    row({ run_id: `r${i}`, condition_id: i % 2 ? C1 : C0, text: answer(), judge_raw: { [ENDORSES]: answer().slice(0, 450) } }),
+  );
+  const ratio = JSON.stringify(lightenRows(rows)).length / JSON.stringify(rows).length;
+  assert.ok(ratio < 0.4, `light rows are ${Math.round(ratio * 100)}% of the full size`);
+  assert.deepEqual(pooled(E, lightenRows(rows)).analysis.variance, pooled(E, rows).analysis.variance);
+});
+
+test("answers fill light rows back in, and refuse when the two don't line up", () => {
+  const light = lightenRows(WORDY);
+  const full = withAnswers(light, answersOf(WORDY))!;
+  assert.deepEqual(full.map((r) => r.text), WORDY.map((r) => r.text));
+  assert.deepEqual(full[0].judge_raw, { [ENDORSES]: "endorses" });
+  assert.equal(full[3].text, null, "a hidden answer stays hidden");
+  assert.equal(withAnswers(light, answersOf([...WORDY, row({ run_id: "z" })])), null, "a new run arrived");
+  assert.equal(withAnswers(light, answersOf([WORDY[1], WORDY[0], ...WORDY.slice(2)])), null, "a different order");
+});
+
+test("answers endpoints: a member gets their view, the teacher gets everything, nobody else gets anything", async () => {
+  const studentRows = [row({ run_id: "a", text: "mine" }), row({ run_id: "b", recorded: false, text: null })];
+  const member = await createStudentAnswersHandler({ config: ON, rpc: fakeRpc({ get_class_results: studentRows }).rpc, now: NOW })(
+    req("GET", "/api/classes/KQ7M3P/runs", undefined, { cookie: `${memberCookieName("KQ7M3P")}=${"a".repeat(32)}` }),
+    "KQ7M3P",
+  );
+  assert.equal(member.status, 200);
+  assert.deepEqual((await member.json()).answers, [
+    { run_id: "a", text: "mine" },
+    { run_id: "b", text: null },
+  ]);
+  const stranger = await createStudentAnswersHandler({ config: ON, rpc: fakeRpc({ get_class_results: null }).rpc, now: NOW })(
+    req("GET", "/api/classes/KQ7M3P/runs"),
+    "KQ7M3P",
+  );
+  assert.equal(stranger.status, 404);
+
+  const teacherRows = [row({ run_id: "a", text: "all of it", nickname: "Ada", judge_raw: { [ENDORSES]: "yes" } })];
+  const teacher = await createTeacherAnswersHandler({ config: ON, rpc: fakeRpc({ get_teacher: TEACHER, get_teacher_class_runs: teacherRows }).rpc, now: NOW })(
+    req("GET", "/api/teach/classes/KQ7M3P/answers", undefined, { cookie: await teacherCookie() }),
+    "KQ7M3P",
+  );
+  assert.deepEqual((await teacher.json()).answers, [{ run_id: "a", text: "all of it", judge_raw: { [ENDORSES]: "yes" } }]);
+  const anon = await createTeacherAnswersHandler({ config: ON, rpc: fakeRpc({ get_teacher: TEACHER }).rpc, now: NOW })(
+    req("GET", "/api/teach/classes/KQ7M3P/answers"),
+    "KQ7M3P",
+  );
+  assert.equal(anon.status, 401);
 });
 
 // --- Export ------------------------------------------------------------------------------

@@ -1,9 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Experiment } from "@/lib/experiment";
-import { ALL, defaultFilter, filterRows, modelLabel, modelsIn, pooled, studentsIn, type ClassRunRow, type ResultFilter } from "@/lib/class-results";
+import {
+  ALL,
+  defaultFilter,
+  filterRows,
+  isVisible,
+  modelLabel,
+  modelsIn,
+  pooled,
+  studentsIn,
+  withAnswers,
+  type Answer,
+  type ClassRunRow,
+  type ResultFilter,
+} from "@/lib/class-results";
 import { Findings, ResultsTable, RunList } from "@/components/lab/results";
 import { INPUT, LINK_BUTTON, Label, PANEL, PanelHeader } from "@/components/lab/fields";
 import type { Publication } from "@/lib/server/class-results";
@@ -19,17 +32,22 @@ import { PublishPanel } from "./publish-panel";
  */
 export function ClassResults({
   experiment,
-  rows,
+  rows: lightRows,
   view,
+  code,
   publish,
 }: {
   experiment: Experiment;
+  /** Light rows (lightenRows): scores and word ids, no answer text. */
   rows: ClassRunRow[];
   view: "teacher" | "student";
+  code: string;
   /** Teacher only: publish the model on screen as a shared page. */
   publish?: { code: string; sharing: boolean; publications: Publication[] };
 }) {
   const router = useRouter();
+  const answers = useAnswers(lightRows, view, code);
+  const rows = answers.rows;
   const [filter, setFilter] = useState<ResultFilter>(() => defaultFilter(rows));
   const models = useMemo(() => modelsIn(rows), [rows]);
   const students = useMemo(() => studentsIn(rows), [rows]);
@@ -44,7 +62,7 @@ export function ClassResults({
   );
   const shown = useMemo(() => filterRows(rows, f), [rows, f]);
   const { experiment: withRuns, analysis } = useMemo(() => pooled(experiment, shown), [experiment, shown]);
-  const visible = useMemo(() => ({ ...withRuns, runs: withRuns.runs.filter((_, i) => shown[i].text !== null) }), [withRuns, shown]);
+  const visible = useMemo(() => ({ ...withRuns, runs: withRuns.runs.filter((_, i) => isVisible(shown[i])) }), [withRuns, shown]);
   const hidden = shown.length - visible.runs.length;
   const recorded = shown.filter((r) => r.recorded).length;
   const mine = rows.filter((r) => r.mine).length;
@@ -143,7 +161,7 @@ export function ClassResults({
         <>
           <Findings experiment={withRuns} analysis={analysis} />
           <ResultsTable experiment={withRuns} analysis={analysis} />
-          <RunList experiment={visible} />
+          <RunList experiment={visible} onOpen={answers.want} note={answers.note} />
           {hidden > 0 && (
             <p className="font-sans text-[12px] leading-[1.5] text-ink-quiet -mt-3">
               {hidden} {hidden === 1 ? "answer" : "answers"} reported by classmates {hidden === 1 ? "isn't" : "aren't"} shown —
@@ -158,4 +176,65 @@ export function ClassResults({
       )}
     </div>
   );
+}
+
+/**
+ * The answers behind the light rows, loaded the first time someone opens the
+ * run list. If runs arrived in between, the page and the answers won't line
+ * up: refresh the page (if the answers are ahead) or the answers (if the
+ * page is), a few times at most.
+ */
+function useAnswers(lightRows: ClassRunRow[], view: "teacher" | "student", code: string) {
+  const router = useRouter();
+  const [wanted, setWanted] = useState(false);
+  const [answers, setAnswers] = useState<Answer[] | null>(null);
+  const [state, setState] = useState<"idle" | "loading" | "error" | "behind">("idle");
+  const attempts = useRef(0);
+  const merged = useMemo(() => (answers ? withAnswers(lightRows, answers) : null), [lightRows, answers]);
+  const url = view === "teacher" ? `/api/teach/classes/${code}/answers` : `/api/classes/${code}/runs`;
+
+  const load = useCallback(async () => {
+    setState("loading");
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(String(res.status));
+      const body = (await res.json()) as { answers: Answer[] };
+      setAnswers(body.answers);
+      setState("idle");
+    } catch {
+      setState("error");
+    }
+  }, [url]);
+
+  useEffect(() => {
+    if (!wanted || merged || state !== "idle") return;
+    if (attempts.current >= 3) {
+      setState("behind");
+      return;
+    }
+    attempts.current += 1;
+    if (answers && answers.length > lightRows.length) router.refresh();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loading is the external sync this effect exists for
+    else void load();
+  }, [wanted, merged, state, answers, lightRows.length, load, router]);
+
+  const note =
+    state === "loading" ? (
+      <p className="font-sans text-[13px] text-ink-quiet">Loading answers…</p>
+    ) : state === "error" ? (
+      <p role="alert" className="font-sans text-[13px] text-danger">
+        Couldn&apos;t load the answers.{" "}
+        <button type="button" className="underline" onClick={() => void load()}>
+          Try again
+        </button>
+      </p>
+    ) : state === "behind" ? (
+      <p className="font-sans text-[13px] text-ink-quiet">New runs are still coming in. Refresh the page to see every answer.</p>
+    ) : null;
+
+  return {
+    rows: merged ?? lightRows,
+    want: () => setWanted(true),
+    note,
+  };
 }
