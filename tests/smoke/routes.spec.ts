@@ -84,6 +84,19 @@ test("the primary nav is a navigation landmark and reaches every section", async
   }
 });
 
+test("home offers three ways in and a lucky card that lands on a lesson or playground", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/", { waitUntil: "networkidle" });
+  const paths = page.getByTestId("learning-paths");
+  await expect(paths.getByRole("link", { name: /Learn by reading/ })).toHaveAttribute("href", "/learn");
+  await expect(paths.getByRole("link", { name: /Learn by doing/ })).toHaveAttribute("href", "/play");
+  for (const id of LENS_IDS) await expect(paths.locator(`a[href="/for/${id}"]`)).toHaveCount(1);
+  await page.getByTestId("lucky-card").click();
+  await page.waitForURL(/\/(learn|play)\/[a-z-]+$/);
+  expect(errors).toEqual([]);
+});
+
 test("every page has a footer that links to privacy", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
   const footer = page.getByTestId("site-footer");

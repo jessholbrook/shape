@@ -5,8 +5,8 @@ import {
   PersonaPreview,
   TonePreview,
 } from "@/components/home/playground-previews";
-import { LensBridges } from "@/components/home/lens-bridges";
 import { LearningPaths } from "@/components/home/learning-paths";
+import { LuckyCard } from "@/components/home/path-previews";
 import { CORE } from "@/lib/lenses";
 
 export default function Home() {
@@ -29,19 +29,12 @@ export default function Home() {
 
       <Divider />
 
-      {/* BRIDGE */}
-      <section id="lenses" className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
-        <LensBridges />
-      </section>
-
-      <Divider />
-
       {/* FEATURED PLAYGROUNDS */}
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <div>
             <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink max-w-3xl">
-              Play and <span className="italic">learn</span>.
+              Popular <span className="italic">playgrounds</span>.
             </h2>
           </div>
           <Link
@@ -52,7 +45,7 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-5">
           <PlaygroundCard
             num="01"
             href="/play/diff"
@@ -80,6 +73,7 @@ export default function Home() {
             artifact="Persona Card"
             preview={<PersonaPreview />}
           />
+          <LuckyCard />
         </div>
       </section>
 
