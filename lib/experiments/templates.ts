@@ -289,3 +289,25 @@ export function templatesFor(lens: LensId | null): ExperimentTemplate[] {
   const own = templateFor(lens);
   return [own, ...TEMPLATES.filter((t) => t.id !== own.id)];
 }
+
+/**
+ * An empty design for someone starting from their own idea: two versions,
+ * one input, length as a free measure to start from. The question and
+ * hypothesis are left for them to write.
+ */
+export function blankExperiment(model: LabModel, now = Date.now()): Experiment {
+  return {
+    ...base(now, "blank"),
+    title: "",
+    question: "",
+    hypothesis: "",
+    base: { system: "", userTemplate: "{{input}}", temperature: 0.7, maxTokens: 300, model },
+    conditions: [
+      { id: "c_base", label: "Baseline", patch: {} },
+      { id: "c_changed", label: "Changed", patch: {} },
+    ],
+    items: [{ id: "i_1", label: "Input 1", vars: { input: "" } }],
+    n: 5,
+    measures: [{ id: "m_length", label: "length (words)", kind: "length" }],
+  };
+}

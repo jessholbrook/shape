@@ -1,4 +1,4 @@
-import { test, expect, type ConsoleMessage } from "@playwright/test";
+import { test, expect, type ConsoleMessage, type Page } from "@playwright/test";
 import { MODULES } from "../../lib/curriculum";
 import { PLAYGROUNDS } from "../../lib/playgrounds";
 import { LENS_IDS } from "../../lib/lenses";
@@ -311,15 +311,43 @@ test("lessons open with the reader's lens intro, and none without a lens", async
   expect(errors).toEqual([]);
 });
 
+/** The lab opens on a choice; this picks the starter experiment. */
+async function openStarter(page: Page) {
+  await page.goto("/lab", { waitUntil: "networkidle" });
+  await page.getByRole("group", { name: "Templates" }).getByRole("button", { name: /Does the model side with the user/ }).click();
+}
+
 /**
- * The lab opens on its starter experiment and won't run without a model to
- * run on. With no key and no GPU (headless), the free in-browser model is
- * unusable, so the button stays disabled rather than failing mid-run.
+ * The lab opens on an example result and a choice, with no design form
+ * until something is picked. Blank starts empty; Start over comes back.
  */
-test("/lab opens on the starter experiment and holds Run until a model is ready", async ({ page }) => {
+test("/lab opens on an example and a choice, then the design", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(String(e)));
   await page.goto("/lab", { waitUntil: "networkidle" });
+
+  await expect(page.getByTestId("lab-example")).toContainText("Illustrative");
+  await expect(page.getByRole("link", { name: /Bring something from Play/ })).toHaveAttribute("href", "/play");
+  await expect(page.getByLabel("Question", { exact: true })).toHaveCount(0);
+
+  await page.getByRole("button", { name: /Start from scratch/ }).click();
+  await expect(page.getByLabel("Question", { exact: true })).toHaveValue("");
+  await expect(page.getByTestId("lab-started-from")).toContainText("scratch");
+
+  await page.getByRole("button", { name: "Start over" }).click();
+  await expect(page.getByTestId("lab-start")).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+/**
+ * The starter experiment won't run without a model to run on. With no key
+ * and no GPU (headless), the free in-browser model is unusable, so the
+ * button stays disabled rather than failing mid-run.
+ */
+test("/lab opens the starter experiment and holds Run until a model is ready", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await openStarter(page);
 
   await expect(page.getByLabel("Question", { exact: true })).toHaveValue(/shift its answer/);
   await expect(page.getByRole("button", { name: "Run experiment" })).toBeVisible();
@@ -343,15 +371,19 @@ test("/lab templates load from the URL, the lens, and the picker", async ({ page
   await page.goto("/lab?template=framing", { waitUntil: "networkidle" });
   await expect(question).toHaveValue(/lives saved or lives lost/);
 
+  await expect(page.getByTestId("lab-start")).toHaveCount(0);
+
   await page.goto("/for/education", { waitUntil: "networkidle" });
   await page.goto("/lab", { waitUntil: "networkidle" });
-  await expect(question).toHaveValue(/AI grader/);
   const picker = page.getByRole("group", { name: "Templates" });
   await expect(picker.getByRole("button").first()).toContainText("for you");
+  await picker.getByRole("button").first().click();
+  await expect(question).toHaveValue(/AI grader/);
+  await expect(page.getByTestId("lab-started-from")).toContainText("longer answer");
 
+  await page.getByRole("button", { name: "Start over" }).click();
   await picker.getByRole("button", { name: /Do rules hold better/ }).click();
   await expect(question).toHaveValue(/rule's rationale/);
-  await expect(picker.getByRole("button", { name: /Do rules hold better/ })).toHaveAttribute("aria-pressed", "true");
 
   expect(errors).toEqual([]);
 });
@@ -445,7 +477,7 @@ test("/lab hides Share when sharing is off, and publishes and deletes a link whe
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(String(e)));
 
-  await page.goto("/lab", { waitUntil: "networkidle" });
+  await openStarter(page);
   await expect(page.getByRole("button", { name: "Run experiment" })).toBeVisible();
   await expect(page.getByTestId("share-panel")).toHaveCount(0);
 
@@ -462,7 +494,7 @@ test("/lab hides Share when sharing is off, and publishes and deletes a link whe
     return route.fulfill({ status: 204, body: "" });
   });
 
-  await page.reload({ waitUntil: "networkidle" });
+  await openStarter(page);
   const panel = page.getByTestId("share-panel");
   await expect(panel).toContainText("No results yet");
   const publish = panel.getByRole("button", { name: /Publish the design/ });
@@ -516,7 +548,7 @@ test("/lab shows Make a class only to a signed-in teacher, and makes one", async
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(String(e)));
 
-  await page.goto("/lab", { waitUntil: "networkidle" });
+  await openStarter(page);
   await expect(page.getByRole("button", { name: "Run experiment" })).toBeVisible();
   await expect(page.getByTestId("make-class-panel")).toHaveCount(0);
 
@@ -526,7 +558,7 @@ test("/lab shows Make a class only to a signed-in teacher, and makes one", async
     made = route.request().postDataJSON();
     return route.fulfill({ status: 201, json: { code: "KQ7M3P", display: "KQ7-M3P" } });
   });
-  await page.reload({ waitUntil: "networkidle" });
+  await openStarter(page);
 
   const panel = page.getByTestId("make-class-panel");
   await panel.getByRole("button", { name: /Make a class/ }).click();
@@ -540,7 +572,7 @@ test("/lab shows Make a class only to a signed-in teacher, and makes one", async
 test("/lab says what the runs can detect, and what a smaller change would take", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(String(e)));
-  await page.goto("/lab", { waitUntil: "networkidle" });
+  await openStarter(page);
 
   const plan = page.getByTestId("power-plan");
   await expect(plan).toBeVisible();

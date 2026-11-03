@@ -59,7 +59,7 @@ export default async function TeachPage() {
                   href="/lab"
                   className="inline-flex items-center gap-2 mt-4 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] hover:bg-ink/90 transition-colors"
                 >
-                  Open the lab <span className="text-highlight">→</span>
+                  Make a class <span className="text-highlight">→</span>
                 </Link>
               </div>
 
