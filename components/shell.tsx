@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { ShapeMark } from "./shape-mark";
 import { CostMeter } from "./cost-meter";
 import { FeedbackButton } from "./feedback-button";
+import { SiteFooter } from "./site-footer";
 import { WebLLMStatusBanner } from "./webllm-status-banner";
 import { UnsavedToast } from "./unsaved-toast";
 import {
@@ -159,7 +160,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Page content */}
-      <main className="md:ml-[240px]">{children}</main>
+      <main className="md:ml-[240px]">
+        {children}
+        <SiteFooter />
+      </main>
 
       <FeedbackButton />
       <WebLLMStatusBanner />

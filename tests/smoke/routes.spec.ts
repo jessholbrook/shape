@@ -16,6 +16,7 @@ const ROUTES = [
   "/learn",
   "/play",
   "/lab",
+  "/privacy",
   "/start",
   "/notebook",
   "/settings/keys",
@@ -81,6 +82,14 @@ test("the primary nav is a navigation landmark and reaches every section", async
   for (const label of ["Home", "Learn", "Play", "Lab", "Notebook"]) {
     await expect(nav.getByRole("link", { name: label })).toBeVisible();
   }
+});
+
+test("every page has a footer that links to privacy", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  const footer = page.getByTestId("site-footer");
+  await expect(footer.getByRole("link", { name: "Privacy & data" })).toHaveAttribute("href", "/privacy");
+  await footer.getByRole("link", { name: "Privacy & data" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Privacy");
 });
 
 test("nav labels carry no section numbers", async ({ page }) => {
