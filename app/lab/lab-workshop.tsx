@@ -30,7 +30,7 @@ import { ProviderModelTempRow } from "@/components/play/provider-model-temp-row"
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
-import { INPUT, Label, LINK_BUTTON, MONO_INPUT, PANEL, PanelHeader } from "@/components/lab/fields";
+import { INPUT, Label, MONO_INPUT, PANEL, PanelHeader } from "@/components/lab/fields";
 import { ConditionsEditor, ItemsEditor, MeasuresEditor } from "@/components/lab/setup";
 import { Findings, ManifestPanel, ResultsTable, RunList } from "@/components/lab/results";
 import { PowerPlan } from "@/components/lab/power-plan";
@@ -149,7 +149,7 @@ export function LabWorkshop() {
   }, []);
 
   function startOver() {
-    if ((dirty || experiment.runs.length > 0) && !window.confirm("Start over? This replaces your current experiment.")) return;
+    if ((dirty || experiment.runs.length > 0) && !window.confirm("Choose a different question? This replaces your current experiment.")) return;
     setStarted(false);
     window.scrollTo({ top: 0 });
   }
@@ -248,6 +248,30 @@ export function LabWorkshop() {
 
   return (
     <div className="flex flex-col gap-6">
+      {!initialDraftId && !running && (
+        <div
+          className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 bg-surface border border-line rounded-[12px] px-4 py-3"
+          data-testid="lab-started-from"
+        >
+          <button
+            type="button"
+            onClick={startOver}
+            className="inline-flex items-center gap-2 rounded-[10px] border border-line px-3 py-1.5 font-sans text-[14px] text-ink hover:border-ink transition-colors"
+          >
+            <span aria-hidden>←</span> Choose a different question
+          </button>
+          <span className="font-sans text-[13px] text-ink-muted">
+            {startedFrom ? (
+              <>
+                Working on <span className="text-ink">{startedFrom}</span>
+              </>
+            ) : (
+              "Working on your own question"
+            )}
+          </span>
+        </div>
+      )}
+
       <DraftSaveBar
         title={title}
         onTitleChange={setTitle}
@@ -257,23 +281,6 @@ export function LabWorkshop() {
         disabled={running}
         artifact="Experiment"
       />
-
-      {!initialDraftId && !running && (
-        <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 font-sans text-[14px] text-ink-muted" data-testid="lab-started-from">
-          <span>
-            {startedFrom ? (
-              <>
-                Started from <span className="text-ink">{startedFrom}</span>
-              </>
-            ) : (
-              "Started from scratch"
-            )}
-          </span>
-          <button type="button" className={LINK_BUTTON} onClick={startOver}>
-            Start over
-          </button>
-        </p>
-      )}
 
       {e.forkedFrom && (
         <p className="bg-surface border border-line rounded-[12px] px-4 py-3 font-sans text-[14px] text-ink-muted" data-testid="lab-rerun-of">

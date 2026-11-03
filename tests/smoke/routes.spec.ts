@@ -318,23 +318,22 @@ async function openStarter(page: Page) {
 }
 
 /**
- * The lab opens on an example result and a choice, with no design form
+ * The lab opens on a choice, with no design form
  * until something is picked. Blank starts empty; Start over comes back.
  */
-test("/lab opens on an example and a choice, then the design", async ({ page }) => {
+test("/lab opens on a choice, then the design", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(String(e)));
   await page.goto("/lab", { waitUntil: "networkidle" });
 
-  await expect(page.getByTestId("lab-example")).toContainText("Illustrative");
   await expect(page.getByRole("link", { name: /Bring something from Play/ })).toHaveAttribute("href", "/play");
   await expect(page.getByLabel("Question", { exact: true })).toHaveCount(0);
 
   await page.getByRole("button", { name: /Start from scratch/ }).click();
   await expect(page.getByLabel("Question", { exact: true })).toHaveValue("");
-  await expect(page.getByTestId("lab-started-from")).toContainText("scratch");
+  await expect(page.getByTestId("lab-started-from")).toContainText("your own question");
 
-  await page.getByRole("button", { name: "Start over" }).click();
+  await page.getByRole("button", { name: /Choose a different question/ }).click();
   await expect(page.getByTestId("lab-start")).toBeVisible();
   expect(errors).toEqual([]);
 });
@@ -381,7 +380,7 @@ test("/lab templates load from the URL, the lens, and the picker", async ({ page
   await expect(question).toHaveValue(/AI grader/);
   await expect(page.getByTestId("lab-started-from")).toContainText("longer answer");
 
-  await page.getByRole("button", { name: "Start over" }).click();
+  await page.getByRole("button", { name: /Choose a different question/ }).click();
   await picker.getByRole("button", { name: /Do rules hold better/ }).click();
   await expect(question).toHaveValue(/rule's rationale/);
 
