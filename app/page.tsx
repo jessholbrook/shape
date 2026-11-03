@@ -56,18 +56,24 @@ export default function Home() {
         <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
           <StepCard
             num="01"
-            title="Start free."
-            body="No key required — pick a free way to run and open a playground. Bring an Anthropic, OpenAI, or Google key when you want bigger models."
+            title="Pick a playground."
+            body="No sign-up, no key. Choose one lever to pull: tone, persona, a boundary."
+            href="/play"
+            cta="Browse playgrounds"
           />
           <StepCard
             num="02"
-            title="Design a behavior."
-            body="Pick one lever in a playground — a tone, a persona, a boundary — change it, and watch how the model's output shifts."
+            title="Change one thing."
+            body="Edit it, run it again, and watch what moves in the answer."
+            href="/play/diff"
+            cta="Try it in Diff"
           />
           <StepCard
             num="03"
-            title="Save it to your notebook."
-            body="Every draft persists locally — reopen, duplicate, export as JSON."
+            title="See if it holds up."
+            body="Open it as an experiment in the lab and run each version many times."
+            href="/lab"
+            cta="Open the lab"
           />
         </div>
       </section>
@@ -193,13 +199,20 @@ function StepCard({
   num,
   title,
   body,
+  href,
+  cta,
 }: {
   num: string;
   title: string;
   body: string;
+  href: string;
+  cta: string;
 }) {
   return (
-    <div className="bg-surface border border-line rounded-[16px] p-6 md:p-8 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+    <Link
+      href={href}
+      className="group flex flex-col bg-surface border border-line rounded-[16px] p-6 md:p-8 shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] hover:border-ink/40 transition"
+    >
       <div className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-quiet">
         {num}
       </div>
@@ -209,6 +222,9 @@ function StepCard({
       <p className="font-sans text-[15px] leading-[1.55] text-ink-muted mt-4">
         {body}
       </p>
-    </div>
+      <span className="mt-auto pt-6 font-mono text-[12px] uppercase tracking-[0.08em] text-ink underline decoration-highlight underline-offset-4 decoration-2">
+        {cta} <span aria-hidden>→</span>
+      </span>
+    </Link>
   );
 }
