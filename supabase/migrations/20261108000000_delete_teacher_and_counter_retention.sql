@@ -90,7 +90,12 @@ revoke all on function public.purge_usage_counters(date) from public, anon, auth
 do $do$
 begin
   if exists (select 1 from pg_available_extensions where name = 'pg_cron') then
-    create extension if not exists pg_cron with schema pg_catalog;
+    -- Only when it isn't installed yet: on Supabase, even a no-op
+    -- "create extension if not exists" re-runs the platform's pg_cron grant
+    -- hook, which fails once jobs exist ("dependent privileges exist").
+    if not exists (select 1 from pg_extension where extname = 'pg_cron') then
+      create extension pg_cron with schema pg_catalog;
+    end if;
     perform cron.schedule(
       'shape-purge-usage-counters',
       '27 4 * * *',
