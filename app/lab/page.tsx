@@ -16,11 +16,11 @@ export default function LabPage() {
         <SectionNumber>Lab</SectionNumber>
 
         <h1 className="font-display text-[48px] md:text-[64px] leading-[1.0] tracking-tight text-ink mt-6 max-w-4xl">
-          Is it real, or did you <span className="italic">get lucky</span>?
+          What is reproducible and <span className="italic">what isn&apos;t</span>?
         </h1>
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted max-w-2xl mt-5">
-          In Play you see one answer, and one answer is an anecdote. Here you run each version of a prompt dozens of
-          times and find out whether the difference holds up.
+          In the Play sections, you see one answer at a time to help learn the concepts. But real model shaping happens
+          over repeated runs, adjusting settings along the way. This is where you get to try that process out.
         </p>
 
         <div className="mt-12">
