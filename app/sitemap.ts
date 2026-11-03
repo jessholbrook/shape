@@ -22,7 +22,7 @@ function origin(): string {
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = origin().replace(/\/$/, "");
 
-  const staticRoutes = ["", "/learn", "/play", "/lab", "/start"].map((path) => ({
+  const staticRoutes = ["", "/learn", "/play", "/lab", "/start", "/privacy"].map((path) => ({
     url: `${base}${path}`,
     changeFrequency: "weekly" as const,
     priority: path === "" ? 1 : 0.8,
