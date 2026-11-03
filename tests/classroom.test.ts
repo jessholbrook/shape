@@ -27,6 +27,7 @@ import {
   createConfirmHandler,
   createJoinHandler,
   createMeHandler,
+  createDeleteAccountHandler,
   createSignInHandler,
   currentMember,
   currentTeacher,
@@ -238,6 +239,31 @@ test("sessions are re-checked against the allowlist; sign-out clears the cookie"
   assert.match(out.headers.get("set-cookie")!, /^shape_teacher=; Path=\/; Max-Age=0/);
 });
 
+test("delete account: signed-in teacher only, same origin only; clears the session", async () => {
+  const cookie = await teacherCookie();
+  const anon = await createDeleteAccountHandler({ config: ON, rpc: fakeRpc({ get_teacher: TEACHER }).rpc, now: NOW })(req("DELETE", "/api/teach/me"));
+  assert.equal(anon.status, 401);
+
+  const cross = await createDeleteAccountHandler({ config: ON, rpc: fakeRpc({ get_teacher: TEACHER }).rpc, now: NOW })(
+    req("DELETE", "/api/teach/me", undefined, { cookie, origin: "https://evil.example" }),
+  );
+  assert.equal(cross.status, 403);
+
+  const { rpc, calls } = fakeRpc({ get_teacher: TEACHER, delete_teacher_account: true });
+  const ok = await createDeleteAccountHandler({ config: ON, rpc, now: NOW })(req("DELETE", "/api/teach/me", undefined, { cookie }));
+  assert.equal(ok.status, 200);
+  assert.deepEqual(calls.find((c) => c.fn === "delete_teacher_account")?.args, { p_teacher_id: TEACHER.id });
+  assert.match(ok.headers.get("set-cookie")!, /^shape_teacher=; Path=\/; Max-Age=0/);
+
+  const down = await createDeleteAccountHandler({ config: ON, rpc: fakeRpc({ get_teacher: TEACHER, delete_teacher_account: new Error("db") }).rpc, now: NOW })(
+    req("DELETE", "/api/teach/me", undefined, { cookie }),
+  );
+  assert.equal(down.status, 503);
+  assert.equal(down.headers.get("set-cookie"), null, "still signed in when nothing was removed");
+
+  assert.equal((await createDeleteAccountHandler({ config: OFF, rpc: null })(req("DELETE", "/api/teach/me"))).status, 503);
+});
+
 // --- Classes and members ----------------------------------------------------------------------
 
 test("make a class: teacher only; stores a locked, run-free copy; retries a taken code", async () => {
@@ -315,4 +341,11 @@ test("idle classes: the days teachers are told match the database's schedule", a
   const { CLASS_IDLE_DAYS } = await import("../lib/classroom");
   const sql = await readFile(new URL("../supabase/migrations/20261104000000_close_idle_classes.sql", import.meta.url), "utf8");
   assert.match(sql, new RegExp(`close_idle_classes\\(now\\(\\) - interval '${CLASS_IDLE_DAYS} days'\\)`));
+});
+
+test("the counter retention on /privacy matches the database job", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { USAGE_COUNTER_DAYS } = await import("../lib/privacy");
+  const sql = await readFile(new URL("../supabase/migrations/20261108000000_delete_teacher_and_counter_retention.sql", import.meta.url), "utf8");
+  assert.match(sql, new RegExp(`purge_usage_counters\\(current_date - ${USAGE_COUNTER_DAYS}\\)`));
 });

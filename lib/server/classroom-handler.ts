@@ -206,6 +206,30 @@ export function createMeHandler(deps: ClassDeps) {
   };
 }
 
+/**
+ * DELETE /api/teach/me — the signed-in teacher deletes their account and
+ * everything with it: classes, students' answers, counters, sign-in links,
+ * and published pages. Clears the session cookie; the signed session would
+ * find no one anyway.
+ */
+export function createDeleteAccountHandler(deps: ClassDeps) {
+  const now = deps.now ?? (() => new Date());
+  return async function DELETE(req: Request): Promise<Response> {
+    if (!deps.config.enabled || !deps.rpc) return error(503, OFF);
+    const blocked = gate(req, "teacher-delete", 5, 60 * 60 * 1000, now().getTime());
+    if (blocked) return blocked;
+    const teacher = await currentTeacher(deps, readCookie(req, TEACHER_COOKIE));
+    if (!teacher) return error(401, "Sign in as a teacher first.");
+    try {
+      await deps.rpc<boolean>("delete_teacher_account", { p_teacher_id: teacher.id });
+    } catch (err) {
+      console.error("classroom: account deletion failed", err instanceof Error ? err.message : err);
+      return error(503, "Couldn't delete your account right now. Nothing was removed; try again in a minute.");
+    }
+    return json(200, { ok: true }, { "set-cookie": clearCookie(TEACHER_COOKIE, isSecure(req)) });
+  };
+}
+
 // --- Classes ------------------------------------------------------------------------------
 
 /** POST /api/classes {experiment, title} — a signed-in teacher makes a class. */

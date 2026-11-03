@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import type { Metadata } from "next";
 import { Shell } from "@/components/shell";
 import { SectionNumber } from "@/components/section-number";
-import { SignOutButton, TeacherSignIn } from "@/components/classroom/forms";
+import { DeleteAccount, SignOutButton, TeacherSignIn } from "@/components/classroom/forms";
 import { TEACHER_COOKIE, formatJoinCode } from "@/lib/classroom";
 import { currentTeacher, listClasses } from "@/lib/server/classroom-handler";
 import { classDeps } from "@/lib/server/classroom-deps";
@@ -87,6 +87,8 @@ export default async function TeachPage() {
                   <p className="font-sans text-[14px] text-ink-muted">No classes yet.</p>
                 )}
               </div>
+
+              <DeleteAccount email={teacher.email} />
             </div>
           )}
         </div>

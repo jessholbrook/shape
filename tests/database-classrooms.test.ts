@@ -27,12 +27,13 @@ const functions = [
   "public.get_teacher_class_runs(uuid,text)",
   "public.set_class_status(uuid,text,text)",
   "public.refund_calls(date,text[])",
+  "public.delete_teacher_account(uuid)",
 ];
 
 const tables: Record<string, string[]> = {
   teacher_allowlist: ["SELECT"],
-  teachers: ["SELECT", "INSERT", "UPDATE"],
-  teacher_login_tokens: ["SELECT", "INSERT", "UPDATE"],
+  teachers: ["SELECT", "INSERT", "UPDATE", "DELETE"],
+  teacher_login_tokens: ["SELECT", "INSERT", "UPDATE", "DELETE"],
   classes: ["SELECT", "INSERT", "UPDATE"],
   class_members: ["SELECT", "INSERT"],
   class_calls: ["SELECT", "INSERT", "UPDATE"],
@@ -434,6 +435,90 @@ test("publications: only the class's teacher publishes, lists and takes down; a 
       ]) {
         assert.equal(await value(db, "select has_function_privilege($1, $2, 'EXECUTE') as result", [role, fn]), false, `${role}: ${fn}`);
       }
+    }
+  } finally {
+    await db.close();
+  }
+});
+
+test("a teacher deletes their account: classes, members, runs, counters, sign-in links and published pages all go", async () => {
+  const db = await fresh();
+  try {
+    await db.exec("insert into public.teacher_allowlist (email) values ('prof@uni.edu'), ('other@uni.edu')");
+    const ids = await asService(db, async () => {
+      const signIn = async (email: string, h: string) => {
+        await value(db, "select public.request_teacher_login($1, $2, now() + interval '15 min') as result", [email, H(h)]);
+        return (await value<{ id: string }>(db, "select public.verify_teacher_login($1) as result", [H(h)])).id;
+      };
+      const prof = await signIn("prof@uni.edu", "a");
+      const other = await signIn("other@uni.edu", "b");
+      await value(db, "select public.create_class($1, 'KQ7M3P', 'Week 3', '{\"q\":1}', 10) as result", [prof]);
+      await value(db, "select public.create_class($1, 'AC3479', 'Theirs', '{\"q\":1}', 10) as result", [other]);
+      await value(db, "select public.join_class('KQ7M3P', 'Ada', $1) as result", [H("1")]);
+      await value(db, "select public.join_class('AC3479', 'Bo', $1) as result", [H("2")]);
+      const mine = await value<{ class_id: string; member_id: string }>(
+        db, "select public.consume_class_quota('KQ7M3P', $1, '2026-11-01', 5, '2026-11-01', 100, 1000) as result", [H("1")]);
+      const theirs = await value<{ class_id: string; member_id: string }>(
+        db, "select public.consume_class_quota('AC3479', $1, '2026-11-01', 5, '2026-11-01', 100, 1000) as result", [H("2")]);
+      await value(db,
+        `select public.publish_class_results($1, 'KQ7M3P', '123456789A', 'Week 3', null, '{"runs":[]}', '{}', $2, $2, '2026-11-02', 5) as result`,
+        [prof, H("e")]);
+      // An unused sign-in link for the same email.
+      await value(db, "select public.request_teacher_login('prof@uni.edu', $1, now() + interval '15 min') as result", [H("c")]);
+      return { prof, other, mine, theirs };
+    });
+    await db.exec("insert into public.usage_daily (day, subject, calls) values ('2026-11-02', 'v:visitor', 4)");
+
+    await asService(db, async () => {
+      assert.equal(await value(db, "select public.delete_teacher_account($1) as result", [ids.prof]), true);
+      assert.equal(await value(db, "select public.get_teacher($1) as result", [ids.prof]), null, "an open session finds no one");
+      assert.equal(await value(db, "select public.delete_teacher_account($1) as result", [ids.prof]), false, "already gone");
+    });
+
+    const count = (sql: string, args: unknown[] = []) => value<number>(db, `select count(*)::int as result from ${sql}`, args);
+    assert.equal(await count("public.teachers where email = 'prof@uni.edu'"), 0);
+    assert.equal(await count("public.teacher_login_tokens where email = 'prof@uni.edu'"), 0, "sign-in links go");
+    assert.equal(await count("public.classes where code = 'KQ7M3P'"), 0);
+    assert.equal(await count("public.class_members where class_id = $1", [ids.mine.class_id]), 0);
+    assert.equal(await count("public.class_calls where class_id = $1", [ids.mine.class_id]), 0);
+    assert.equal(await count("public.shared_experiments where slug = '123456789A'"), 0, "published pages go");
+    assert.equal(
+      await count("public.usage_daily where subject in ($1, $2, $3)", [`c:${ids.mine.class_id}`, `m:${ids.mine.member_id}`, `p:t:${ids.prof}`]),
+      0,
+      "its counters go",
+    );
+
+    // Nobody else's data is touched.
+    assert.equal(await count("public.teachers where email = 'other@uni.edu'"), 1);
+    assert.equal(await count("public.class_members where class_id = $1", [ids.theirs.class_id]), 1);
+    assert.equal(await count("public.usage_daily where subject in ($1, $2)", [`c:${ids.theirs.class_id}`, `m:${ids.theirs.member_id}`]), 2);
+    assert.equal(await count("public.usage_daily where subject = 'v:visitor'"), 1);
+    assert.equal(await count("public.teacher_allowlist where email = 'prof@uni.edu'"), 1, "the allowlist is the site owner's, not the teacher's");
+  } finally {
+    await db.close();
+  }
+});
+
+test("daily counters older than the cutoff are purged by the database's own job only", async () => {
+  const db = await fresh();
+  try {
+    await db.exec(`
+      insert into public.usage_daily (day, subject, calls) values
+        (current_date - 31, 'v:old', 1),
+        (current_date - 30, 'v:edge', 1),
+        (current_date, 'v:today', 1);
+    `);
+    assert.equal(await value(db, "select public.purge_usage_counters(current_date - 30) as result"), 1);
+    assert.deepEqual(
+      (await db.query<{ subject: string }>("select subject from public.usage_daily order by subject")).rows.map((r) => r.subject),
+      ["v:edge", "v:today"],
+    );
+    for (const role of ["service_role", "anon", "authenticated"]) {
+      assert.equal(
+        await value(db, "select has_function_privilege($1, 'public.purge_usage_counters(date)', 'EXECUTE') as result", [role]),
+        false,
+        `${role} cannot purge counters`,
+      );
     }
   } finally {
     await db.close();
