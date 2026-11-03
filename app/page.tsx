@@ -47,33 +47,6 @@ export default function Home() {
 
       <Divider />
 
-      {/* HOW IT WORKS */}
-      <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
-        <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink max-w-3xl">
-          Three steps to <span className="italic">get going</span>.
-        </h2>
-
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StepCard
-            num="01"
-            title="Start free."
-            body="No key required — pick a free way to run and open a playground. Bring an Anthropic, OpenAI, or Google key when you want bigger models."
-          />
-          <StepCard
-            num="02"
-            title="Design a behavior."
-            body="Pick one lever in a playground — a tone, a persona, a boundary — change it, and watch how the model's output shifts."
-          />
-          <StepCard
-            num="03"
-            title="Save it to your notebook."
-            body="Every draft persists locally — reopen, duplicate, export as JSON."
-          />
-        </div>
-      </section>
-
-      <Divider />
-
       {/* BRIDGE */}
       <section id="lenses" className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
         <LensBridges />
@@ -186,29 +159,5 @@ function PlaygroundCard({
         </span>
       </div>
     </Link>
-  );
-}
-
-function StepCard({
-  num,
-  title,
-  body,
-}: {
-  num: string;
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="bg-surface border border-line rounded-[16px] p-6 md:p-8 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-      <div className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-quiet">
-        {num}
-      </div>
-      <h3 className="font-display text-[26px] md:text-[28px] leading-[1.15] text-ink mt-4">
-        {title}
-      </h3>
-      <p className="font-sans text-[15px] leading-[1.55] text-ink-muted mt-4">
-        {body}
-      </p>
-    </div>
   );
 }
