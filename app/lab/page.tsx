@@ -20,7 +20,8 @@ export default function LabPage() {
         </h1>
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted max-w-2xl mt-5">
           In the Play sections, you see one answer at a time to help learn the concepts. But real model shaping happens
-          over repeated runs, adjusting settings along the way. This is where you get to try that process out.
+          over repeated runs, adjusting settings along the way. This is where you get to try that out. Choose a question
+          and then play with the settings over multiple runs to understand the differences.
         </p>
 
         <div className="mt-12">
