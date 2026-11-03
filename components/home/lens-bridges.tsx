@@ -13,7 +13,7 @@ export function LensBridges() {
 
   return (
     <>
-      <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
+      <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink max-w-3xl">
         {content.bridgeHeading.before}{" "}
         <span className="italic">{content.bridgeHeading.italic}</span>.
       </h2>

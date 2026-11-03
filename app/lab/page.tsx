@@ -6,7 +6,7 @@ import { LabWorkshop } from "./lab-workshop";
 export const metadata = {
   title: "Lab",
   description:
-    "Ask a model a question and get an answer you could defend: conditions, repeated runs, and results with confidence intervals and a full record of what was run.",
+    "Find out whether a change in a model's behavior is real: run each version many times and get results with honest error bars and a full record of what was run.",
 };
 
 export default function LabPage() {
@@ -15,12 +15,13 @@ export default function LabPage() {
       <section className="mx-auto max-w-[1100px] px-6 md:px-12 pt-16 md:pt-20 pb-32">
         <SectionNumber>Lab</SectionNumber>
 
-        <h1 className="font-display text-[48px] md:text-[64px] leading-[1.0] tracking-tight text-ink mt-6">
-          Ask a model <span className="italic">a question</span>.
+        <h1 className="font-display text-[48px] md:text-[64px] leading-[1.0] tracking-tight text-ink mt-6 max-w-4xl">
+          What is reproducible and <span className="italic">what isn&apos;t</span>?
         </h1>
-        <p className="font-sans text-[15px] leading-[1.6] text-ink-muted max-w-2xl mt-5">
-          One answer is an anecdote. Here you change one thing, run each version many times, and get a result
-          with honest error bars — plus a record of exactly what was run, so anyone can check it.
+        <p className="font-sans text-[18px] leading-[1.55] text-ink-muted max-w-2xl mt-5">
+          In the Play sections, you see one answer at a time to help learn the concepts. But real model shaping happens
+          over repeated runs, adjusting settings along the way. This is where you get to try that out. Choose a question
+          and then play with the settings over multiple runs to understand the differences.
         </p>
 
         <div className="mt-12">

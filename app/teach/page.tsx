@@ -29,8 +29,8 @@ export default async function TeachPage() {
           One experiment, <span className="italic">a whole class</span>.
         </h1>
         <p className="font-sans text-[15px] leading-[1.6] text-ink-muted max-w-2xl mt-5">
-          Every student runs the same experiment and the results pool together. One student&apos;s handful of runs is an
-          anecdote; thirty students&apos; is evidence — and seeing the spread is the lesson.
+          Have students run the same experiments, pool the results, compare, and discuss. Learn as a group how small
+          decisions can lead to large changes in model behaviors.
         </p>
 
         <div className="mt-12">
@@ -59,7 +59,7 @@ export default async function TeachPage() {
                   href="/lab"
                   className="inline-flex items-center gap-2 mt-4 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] hover:bg-ink/90 transition-colors"
                 >
-                  Open the lab <span className="text-highlight">→</span>
+                  Make a class <span className="text-highlight">→</span>
                 </Link>
               </div>
 

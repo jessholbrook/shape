@@ -9,8 +9,8 @@ import { useUnsavedWork } from "@/lib/hooks/use-unsaved-work";
 import { useLens } from "@/lib/hooks/use-lens";
 import { useHostedStatus } from "@/lib/hooks/use-hosted-status";
 import { useHydrated } from "@/lib/hooks/use-local-store";
-import { getTemplate, templateFor, DEFAULT_TEMPLATE_ID } from "@/lib/experiments/templates";
-import { TemplatePicker } from "@/components/lab/template-picker";
+import { blankExperiment, getTemplate, DEFAULT_TEMPLATE_ID } from "@/lib/experiments/templates";
+import { LabStart } from "@/components/lab/lab-start";
 import { runChat } from "@/lib/providers/index";
 import { recordUsage } from "@/lib/usage";
 import { PROVIDERS, providerNeedsKey, type ProviderId } from "@/lib/providers";
@@ -62,6 +62,9 @@ export function LabWorkshop() {
   // times are stamped on run and save.
   const [experiment, setExperiment] = useState<Experiment>(() => getTemplate(DEFAULT_TEMPLATE_ID)!.build(INITIAL_MODEL, 0));
   const [templateId, setTemplateId] = useState<string | null>(initialDraftId ? null : DEFAULT_TEMPLATE_ID);
+  // The lab opens on a choice — a template, Play, or blank — unless a link
+  // already made it (a draft, or ?template= from a lens page).
+  const [started, setStarted] = useState(() => !!initialDraftId || !!getTemplate(searchParams.get("template")));
   const { lens } = useLens();
   const hosted = useHostedStatus();
   const sharing = useShareStatus();
@@ -121,21 +124,34 @@ export function LabWorkshop() {
     setDirty(false);
   }, []);
 
-  // After hydration, once, and never over a draft: ?template= wins, then the
-  // reader's lens. Same contract as the playgrounds' lens seeds — the server
-  // render always shows the default, so nothing mismatches.
+  // After hydration, once, and never over a draft: a ?template= link opens
+  // on that template. The server render always shows the default, so nothing
+  // mismatches.
   useEffect(() => {
     if (templateApplied.current || initialDraftId || !hydrated2) return;
     templateApplied.current = true;
-    const wanted = getTemplate(searchParams.get("template")) ?? templateFor(lens);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- lens and URL are only readable after hydration
-    if (wanted.id !== DEFAULT_TEMPLATE_ID) loadTemplate(wanted.id);
-  }, [hydrated2, initialDraftId, lens, loadTemplate, searchParams]);
+    const wanted = getTemplate(searchParams.get("template"));
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the URL is only readable after hydration
+    if (wanted && wanted.id !== DEFAULT_TEMPLATE_ID) loadTemplate(wanted.id);
+  }, [hydrated2, initialDraftId, loadTemplate, searchParams]);
 
-  function pickTemplate(id: string) {
-    if (id === templateId && !dirty && experiment.runs.length === 0) return;
-    if ((dirty || experiment.runs.length > 0) && !window.confirm("Start from this template? It replaces your current experiment.")) return;
-    loadTemplate(id);
+  function begin(load: () => void) {
+    load();
+    setStarted(true);
+    window.scrollTo({ top: 0 });
+  }
+
+  const startBlank = useCallback(() => {
+    setExperiment((prev) => blankExperiment(prev.base.model, 0));
+    setRanDesign(null);
+    setTemplateId(null);
+    setDirty(false);
+  }, []);
+
+  function startOver() {
+    if ((dirty || experiment.runs.length > 0) && !window.confirm("Choose a different question? This replaces your current experiment.")) return;
+    setStarted(false);
+    window.scrollTo({ top: 0 });
   }
 
   const e = experiment;
@@ -218,20 +234,42 @@ export function LabWorkshop() {
     setDirty(false);
   }
 
+  if (!started) {
+    return (
+      <LabStart
+        lens={hydrated2 ? lens : null}
+        onPickTemplate={(id) => begin(() => loadTemplate(id))}
+        onBlank={() => begin(startBlank)}
+      />
+    );
+  }
+
+  const startedFrom = templateId ? getTemplate(templateId)?.title : null;
+
   return (
     <div className="flex flex-col gap-6">
-      <DraftSaveBar
-        title={title}
-        onTitleChange={setTitle}
-        status={saveStatus}
-        draftId={draftId}
-        onSave={handleSave}
-        disabled={running}
-        artifact="Experiment"
-      />
-
       {!initialDraftId && !running && (
-        <TemplatePicker lens={hydrated2 ? lens : null} activeId={templateId} onPick={pickTemplate} />
+        <div
+          className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 bg-surface border border-line rounded-[12px] px-4 py-3"
+          data-testid="lab-started-from"
+        >
+          <button
+            type="button"
+            onClick={startOver}
+            className="inline-flex items-center gap-2 rounded-[10px] border border-line px-3 py-1.5 font-sans text-[14px] text-ink hover:border-ink transition-colors"
+          >
+            <span aria-hidden>←</span> Choose a different question
+          </button>
+          <span className="font-sans text-[13px] text-ink-muted">
+            {startedFrom ? (
+              <>
+                Working on <span className="text-ink">{startedFrom}</span>
+              </>
+            ) : (
+              "Working on your own question"
+            )}
+          </span>
+        </div>
       )}
 
       {e.forkedFrom && (
@@ -249,13 +287,14 @@ export function LabWorkshop() {
         <PanelHeader num="01" title="The question" hint="What do you want to know about how the model behaves? Write the hypothesis before you run — afterwards it's locked, so the result can't quietly rewrite it." />
         <div>
           <Label htmlFor="lab-question">Question</Label>
-          <textarea id="lab-question" rows={2} value={e.question} disabled={locked} onChange={(ev) => edit({ question: ev.target.value })} className={`${INPUT} resize-y`} />
+          <textarea id="lab-question" rows={2} placeholder="e.g. Does a friendlier system prompt make the model agree with users more?" value={e.question} disabled={locked} onChange={(ev) => edit({ question: ev.target.value })} className={`${INPUT} resize-y`} />
         </div>
         <div>
           <Label htmlFor="lab-hypothesis">Hypothesis{e.hypothesisLockedAt ? " — locked" : ""}</Label>
           <textarea
             id="lab-hypothesis"
             rows={2}
+            placeholder="e.g. With the friendly prompt, the model agrees with a wrong claim more often."
             value={e.hypothesis}
             readOnly={!!e.hypothesisLockedAt}
             disabled={locked}
@@ -394,6 +433,16 @@ export function LabWorkshop() {
           blockedReason={shareBlocked}
         />
       )}
+
+      <DraftSaveBar
+        title={title}
+        onTitleChange={setTitle}
+        status={saveStatus}
+        draftId={draftId}
+        onSave={handleSave}
+        disabled={running}
+        artifact="Experiment"
+      />
 
       <MakeClassPanel
         experiment={e}

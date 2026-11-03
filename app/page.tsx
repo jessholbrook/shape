@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Shell } from "@/components/shell";
-import { SectionNumber } from "@/components/section-number";
 import {
   DiffPreview,
   PersonaPreview,
@@ -14,9 +13,7 @@ export default function Home() {
     <Shell>
       {/* HERO */}
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 pt-16 md:pt-24 pb-16 md:pb-20">
-        <SectionNumber>01</SectionNumber>
-
-        <h1 className="font-display text-[64px] sm:text-[88px] md:text-[120px] leading-[0.95] tracking-tight text-ink mt-8 max-w-5xl">
+        <h1 className="font-display text-[64px] sm:text-[88px] md:text-[120px] leading-[0.95] tracking-tight text-ink max-w-5xl">
           Shape <span className="italic">model</span> behavior.
         </h1>
 
@@ -52,8 +49,7 @@ export default function Home() {
 
       {/* HOW IT WORKS */}
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
-        <SectionNumber>02</SectionNumber>
-        <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
+        <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink max-w-3xl">
           Three steps to <span className="italic">get going</span>.
         </h2>
 
@@ -80,7 +76,6 @@ export default function Home() {
 
       {/* BRIDGE */}
       <section id="lenses" className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
-        <SectionNumber>03</SectionNumber>
         <LensBridges />
       </section>
 
@@ -90,8 +85,7 @@ export default function Home() {
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12 md:py-16">
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <div>
-            <SectionNumber>04</SectionNumber>
-            <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink mt-6 max-w-3xl">
+            <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink max-w-3xl">
               Play and <span className="italic">learn</span>.
             </h2>
           </div>
