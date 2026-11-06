@@ -22,7 +22,7 @@ export default function PrivacyPage() {
       <article className="mx-auto max-w-[760px] px-6 md:px-12 pt-16 md:pt-20 pb-24">
         <SectionNumber>Privacy</SectionNumber>
         <h1 className="font-display text-[48px] md:text-[64px] leading-[1.0] tracking-tight text-ink mt-6">
-          Privacy &amp; <span className="italic">data</span>.
+          Privacy &amp; <span className="italic">data</span>
         </h1>
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-6">
           Shape has no accounts for learners. Most of what you do stays in your own browser. This page lists everything

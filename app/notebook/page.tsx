@@ -11,7 +11,7 @@ export default function NotebookPage() {
     <Shell>
       <section className="mx-auto max-w-[1100px] px-6 md:px-12 pt-16 md:pt-20 pb-32">
         <h1 className="font-display text-[48px] md:text-[64px] leading-[1.0] tracking-tight text-ink">
-          Your <span className="italic">notebook</span>.
+          Your <span className="italic">notebook</span>
         </h1>
 
         <div className="mt-12">

@@ -48,7 +48,7 @@ export default async function LensPage({ params }: Props) {
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 pt-16 md:pt-24 pb-12">
         <SectionNumber>For {lens.name}</SectionNumber>
         <h1 className="font-display text-[56px] sm:text-[72px] md:text-[96px] leading-[0.95] tracking-tight text-ink mt-8 max-w-5xl">
-          Shape <span className="italic">model</span> behavior.
+          Shape <span className="italic">model</span> behavior
         </h1>
         <p className="font-sans text-[18px] md:text-[22px] leading-[1.5] text-ink-muted mt-8 max-w-2xl">
           {lens.hero.lede}
@@ -66,7 +66,7 @@ export default async function LensPage({ params }: Props) {
 
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12">
         <h2 className="font-display text-[36px] md:text-[48px] leading-[1.05] tracking-tight text-ink max-w-3xl">
-          {lens.bridgeHeading.before} <span className="italic">{lens.bridgeHeading.italic}</span>.
+          {lens.bridgeHeading.before} <span className="italic">{lens.bridgeHeading.italic}</span>
         </h2>
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-5 max-w-2xl">
           {lens.bridgeIntro}
@@ -80,7 +80,7 @@ export default async function LensPage({ params }: Props) {
 
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12">
         <h2 className="font-display text-[36px] md:text-[48px] leading-[1.05] tracking-tight text-ink">
-          A suggested <span className="italic">path</span>.
+          A suggested <span className="italic">path</span>
         </h2>
         <ol className="mt-8 grid gap-3 max-w-3xl">
           {lens.path.map((href, i) => {

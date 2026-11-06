@@ -968,7 +968,7 @@ function EmptyState() {
         No drafts yet
       </p>
       <h2 className="font-display text-[28px] md:text-[34px] leading-[1.15] text-ink mt-3">
-        Save something from a playground.
+        Save something from a playground
       </h2>
       <p className="font-sans text-[14px] leading-[1.55] text-ink-muted mt-4 max-w-md mx-auto">
         Every playground has a Save draft action at the bottom. Anything

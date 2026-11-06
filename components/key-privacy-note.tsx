@@ -15,7 +15,7 @@ export function KeyPrivacyNote() {
       <div className="flex items-center gap-2.5">
         <LockIcon />
         <h3 className="font-display text-[20px] md:text-[22px] leading-[1.15] text-ink">
-          Your key stays in your browser.
+          Your key stays in your browser
         </h3>
       </div>
       <ul className="mt-4 flex flex-col gap-3">

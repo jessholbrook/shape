@@ -76,11 +76,7 @@ export function OgCard() {
           }}
         >
           <span>Design how an AI&nbsp;</span>
-          {/* One unit, so the full stop never wraps on its own. */}
-          <span style={{ display: "flex" }}>
-            <span style={{ color: HIGHLIGHT }}>behaves</span>
-            <span>.</span>
-          </span>
+          <span style={{ color: HIGHLIGHT }}>behaves</span>
         </div>
         <div
           style={{
