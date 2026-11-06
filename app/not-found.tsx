@@ -10,7 +10,7 @@ export default function NotFound() {
   return (
     <Shell>
       <section className="mx-auto max-w-[860px] px-6 md:px-12 pt-16 md:pt-24 pb-32">
-        <SectionNumber label="404">—</SectionNumber>
+        <SectionNumber>404</SectionNumber>
 
         <h1 className="font-display text-[48px] md:text-[72px] leading-[1.0] tracking-tight text-ink mt-6">
           This page <span className="italic">wandered off</span>.

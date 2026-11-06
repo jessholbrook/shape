@@ -82,9 +82,13 @@ export function FeedbackButton() {
         type="button"
         onClick={openModal}
         aria-label="Send feedback"
-        className="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 bg-ink text-canvas rounded-full px-4 py-2 font-mono text-[11px] uppercase tracking-[0.08em] shadow-[0_4px_16px_rgba(0,0,0,0.18)] hover:bg-ink/90 transition-colors"
+        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-30 inline-flex items-center justify-center gap-2 bg-ink text-canvas rounded-full w-11 h-11 md:w-auto md:h-auto md:px-4 md:py-2 font-mono text-[11px] uppercase tracking-[0.08em] shadow-[0_4px_16px_rgba(0,0,0,0.18)] hover:bg-ink/90 transition-colors"
       >
-        Feedback
+        {/* On a phone, an icon: the label sat over whatever text was under it. */}
+        <svg aria-hidden className="md:hidden w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" />
+        </svg>
+        <span className="hidden md:inline">Feedback</span>
       </button>
 
       {open && (

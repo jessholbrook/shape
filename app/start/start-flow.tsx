@@ -95,7 +95,7 @@ function KeyEntry({
           Step 1 — Pick a provider
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {BYOK_PROVIDERS.map((p) => (
+          {BYOK_PROVIDERS.filter((p) => p.id !== "custom").map((p) => (
             <ProviderCard
               key={p.id}
               providerId={p.id}
@@ -109,6 +109,13 @@ function KeyEntry({
             />
           ))}
         </div>
+        <p className="mt-4 font-sans text-[13px] leading-[1.5] text-ink-muted">
+          Using OpenRouter, Groq, or a local server like Ollama?{" "}
+          <Link href="/settings/keys" className="text-ink underline decoration-highlight underline-offset-4 decoration-2">
+            Add a custom endpoint in Keys
+          </Link>
+          .
+        </p>
       </div>
 
       <div>

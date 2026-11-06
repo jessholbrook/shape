@@ -28,7 +28,7 @@ export function LearnIndex() {
   return (
     <>
       <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
-        {totalReady} of {MODULES.length} lessons live
+        {readable.length} lessons{totalReady < MODULES.length ? ` · ${MODULES.length - totalReady} coming soon` : ""}
         {hydrated && readable.length > 0 && (
           <>
             {" · "}
@@ -40,7 +40,8 @@ export function LearnIndex() {
       </p>
 
       {/* Recommended next */}
-      {hydrated && (upNext || allRead) && (
+      {/* Only once something's been read: on a first visit the list's own top is the next step. */}
+      {hydrated && readCount > 0 && (upNext || allRead) && (
         <div className="mt-10">
           {upNext ? (
             <Link
@@ -181,7 +182,7 @@ function ModuleRow({
           </span>
         )}
         {ready && (
-          <span className="ml-auto font-mono text-[12px] text-ink group-hover:text-highlight transition-colors">
+          <span className="ml-auto font-mono text-[12px] normal-case tracking-normal text-ink group-hover:text-highlight transition-colors">
             Open →
           </span>
         )}

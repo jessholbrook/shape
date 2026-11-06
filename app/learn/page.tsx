@@ -4,7 +4,7 @@ import { LearnIndex } from "@/components/learn/learn-index";
 export const metadata = {
   title: "Learn",
   description:
-    "Twelve micro-lessons that pair a short explanation with a hands-on playground.",
+    "Twelve short lessons, each paired with a hands-on playground to explore the concept.",
 };
 
 export default function LearnPage() {
@@ -18,8 +18,8 @@ export default function LearnPage() {
 
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-8 max-w-2xl">
           Twelve micro-lessons that pair a short explanation with a
-          hands-on playground to explore the concept. Read in order or
-          jump around.
+          hands-on playground to explore the concept, plus a one-minute
+          setup. Read in order or jump around.
         </p>
 
         <LearnIndex />

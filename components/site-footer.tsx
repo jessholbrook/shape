@@ -44,15 +44,15 @@ export function SiteFooter() {
           {COLUMNS.map((col) => (
             <div key={col.title}>
               <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-quiet">{col.title}</p>
-              <ul className="mt-3 flex flex-col gap-2">
+              <ul className="mt-2 flex flex-col">
                 {col.links.map((l) => (
                   <li key={l.href}>
                     {l.external ? (
-                      <a href={l.href} target="_blank" rel="noopener noreferrer" className="font-sans text-[14px] text-ink-muted hover:text-ink transition-colors">
+                      <a href={l.href} target="_blank" rel="noopener noreferrer" className="inline-block py-2 md:py-1 font-sans text-[14px] text-ink-muted hover:text-ink transition-colors">
                         {l.label} <span aria-hidden>↗</span>
                       </a>
                     ) : (
-                      <Link href={l.href} className="font-sans text-[14px] text-ink-muted hover:text-ink transition-colors">
+                      <Link href={l.href} className="inline-block py-2 md:py-1 font-sans text-[14px] text-ink-muted hover:text-ink transition-colors">
                         {l.label}
                       </Link>
                     )}

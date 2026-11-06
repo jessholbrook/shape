@@ -151,7 +151,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <div className="px-2">
             <Link
               href="/settings/keys"
-              className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+              className="hit-area font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
             >
               Keys
             </Link>
