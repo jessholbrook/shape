@@ -32,7 +32,6 @@ export function ArticleHeader({ module: mod }: { module: CurriculumModule }) {
             <span className="italic">{mod.italic}</span>
           </>
         )}
-        .
       </h1>
 
       <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">

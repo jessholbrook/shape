@@ -38,7 +38,7 @@ export default async function StudentClassPage({ params }: { params: Promise<{ c
         <SectionNumber>Class</SectionNumber>
         {result.status === "unavailable" ? (
           <div className="mt-6 max-w-xl" data-testid="class-unavailable">
-            <h1 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink">Can&apos;t load this right now.</h1>
+            <h1 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink">Can&apos;t load this right now</h1>
             <p className="font-sans text-[16px] leading-[1.6] text-ink-muted mt-5">
               Shape&apos;s server isn&apos;t answering at the moment. Your code is fine — try again in a few minutes.
             </p>

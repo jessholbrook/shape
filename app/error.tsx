@@ -27,7 +27,7 @@ export default function Error({
         <SectionNumber>Error</SectionNumber>
 
         <h1 className="font-display text-[48px] md:text-[72px] leading-[1.0] tracking-tight text-ink mt-6">
-          Something <span className="italic">broke</span>.
+          Something <span className="italic">broke</span>
         </h1>
 
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-6 max-w-xl">

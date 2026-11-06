@@ -15,7 +15,7 @@ export default function KeysPage() {
       <section className="mx-auto max-w-[860px] px-6 md:px-12 pt-16 md:pt-24 pb-32">
 
         <h1 className="font-display text-[48px] md:text-[72px] leading-[1.0] tracking-tight text-ink">
-          Bring <span className="italic">your</span> keys.
+          Bring <span className="italic">your</span> keys
         </h1>
 
         <p className="font-sans text-[18px] leading-[1.55] text-ink-muted mt-6 max-w-xl">

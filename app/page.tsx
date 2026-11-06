@@ -15,7 +15,7 @@ export default function Home() {
       {/* HERO */}
       <section className="mx-auto max-w-[1280px] px-6 md:px-12 pt-16 md:pt-24 pb-16 md:pb-20">
         <h1 className="font-display text-[64px] sm:text-[88px] md:text-[120px] leading-[0.95] tracking-tight text-ink max-w-5xl">
-          Shape <span className="italic">model</span> behavior.
+          Shape <span className="italic">model</span> behavior
         </h1>
 
         <p className="font-sans text-[18px] md:text-[22px] leading-[1.5] text-ink-muted mt-8 max-w-2xl">
@@ -34,7 +34,7 @@ export default function Home() {
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <div>
             <h2 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink max-w-3xl">
-              Popular <span className="italic">playgrounds</span>.
+              Popular <span className="italic">playgrounds</span>
             </h2>
           </div>
           <Link

@@ -266,7 +266,7 @@ function SuccessState({ keys }: { keys: Partial<Record<ProviderId, string>> }) {
           Connected via {connectedNames}
         </div>
         <h2 className="font-display text-[34px] md:text-[40px] leading-[1.05] tracking-tight text-ink mt-4">
-          You&apos;re ready to shape.
+          You&apos;re ready to shape
         </h2>
         <p className="font-sans text-[15px] leading-[1.55] text-ink-muted mt-4 max-w-lg">
           Every playground is unlocked. Most people start with Diff Mode for

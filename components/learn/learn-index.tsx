@@ -81,7 +81,7 @@ export function LearnIndex() {
                 Curriculum complete
               </p>
               <h2 className="font-display text-[28px] md:text-[32px] leading-[1.1] text-ink mt-3">
-                You&apos;ve read every live lesson.
+                You&apos;ve read every live lesson
               </h2>
               <p className="font-sans text-[14px] leading-[1.55] text-ink-muted mt-3 max-w-2xl">
                 More will show up here as they land. In the meantime, the

@@ -55,7 +55,7 @@ export default async function SharedExperimentPage({ params }: Props) {
           </>
         ) : (
           <div className="mt-6 max-w-xl" data-testid="shared-unavailable">
-            <h1 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink">Can&apos;t load this right now.</h1>
+            <h1 className="font-display text-[40px] md:text-[56px] leading-[1.05] tracking-tight text-ink">Can&apos;t load this right now</h1>
             <p className="font-sans text-[16px] leading-[1.6] text-ink-muted mt-5">
               Shared experiments are stored on Shape&apos;s server, and it isn&apos;t answering at the moment. The link
               itself is fine — try again in a few minutes.

@@ -55,7 +55,7 @@ export default function GlobalError({
               margin: "12px 0 0",
             }}
           >
-            Something broke.
+            Something broke
           </h1>
           <p
             style={{
