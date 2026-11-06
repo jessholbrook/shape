@@ -15,7 +15,7 @@ export function ArticleHeader({ module: mod }: { module: CurriculumModule }) {
     <>
       <Link
         href="/learn"
-        className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+        className="hit-area font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
       >
         ← Learn
       </Link>
@@ -42,7 +42,7 @@ export function ArticleHeader({ module: mod }: { module: CurriculumModule }) {
             {" · pairs with "}
             <Link
               href={mod.playground.href}
-              className="text-ink underline decoration-highlight underline-offset-4 decoration-2"
+              className="hit-area text-ink underline decoration-highlight underline-offset-4 decoration-2"
             >
               {mod.playground.label}
             </Link>

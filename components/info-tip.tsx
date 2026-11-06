@@ -35,7 +35,7 @@ export function InfoTip({
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        className="inline-flex items-center justify-center w-[14px] h-[14px] rounded-full bg-line/60 text-ink-quiet hover:bg-highlight-soft hover:text-highlight-ink focus:bg-highlight-soft focus:text-highlight-ink focus:outline-none font-mono text-[9px] font-medium leading-none transition-colors"
+        className="hit-area inline-flex items-center justify-center w-[14px] h-[14px] rounded-full bg-line/60 text-ink-quiet hover:bg-highlight-soft hover:text-highlight-ink focus:bg-highlight-soft focus:text-highlight-ink focus:outline-none font-mono text-[9px] font-medium leading-none transition-colors"
       >
         ?
       </button>

@@ -54,7 +54,9 @@ function PlaygroundCard({
         <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-quiet">
           {num}
         </span>
-        {!ready && (
+        {ready ? (
+          <span className="font-mono text-[12px] text-ink group-hover:text-highlight transition-colors">Open →</span>
+        ) : (
           <span className="font-mono text-[10px] uppercase tracking-[0.08em] rounded-full px-2 py-0.5 bg-line/60 text-ink-quiet">
             Soon
           </span>
@@ -69,7 +71,7 @@ function PlaygroundCard({
         {blurb}
       </p>
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+      <div className="mt-6">
         <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
           Produces — <span className="text-ink-muted">{artifact}</span>
           {concept && (
@@ -79,11 +81,6 @@ function PlaygroundCard({
             </>
           )}
         </span>
-        {ready && (
-          <span className="font-mono text-[12px] text-ink group-hover:text-highlight transition-colors">
-            Open →
-          </span>
-        )}
       </div>
     </div>
   );

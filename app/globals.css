@@ -141,3 +141,17 @@ body {
     text-decoration: none;
   }
 }
+
+/*
+ * A bigger touch target without a bigger look: small text links and icon
+ * buttons get an invisible 8px margin of tap area on every side. Keep
+ * neighbours at least 16px apart so the areas don't overlap.
+ */
+@utility hit-area {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+  }
+}

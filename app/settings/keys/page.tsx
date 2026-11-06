@@ -1,5 +1,4 @@
 import { Shell } from "@/components/shell";
-import { SectionNumber } from "@/components/section-number";
 import { KeySetupForm } from "@/components/key-setup-form";
 import { KeyPrivacyNote } from "@/components/key-privacy-note";
 import { LocalModelStorage } from "@/components/local-model-storage";
@@ -14,9 +13,8 @@ export default function KeysPage() {
   return (
     <Shell>
       <section className="mx-auto max-w-[860px] px-6 md:px-12 pt-16 md:pt-24 pb-32">
-        <SectionNumber>00</SectionNumber>
 
-        <h1 className="font-display text-[48px] md:text-[72px] leading-[1.0] tracking-tight text-ink mt-6">
+        <h1 className="font-display text-[48px] md:text-[72px] leading-[1.0] tracking-tight text-ink">
           Bring <span className="italic">your</span> keys.
         </h1>
 

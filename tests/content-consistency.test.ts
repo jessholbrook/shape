@@ -98,17 +98,13 @@ test("playground numbers are unique and sequential", () => {
   );
 });
 
-test("each play page's section number matches its index card", () => {
+test("play pages carry no number label; only the index cards are numbered", () => {
+  // Playgrounds have no reading order, so a number over a page title reads as
+  // one. The /play index keeps them as card ids.
   for (const p of PLAYGROUNDS) {
     const dir = p.href.replace(/^\/play\//, "");
     const src = readFileSync(join(ROOT, "app/play", dir, "page.tsx"), "utf8");
-    const found = src.match(/<SectionNumber>(\d+)<\/SectionNumber>/);
-    assert.ok(found, `${p.href}: no <SectionNumber> on the page`);
-    assert.equal(
-      found[1],
-      p.num,
-      `${p.href}: page shows ${found[1]}, index card says ${p.num}`,
-    );
+    assert.doesNotMatch(src, /<SectionNumber>\d+<\/SectionNumber>/, `${p.href}: number label is back`);
   }
 });
 
