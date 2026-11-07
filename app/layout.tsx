@@ -39,7 +39,7 @@ function siteOrigin(): string {
 }
 
 const DESCRIPTION =
-  "A hands-on lab for understanding how AI models behave and how that behavior gets made — tone, persona, boundaries, values. For designers, researchers, policy makers, philosophers, educators, and anyone curious.";
+  "A hands-on way to understand how AI models behave and how that behavior gets shaped — tone, persona, boundaries, values. For designers, researchers, policy makers, philosophers, educators, and anyone curious.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin()),

@@ -44,7 +44,7 @@ export type Lens = LensContent & {
 /** What a reader with no lens sees. Every lens falls back to these ideas. */
 export const CORE: LensContent = {
   hero: {
-    lede: "A hands-on lab for understanding how AI models behave — and how that behavior gets shaped. Change one aspect, run it, and see what moves: tone, persona, boundaries, values. Learn how to question and direct models using what you already know.",
+    lede: "A hands-on way to understand how AI models behave — and how that behavior gets shaped. Change one aspect, run it, and see what moves: tone, persona, boundaries, values. Learn how to question and direct models using what you already know.",
   },
   bridgeHeading: { before: "You already have the right", italic: "experience" },
   bridgeIntro:

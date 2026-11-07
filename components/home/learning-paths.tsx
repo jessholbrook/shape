@@ -29,7 +29,7 @@ export function LearningPaths() {
         <div className="mt-4">
           <ReadingPreview />
         </div>
-        <p className={BODY}>Short lessons on how model behavior gets made, each paired with a playground to try it in.</p>
+        <p className={BODY}>Short lessons on how model behavior gets shaped, each paired with a playground to try it in.</p>
         <p className={META}>{LESSON_META}</p>
         <span className={CTA}>
           Start reading <span aria-hidden>→</span>

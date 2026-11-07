@@ -612,3 +612,10 @@ test("/lab says what the runs can detect, and what a smaller change would take",
   await expect(page.getByTestId("power-target-text")).toContainText(/class|already have/);
   expect(errors).toEqual([]);
 });
+
+test("the Educators path points teachers to class setup, and only that path does", async ({ page }) => {
+  await page.goto("/for/education", { waitUntil: "networkidle" });
+  await expect(page.getByTestId("teach-cta")).toHaveAttribute("href", "/teach");
+  await page.goto("/for/ux", { waitUntil: "networkidle" });
+  await expect(page.getByTestId("teach-cta")).toHaveCount(0);
+});
