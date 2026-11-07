@@ -86,8 +86,8 @@ export function OgCard() {
             maxWidth: "880px",
           }}
         >
-          A hands-on lab for understanding how AI models behave — and how
-          that behavior gets made.
+          A hands-on way to understand how AI models behave — and how that
+          behavior gets shaped.
         </div>
       </div>
 

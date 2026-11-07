@@ -31,7 +31,7 @@ Shape is a craft tool for behavior design. The visual identity should feel:
 ### Usage rules for vermillion
 
 - Inline command/code chips: `--highlight-soft` background, `--highlight-ink` text.
-- Active-state dots in the bottom pill nav.
+- Active-state dot beside the current item in the sidebar nav.
 - Underlines on hover for primary CTAs.
 - Small accent dots on icons and cards.
 - **Never** as a flood color on large surfaces. Highlighter behavior only.
@@ -155,9 +155,13 @@ radius: 999px
 
 Neutral variant (for tags, status badges): `bg: --line`, `text: --ink-muted`.
 
-### Bottom nav (the pill)
+### Navigation
 
-Floating, fixed at bottom of viewport with 32px margin. White background, `--line` border, 999px radius, ~18px padding. Items in Geist Mono small caps with the section numeral preceding the label (`01 Foundation`). Active item: black pill background, white text. Active marker: tiny vermillion dot above the active item.
+**Desktop:** a fixed left sidebar, 240px wide, `--line` right border, canvas at 60% over a light backdrop blur. Top: the Shape mark and wordmark. Then the nav items (Home, Learn, Play, Lab, Notebook) in Inter 14px, `--ink-muted`; the current item is `--ink` with a tiny vermillion dot at the right edge. Bottom: the "How to run" card, then Keys and Feedback as Geist Mono small-caps links.
+
+**Phone:** a top bar with the mark and a menu button that drops the same items down as a sheet. Feedback is a 44px round icon button fixed bottom-right.
+
+**Footer:** every page ends with a four-column link footer (Use, Learn, Teach, About) for the pages the sidebar doesn't hold.
 
 ### Sequence numerals
 

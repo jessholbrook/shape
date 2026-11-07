@@ -112,6 +112,30 @@ export default async function LensPage({ params }: Props) {
           })}
         </ol>
       </section>
+
+      {/* Teachers land here from the home page; class setup is otherwise only in the footer. */}
+      {id === "education" && (
+        <section className="mx-auto max-w-[1280px] px-6 md:px-12 py-12">
+          <Link
+            href="/teach"
+            data-testid="teach-cta"
+            className="group flex flex-col md:flex-row md:items-center md:justify-between gap-4 max-w-3xl bg-surface border border-line rounded-[16px] p-6 md:p-7 hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-shadow"
+          >
+            <span>
+              <span className="block font-display text-[26px] md:text-[30px] leading-[1.15] tracking-tight text-ink">
+                Running a <span className="italic">class?</span>
+              </span>
+              <span className="block font-sans text-[15px] leading-[1.55] text-ink-muted mt-2 max-w-xl">
+                Set up one experiment for the whole room. Students join with a code and a nickname, run it, and see
+                everyone&apos;s results pooled together.
+              </span>
+            </span>
+            <span className="self-start md:self-auto shrink-0 inline-flex items-center gap-2 bg-ink text-canvas rounded-[12px] px-5 py-2.5 font-sans text-[14px]">
+              Make a class <span className="text-highlight transition-transform group-hover:translate-x-0.5">→</span>
+            </span>
+          </Link>
+        </section>
+      )}
       <div className="h-20" />
     </Shell>
   );
