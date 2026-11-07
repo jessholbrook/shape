@@ -30,7 +30,6 @@ Shape is a craft tool for behavior design. The visual identity should feel:
 
 ### Usage rules for vermillion
 
-- Numerals (`01`, `02`) on section headers.
 - Inline command/code chips: `--highlight-soft` background, `--highlight-ink` text.
 - Active-state dots in the bottom pill nav.
 - Underlines on hover for primary CTAs.
@@ -92,7 +91,7 @@ Push `SOFT` higher (80–100) for hero headlines to soften the serifs. Drop `wgh
 - Display sizes: **Fraunces**
 - Body sizes: **Inter**
 - Code/prompts/system messages: **Geist Mono**
-- Section numerals (`01`, `02`): **Geist Mono**, small-caps tracking, `--ink-quiet`
+- Sequence numerals (lesson `01`, `02`): **Geist Mono**, small-caps tracking, `--ink-quiet`
 
 ## 4. Layout
 
@@ -100,7 +99,7 @@ Push `SOFT` higher (80–100) for hero headlines to soften the serifs. Drop `wgh
 
 - Max content width: **1280px** for most pages, **960px** for reading-dense pages (curriculum, case studies).
 - Section vertical padding: **120px desktop / 64px mobile**.
-- Use small-caps mono section numerals (`01 — The Foundation`) to anchor the start of each section.
+- Sections start with their title. No numerals or eyebrow labels above page or section titles.
 
 ### Grid
 
@@ -160,7 +159,9 @@ Neutral variant (for tags, status badges): `bg: --line`, `text: --ink-muted`.
 
 Floating, fixed at bottom of viewport with 32px margin. White background, `--line` border, 999px radius, ~18px padding. Items in Geist Mono small caps with the section numeral preceding the label (`01 Foundation`). Active item: black pill background, white text. Active marker: tiny vermillion dot above the active item.
 
-### Section numerals
+### Sequence numerals
+
+Only where order carries information the reader needs: the lesson sequence (`01` above a lesson title, `Next up 02`). Never on page titles, section headers, or unordered card grids like playgrounds.
 
 ```
 font: Geist Mono 12px
@@ -169,7 +170,7 @@ text-transform: uppercase
 color: --ink-quiet
 ```
 
-Placement: top-left of each section, on its own line above the section title.
+Placement: on its own line above the lesson title.
 
 ### Inputs (textareas, system prompt fields)
 

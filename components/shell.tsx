@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ShapeMark } from "./shape-mark";
 import { CostMeter } from "./cost-meter";
-import { FeedbackButton } from "./feedback-button";
+import { FeedbackButton, openFeedback } from "./feedback-button";
 import { SiteFooter } from "./site-footer";
 import { WebLLMStatusBanner } from "./webllm-status-banner";
 import { UnsavedToast } from "./unsaved-toast";
@@ -148,13 +148,20 @@ export function Shell({ children }: { children: React.ReactNode }) {
         {/* Bottom: cost meter + keys */}
         <div className="mt-auto px-6 pb-6 space-y-3">
           <CostMeter />
-          <div className="px-2">
+          <div className="px-2 flex items-center gap-5">
             <Link
               href="/settings/keys"
               className="hit-area font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
             >
               Keys
             </Link>
+            <button
+              type="button"
+              onClick={openFeedback}
+              className="hit-area font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink"
+            >
+              Feedback
+            </button>
           </div>
         </div>
       </aside>

@@ -156,7 +156,19 @@ function LuckyPreview() {
     <div className={WRAPPER} aria-hidden>
       <div className="flex items-center justify-between">
         <span className="font-mono text-[8px] uppercase tracking-[0.1em] text-ink-quiet">Shuffling</span>
-        <span className="font-mono text-[12px] text-highlight">⚄</span>
+        {/* Drawn, not a ⚄ glyph: Geist Mono has no die and fell back to a box. */}
+        <svg viewBox="0 0 16 16" className="w-[14px] h-[14px] text-highlight" fill="none" aria-hidden>
+          <rect x="1.5" y="1.5" width="13" height="13" rx="3" stroke="currentColor" strokeWidth="1.4" />
+          {[
+            [5, 5],
+            [11, 5],
+            [8, 8],
+            [5, 11],
+            [11, 11],
+          ].map(([cx, cy]) => (
+            <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.2" fill="currentColor" />
+          ))}
+        </svg>
       </div>
       <div className="mt-2.5 bg-surface rounded-[8px] px-2 py-1.5 flex items-baseline justify-between gap-2">
         <span className="font-mono text-[10px] leading-[1.35] text-ink truncate">{d.label}</span>
@@ -180,8 +192,7 @@ export function LuckyCard() {
       data-testid="lucky-card"
       className="group text-left flex flex-col bg-surface border border-line rounded-[16px] p-6 md:p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-shadow"
     >
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-quiet">?</span>
+      <div className="flex items-center justify-end">
         <span className="font-mono text-[12px] text-ink group-hover:text-highlight transition-colors">Go →</span>
       </div>
       <h3 className="font-display text-[28px] md:text-[34px] leading-[1.1] tracking-tight text-ink mt-6">

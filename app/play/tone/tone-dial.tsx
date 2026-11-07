@@ -315,6 +315,74 @@ export function ToneDial() {
     temperature,
   };
 
+  // The run row and output follow the composed prompt in forward mode, so
+  // dial → prompt → run → answer reads as one column without scrolling back.
+  const runRow = (
+    <div className="bg-surface border border-line rounded-[16px] p-5">
+      <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet mb-2 inline-flex items-center gap-1.5">
+        User message
+        <InfoTip>{UserMessageTip}</InfoTip>
+      </label>
+      <textarea
+        value={userMessage}
+        onChange={(e) => setUserMessage(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && canRun) {
+            e.preventDefault();
+            run();
+          }
+        }}
+        aria-keyshortcuts="Meta+Enter Control+Enter"
+        rows={2}
+        placeholder="What do you want to send through the dials?"
+        className="w-full bg-canvas border border-line rounded-[10px] px-3 py-2 font-sans text-[14px] leading-[1.55] text-ink placeholder:text-ink-quiet focus:border-ink focus:outline-none resize-y"
+      />
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={run}
+          disabled={!canRun}
+          title="Run (⌘/Ctrl + Enter in the message)"
+          className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ink/90 transition-colors"
+        >
+          {running && output.status === "running"
+            ? "Streaming…"
+            : isReverse
+              ? "Run these dials"
+              : "Run with this tone"}
+          <span className="text-highlight">→</span>
+        </button>
+        <button
+          type="button"
+          onClick={reset}
+          disabled={running}
+          className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink disabled:opacity-40"
+        >
+          Clear output
+        </button>
+        {!isReverse && output.status === "done" && !!output.text && (
+          <button
+            type="button"
+            onClick={adoptOutputAsTarget}
+            disabled={running}
+            className="ml-auto font-mono text-[12px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink disabled:opacity-40"
+          >
+            Edit this output as a target →
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  const outputPanel = (
+    <OutputPanel
+      label={isReverse ? "Output from these dials" : "Output"}
+      config={config}
+      output={output}
+      filenameStem={`tone-${slugify(title || brief, "output")}`}
+    />
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <MissingKeyBanner
@@ -442,63 +510,14 @@ export function ToneDial() {
             toneLines={toneLines}
             dialsTouched={dialsTouched}
           />
+          {!isReverse && runRow}
+          {!isReverse && outputPanel}
         </div>
       </div>
 
-      {/* Run row */}
-      <div className="bg-surface border border-line rounded-[16px] p-5">
-        <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-quiet mb-2 inline-flex items-center gap-1.5">
-          User message
-          <InfoTip>{UserMessageTip}</InfoTip>
-        </label>
-        <textarea
-          value={userMessage}
-          onChange={(e) => setUserMessage(e.target.value)}
-          rows={2}
-          placeholder="What do you want to send through the dials?"
-          className="w-full bg-canvas border border-line rounded-[10px] px-3 py-2 font-sans text-[14px] leading-[1.55] text-ink placeholder:text-ink-quiet focus:border-ink focus:outline-none resize-y"
-        />
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={run}
-            disabled={!canRun}
-            className="inline-flex items-center gap-2 bg-ink text-canvas rounded-[10px] px-5 py-2.5 font-sans text-[14px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ink/90 transition-colors"
-          >
-            {running && output.status === "running"
-              ? "Streaming…"
-              : isReverse
-                ? "Run these dials"
-                : "Run with this tone"}
-            <span className="text-highlight">→</span>
-          </button>
-          <button
-            type="button"
-            onClick={reset}
-            disabled={running}
-            className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink disabled:opacity-40"
-          >
-            Clear output
-          </button>
-          {!isReverse && output.status === "done" && !!output.text && (
-            <button
-              type="button"
-              onClick={adoptOutputAsTarget}
-              disabled={running}
-              className="ml-auto font-mono text-[12px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink disabled:opacity-40"
-            >
-              Edit this output as a target →
-            </button>
-          )}
-        </div>
-      </div>
-
-      <OutputPanel
-        label={isReverse ? "Output from these dials" : "Output"}
-        config={config}
-        output={output}
-        filenameStem={`tone-${slugify(title || brief, "output")}`}
-      />
+      {/* In reverse the right column holds the proposal, so run and output sit below the grid. */}
+      {isReverse && runRow}
+      {isReverse && outputPanel}
 
       {isReverse &&
         output.status === "done" &&
@@ -547,7 +566,7 @@ function ComposedPromptCard({
   const trimmedBrief = brief.trim();
 
   return (
-    <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-col gap-3 min-h-[280px]">
+    <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-col gap-3 min-h-[160px]">
       <div className="flex items-center justify-between">
         <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-quiet">
           Composed system prompt
