@@ -47,7 +47,6 @@ export default function Home() {
 
         <div className="mt-10 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-5">
           <PlaygroundCard
-            num="01"
             href="/play/diff"
             title="Diff"
             italic="mode"
@@ -56,7 +55,6 @@ export default function Home() {
             preview={<DiffPreview />}
           />
           <PlaygroundCard
-            num="02"
             href="/play/tone"
             title="Tone"
             italic="dial"
@@ -65,7 +63,6 @@ export default function Home() {
             preview={<TonePreview />}
           />
           <PlaygroundCard
-            num="03"
             href="/play/persona"
             title="Persona"
             italic="workshop"
@@ -92,7 +89,6 @@ function Divider() {
 }
 
 function PlaygroundCard({
-  num,
   href,
   title,
   italic,
@@ -100,7 +96,6 @@ function PlaygroundCard({
   artifact,
   preview,
 }: {
-  num: string;
   href: string;
   title: string;
   italic: string;
@@ -113,10 +108,7 @@ function PlaygroundCard({
       href={href}
       className="group block bg-surface border border-line rounded-[16px] p-6 md:p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-shadow"
     >
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-quiet">
-          {num}
-        </span>
+      <div className="flex items-center justify-end">
         <span className="font-mono text-[12px] text-ink group-hover:text-highlight transition-colors">
           Open →
         </span>
