@@ -32,7 +32,6 @@ export default function PlayPage() {
 }
 
 function PlaygroundCard({
-  num,
   href,
   title,
   italic,
@@ -50,10 +49,8 @@ function PlaygroundCard({
           : "opacity-70"
       }`}
     >
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-quiet">
-          {num}
-        </span>
+      {/* No numbers: playgrounds aren't a sequence (see DESIGN.md, Sequence numerals). */}
+      <div className="flex items-center justify-end">
         {ready ? (
           <span className="font-mono text-[12px] text-ink group-hover:text-highlight transition-colors">Open →</span>
         ) : (
