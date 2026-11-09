@@ -165,7 +165,7 @@ Neutral variant (for tags, status badges): `bg: --line`, `text: --ink-muted`.
 
 ### Sequence numerals
 
-Only where order carries information the reader needs: the lesson sequence (`01` above a lesson title, `Next up 02`). Never on page titles, section headers, or unordered card grids like playgrounds.
+Only where order carries information the reader needs: the lesson sequence (`01` above a lesson title, `Next up 02`). Never on page titles or section headers. One deliberate exception: the `/play` index numbers its playground cards (`01`, `02`…) as a catalog count. The home page's featured playground cards stay unnumbered.
 
 ```
 font: Geist Mono 12px
