@@ -17,16 +17,14 @@ import {
   buildRoundtableReport,
   callsFor,
   capsFor,
-  composeSeatSystem,
-  composeSeatUserTurn,
   estimateRoundtableCost,
-  stopAfterRound,
   type Protocol,
   type Seat,
   type StopReason,
   type Task,
   type Turn,
 } from "@/lib/roundtable";
+import { runTable as runTableSession } from "@/lib/roundtable-run";
 import { suggestTitle, type ProtocolDraft } from "@/lib/drafts";
 import type { Writer } from "@/lib/judge";
 import {
@@ -218,11 +216,7 @@ export function RoundtableWorkshop() {
     setJudging(false);
   }
 
-  /**
-   * Sequential by nature: every turn reads the table so far, so nothing can
-   * fan out. A local copy of the turns is the source of truth while the run
-   * is going; state mirrors it after every change so the transcript streams.
-   */
+  /** One session at the table. The loop itself is lib/roundtable-run.ts, shared with the Lab. */
   async function runTable() {
     if (!ready || running) return;
     setRunning(true);
@@ -230,67 +224,14 @@ export function RoundtableWorkshop() {
     setReflectionDismissed(false);
     setStopReason(null);
     setReadings([]);
-    const local: Turn[] = [];
-    const publish = () => setTurns([...local]);
-    let reason: StopReason | null = null;
-    let failed = false;
-
-    outer: for (let round = 1; round <= live.rounds; round++) {
-      for (const seat of seats) {
-        const t: Turn = { round, seatId: seat.id, text: "", status: "running" };
-        local.push(t);
-        publish();
-        const apiKey = keys[seat.provider];
-        try {
-          const stream = runChat({
-            provider: seat.provider,
-            model: seat.model,
-            system: composeSeatSystem(seat, seats, live),
-            messages: [
-              {
-                role: "user",
-                content: composeSeatUserTurn(seat, seats, task, live, local.slice(0, -1), round),
-              },
-            ],
-            temperature,
-            apiKey,
-          });
-          for await (const event of stream) {
-            if (event.type === "text") {
-              t.text += event.delta;
-              publish();
-            } else if (event.type === "done") {
-              t.status = "done";
-              t.inputTokens = event.usage.inputTokens;
-              t.outputTokens = event.usage.outputTokens;
-              t.costUsd = calcCost(seat.provider, seat.model, event.usage.inputTokens, event.usage.outputTokens);
-              recordUsage({
-                provider: seat.provider,
-                model: seat.model,
-                inputTokens: event.usage.inputTokens,
-                outputTokens: event.usage.outputTokens,
-              });
-              publish();
-            } else if (event.type === "error") {
-              t.status = "error";
-              t.error = event.message;
-              publish();
-            }
-          }
-        } catch (err) {
-          t.status = "error";
-          t.error = err instanceof Error ? err.message : String(err);
-          publish();
-        }
-        if (t.status !== "done") {
-          failed = true;
-          break outer;
-        }
-      }
-      reason = stopAfterRound(live, seats, local, round);
-      if (reason) break;
-    }
-    if (!failed) setStopReason(reason);
+    const result = await runTableSession(seats, task, live, temperature, {
+      runChat,
+      keyFor: (provider) => keys[provider],
+      onTurns: setTurns,
+      record: recordUsage,
+      costOf: calcCost,
+    });
+    if (!result.failed) setStopReason(result.stopReason);
     setRunning(false);
   }
 
