@@ -246,6 +246,7 @@ export function createClassHandler(deps: ClassDeps) {
     if (!parsed.ok) return parsed.res;
     const v = validateExperiment(parsed.body.experiment);
     if (!v.ok) return error(400, `This experiment can't become a class: ${v.reason}`);
+    if (v.experiment.table) return error(400, "Round Table experiments can't become a class yet.");
     const title = typeof parsed.body.title === "string" ? parsed.body.title.trim() : "";
     if (!title || title.length > 200) return error(400, "Give the class a title (up to 200 characters).");
     if (!v.experiment.question.trim()) return error(400, "Write the experiment's question before making a class.");

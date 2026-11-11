@@ -17,6 +17,9 @@ import {
   type ExperimentRun,
   type Measure,
 } from "./experiment";
+import { estimateTableCost, scoreTable, tableFor, tableModels } from "./experiment-table";
+import { renderTranscript } from "./roundtable";
+import { runTable } from "./roundtable-run";
 
 /**
  * The lab's run loop, kept out of React so it can be tested against a
@@ -49,7 +52,7 @@ const JUDGE_MAX_TOKENS = 200;
 /** One idle run per cell × repeat, in cell order. */
 export function planRuns(e: Experiment): ExperimentRun[] {
   return expandCells(e).flatMap(({ conditionId, itemId }) => {
-    const model = resolveCall(e, conditionId, itemId).model;
+    const model = e.table ? tableModels(tableFor(e, conditionId).seats) : resolveCall(e, conditionId, itemId).model;
     return Array.from({ length: e.n }, (_, index) => ({
       id: newId("run"),
       conditionId,
@@ -128,6 +131,7 @@ async function judge(
  * the component can show the idle grid before the first token arrives.
  */
 export async function runExperiment(e: Experiment, runs: ExperimentRun[], deps: RunDeps): Promise<void> {
+  if (e.table) return runTables(e, runs, deps);
   const limit = deps.concurrency ?? concurrencyFor(e.base.model.provider);
 
   await runPool(runs, limit, async (planned) => {
@@ -195,6 +199,78 @@ export async function runExperiment(e: Experiment, runs: ExperimentRun[], deps: 
   });
 }
 
+/**
+ * A Round Table experiment: each run is one whole table, run by the same loop
+ * as the playground. Tables run side by side (each one is sequential inside);
+ * any in-browser seat means one table at a time, since the browser runs one
+ * model call at a time. The run's text is the shared transcript, so length,
+ * pattern and judge measures read the whole table; table measures read the
+ * report. A table that fails or is stopped part-way is an errored run — a
+ * partial table is a different room, not a shorter one.
+ */
+async function runTables(e: Experiment, runs: ExperimentRun[], deps: RunDeps): Promise<void> {
+  if (deps.classCode) throw new Error("Round Table experiments can't run as a class yet.");
+  const anyBrowser = e.table!.seats.some((s) => s.provider === "webllm");
+  const limit = anyBrowser ? 1 : (deps.concurrency ?? concurrencyFor(e.table!.seats[0].provider));
+
+  await runPool(runs, limit, async (planned) => {
+    if (deps.signal?.aborted) return;
+    const t = tableFor(e, planned.conditionId);
+    const startedAt = Date.now();
+    let run: ExperimentRun = { ...planned, status: "running", startedAt, text: "", turns: [], scores: {} };
+    deps.onRun(run);
+
+    const result = await runTable(t.seats, t.task, t.protocol, t.temperature, {
+      runChat: deps.runChat,
+      keyFor: deps.keyFor,
+      record: deps.record,
+      signal: deps.signal,
+      onTurns: (turns) => {
+        run = { ...run, turns, text: renderTranscript(turns, t.seats) };
+        deps.onRun(run);
+      },
+    });
+    const text = renderTranscript(result.turns, t.seats);
+    const usage = result.turns.reduce(
+      (u, x) => ({ input: u.input + (x.inputTokens ?? 0), output: u.output + (x.outputTokens ?? 0) }),
+      { input: 0, output: 0 },
+    );
+    const base = {
+      ...run,
+      turns: result.turns,
+      text,
+      stopReason: result.stopReason,
+      latencyMs: Date.now() - startedAt,
+      inputTokens: usage.input,
+      outputTokens: usage.output,
+    };
+
+    if (result.failed || result.stopped) {
+      const failed = result.turns.find((x) => x.status === "error");
+      deps.onRun({ ...base, status: "error", error: result.stopped ? "Stopped." : (failed?.error ?? "A turn failed.") });
+      return;
+    }
+
+    const scores = scoreTable(e, planned.conditionId, result.turns, result.stopReason);
+    const judgeRaw: Record<string, string> = {};
+    for (const m of e.measures) {
+      if (m.kind === "table") continue;
+      if (m.kind === "classify" || m.kind === "rate") {
+        if (deps.signal?.aborted) {
+          scores[m.id] = null;
+          continue;
+        }
+        const j = await judge(m, text, deps, planned.id);
+        scores[m.id] = j.score;
+        judgeRaw[m.id] = j.raw;
+      } else {
+        scores[m.id] = scoreLocal(m, text);
+      }
+    }
+    deps.onRun({ ...base, status: "done", scores, judgeRaw: Object.keys(judgeRaw).length ? judgeRaw : undefined });
+  });
+}
+
 /** Output tokens assumed per run when estimating; matches Spread's estimate. */
 const ASSUMED_OUTPUT_TOKENS = 250;
 
@@ -204,6 +280,7 @@ const ASSUMED_OUTPUT_TOKENS = 250;
  * rough model Spread uses. Free when every model involved is free (in-browser).
  */
 export function estimateExperimentCost(e: Experiment): { calls: number; usd: number; free: boolean; hostedCalls: number } {
+  if (e.table) return estimateTableCost(e);
   const calls = plannedCalls(e);
   let usd = 0;
   let free = true;

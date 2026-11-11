@@ -5,6 +5,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { starterExperiment, type Experiment } from "../lib/experiment";
+import { fromRoundtable } from "../lib/experiment-table";
+import { DEFAULT_PROTOCOL, SEED_SEATS, SEED_TASK } from "../lib/roundtable";
 import {
   CODE_ALPHABET,
   TEACHER_COOKIE,
@@ -295,6 +297,14 @@ test("make a class: teacher only; stores a locked, run-free copy; retries a take
 
   const noTitle = await createClassHandler({ config: ON, rpc, now: NOW })(req("POST", "/api/classes", { experiment: experiment(), title: "" }, { cookie: await teacherCookie() }));
   assert.equal(noTitle.status, 400);
+
+  // Round Table experiments don't become classes yet: each run is a whole table of calls.
+  const table = fromRoundtable({ seats: SEED_SEATS, task: SEED_TASK, protocol: DEFAULT_PROTOCOL, temperature: 0.7 }, 0);
+  const before = calls.filter((c) => c.fn === "create_class").length;
+  const tableRes = await createClassHandler({ config: ON, rpc, now: NOW })(req("POST", "/api/classes", { experiment: table, title: "Week 4" }, { cookie: await teacherCookie() }));
+  assert.equal(tableRes.status, 400);
+  assert.match((await tableRes.json()).error.message, /Round Table/);
+  assert.equal(calls.filter((c) => c.fn === "create_class").length, before);
 });
 
 test("join: sets a per-class member cookie; the database sees only its hash; clear refusals", async () => {

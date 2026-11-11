@@ -1,5 +1,6 @@
 "use client";
 
+import { TABLE_CHECKS } from "@/lib/experiment-table";
 import { useEffect, useMemo, useState } from "react";
 import {
   buildManifest,
@@ -195,6 +196,7 @@ function MeasureBlock({
         {m.kind === "assertion" && "Exact text check"}
         {m.kind === "regex" && <span title={`/${m.pattern}/${m.flags ?? ""}`}>{m.describe ?? `Pattern /${m.pattern}/${m.flags ?? ""}`}</span>}
         {m.kind === "length" && "Words per answer"}
+        {m.kind === "table" && TABLE_CHECKS[m.check].describe}
         {judged && " · a model's call, not ground truth"}
       </p>
       <div className="mt-1 divide-y divide-line/60">
