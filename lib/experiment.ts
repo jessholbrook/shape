@@ -1,6 +1,16 @@
 import type { ProviderId } from "./providers";
 import type { ChatCall } from "./providers/types";
 import type { LensId } from "./lenses";
+import type { Protocol, StopReason, Turn } from "./roundtable";
+import {
+  TABLE_CHECKS,
+  tableCallsFor,
+  tableManifest,
+  tableProblem,
+  type TableCheck,
+  type TableManifest,
+  type TableSetup,
+} from "./experiment-table";
 import { checkAssertion, wordCount, type Assertion } from "./spread";
 import {
   cohenH,
@@ -39,6 +49,10 @@ export type Condition = {
     userTemplate?: string;
     temperature?: number;
     model?: LabModel;
+    /** Round Table experiments only: protocol settings this condition changes. */
+    protocol?: Partial<Protocol>;
+    /** Round Table experiments only: the seat that speaks first; the rest keep their order. */
+    firstSpeaker?: string;
   };
 };
 
@@ -72,7 +86,9 @@ export type Measure =
       target: string;
       judge: LabModel;
     }
-  | { id: string; label: string; kind: "rate"; rubric: string; scale: 5 | 7; judge: LabModel };
+  | { id: string; label: string; kind: "rate"; rubric: string; scale: 5 | 7; judge: LabModel }
+  /** Round Table experiments only: one of the table report's checks, read off each finished table. */
+  | { id: string; label: string; kind: "table"; check: TableCheck };
 
 export type MeasureKind = Measure["kind"];
 
@@ -80,7 +96,7 @@ const BINARY_KINDS: readonly MeasureKind[] = ["assertion", "regex", "classify"];
 const NUMERIC_KINDS: readonly MeasureKind[] = ["length", "rate"];
 const JUDGE_KINDS: readonly MeasureKind[] = ["classify", "rate"];
 
-export const isBinary = (m: Measure) => BINARY_KINDS.includes(m.kind);
+export const isBinary = (m: Measure) => (m.kind === "table" ? TABLE_CHECKS[m.check].binary : BINARY_KINDS.includes(m.kind));
 export const usesJudge = (m: Measure) => JUDGE_KINDS.includes(m.kind);
 
 export type RunStatus = "idle" | "running" | "done" | "error";
@@ -108,6 +124,10 @@ export type ExperimentRun = {
   judgeRaw?: Record<string, string>;
   /** Queued for a free slot on Shape's free tier; cleared when it starts answering. Never stored. */
   waiting?: boolean;
+  /** Round Table experiments: every turn of this run's table. `text` holds the rendered transcript. */
+  turns?: Turn[];
+  /** Round Table experiments: why the table ended, when it ran to an end. */
+  stopReason?: StopReason | null;
 };
 
 export type BaseConfig = {
@@ -127,6 +147,11 @@ export type Experiment = {
   /** Set on first run; the hypothesis is fixed from then on. */
   hypothesisLockedAt?: number;
   base: BaseConfig;
+  /**
+   * Present on a Round Table experiment: one run is a whole table session
+   * (see lib/experiment-table.ts). `base` is unused by its runs then.
+   */
+  table?: TableSetup;
   conditions: Condition[];
   items: Item[];
   /** Runs per condition × item. */
@@ -179,10 +204,16 @@ export function expandCells(e: Pick<Experiment, "conditions" | "items">): Cell[]
   return e.conditions.flatMap((c) => items.map((itemId) => ({ conditionId: c.id, itemId })));
 }
 
-/** Model calls a full run will make: every run, plus one per judge measure per run. */
-export function plannedCalls(e: Pick<Experiment, "conditions" | "items" | "n" | "measures">): number {
-  const runs = expandCells(e).length * e.n;
+/**
+ * Model calls a full run will make: every run, plus one per judge measure per
+ * run. A Round Table run is a whole table: seats × rounds calls, at most.
+ */
+export function plannedCalls(e: Pick<Experiment, "conditions" | "items" | "n" | "measures" | "table">): number {
   const judges = e.measures.filter(usesJudge).length;
+  if (e.table) {
+    return e.conditions.reduce((sum, c) => sum + e.n * (tableCallsFor(e, c.id) + judges), 0);
+  }
+  const runs = expandCells(e).length * e.n;
   return runs * (1 + judges);
 }
 
@@ -190,6 +221,7 @@ export function plannedCalls(e: Pick<Experiment, "conditions" | "items" | "n" | 
 export type ResolvedCall = Omit<ChatCall, "apiKey" | "tools"> & { maxTokens: number };
 
 export function resolveCall(e: Experiment, conditionId: string, itemId: string | null): ResolvedCall {
+  if (e.table) throw new Error("A Round Table run is a whole table, not one call: use tableFor.");
   const condition = e.conditions.find((c) => c.id === conditionId);
   if (!condition) throw new Error(`Unknown condition "${conditionId}"`);
   const item = itemId === null ? undefined : e.items.find((i) => i.id === itemId);
@@ -498,6 +530,8 @@ export type Manifest = {
   params: { temperature: number[]; maxTokens: number; n: number };
   prompts: { conditionId: string; itemId: string | null; provider: ProviderId; model: string; system: string; user: string; temperature: number }[];
   judgePrompts: { measureId: string; kind: "classify" | "rate"; model: string; system: string }[];
+  /** Round Table experiments: the seats, the decision, and each condition's protocol and seat prompts. `prompts` is empty then. */
+  table?: TableManifest;
   statsMethods: { proportion: "wilson"; difference: "newcombe-hybrid"; means: "welch"; effect: "cohen-h / hedges-g" };
   notes: string[];
 };
@@ -512,7 +546,7 @@ export function buildManifest(
   e: Experiment,
   meta: { appVersion: string; ranAt: string; runner: Runner },
 ): Manifest {
-  const prompts = expandCells(e).map(({ conditionId, itemId }) => {
+  const prompts = (e.table ? [] : expandCells(e)).map(({ conditionId, itemId }) => {
     const call = resolveCall(e, conditionId, itemId);
     const first = call.messages[0];
     return {
@@ -536,19 +570,26 @@ export function buildManifest(
     return [];
   });
 
+  const table = e.table ? tableManifest(e) : undefined;
+  const requested = table ? table.seats.map((s) => s.model) : prompts.map((p) => p.model);
+  const temperatures = table
+    ? e.conditions.map((c) => c.patch.temperature ?? table.temperature)
+    : prompts.map((p) => p.temperature);
+
   return {
     schema: "shape.manifest.v1",
     appVersion: meta.appVersion,
     ranAt: meta.ranAt,
     runner: meta.runner,
     models: {
-      requested: uniq(prompts.map((p) => p.model)),
+      requested: uniq(requested),
       resolved: uniq(e.runs.map((r) => r.resolvedModel).filter((m): m is string => !!m)),
       judges: uniq(judgePrompts.map((j) => j.model)),
     },
-    params: { temperature: uniq(prompts.map((p) => p.temperature)), maxTokens: e.base.maxTokens, n: e.n },
+    params: { temperature: uniq(temperatures), maxTokens: e.base.maxTokens, n: e.n },
     prompts,
     judgePrompts,
+    ...(table ? { table } : {}),
     statsMethods: { proportion: "wilson", difference: "newcombe-hybrid", means: "welch", effect: "cohen-h / hedges-g" },
     notes: [
       "Sampling is non-deterministic: a rerun estimates the same distribution, not the same text.",
@@ -582,7 +623,7 @@ export async function manifestHash(m: Manifest): Promise<string> {
 
 export type ValidationResult = { ok: true; experiment: Experiment } | { ok: false; reason: string };
 
-const MEASURE_KINDS: readonly MeasureKind[] = [...BINARY_KINDS, ...NUMERIC_KINDS];
+const MEASURE_KINDS: readonly MeasureKind[] = [...BINARY_KINDS, ...NUMERIC_KINDS, "table"];
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 const isStr = (v: unknown): v is string => typeof v === "string";
 const isModel = (v: unknown) => isObj(v) && isStr(v.provider) && isStr(v.model);
@@ -639,6 +680,8 @@ export function validateExperiment(json: unknown): ValidationResult {
       return { ok: false, reason: `A run refers to unknown condition "${r.conditionId}".` };
     }
   }
+  const tableIssue = tableProblem(json);
+  if (tableIssue) return { ok: false, reason: tableIssue };
   return { ok: true, experiment: json as unknown as Experiment };
 }
 

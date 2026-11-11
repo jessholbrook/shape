@@ -1,5 +1,6 @@
 "use client";
 
+import { TABLE_CHECKS } from "@/lib/experiment-table";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { analyze, manifestHash, type Condition, type Experiment, type Measure } from "@/lib/experiment";
@@ -112,6 +113,12 @@ function changes(c: Condition): string[] {
   if (c.patch.userTemplate !== undefined) out.push(`User message: ${c.patch.userTemplate}`);
   if (c.patch.temperature !== undefined) out.push(`Temperature: ${c.patch.temperature}`);
   if (c.patch.model) out.push(`Model: ${modelName(c.patch.model)}`);
+  const pr = c.patch.protocol;
+  if (pr?.firstRound) out.push(`First round: ${pr.firstRound}`);
+  if (pr?.rounds !== undefined) out.push(`Rounds: ${pr.rounds}`);
+  if (pr?.stopRule) out.push(`Stop: ${pr.stopRule === "consensus" ? "at consensus" : "after every round"}`);
+  if (pr?.whispers !== undefined) out.push(`Side-notes: ${pr.whispers ? "on" : "off"}`);
+  if (c.patch.firstSpeaker) out.push(`First speaker: ${c.patch.firstSpeaker}`);
   return out;
 }
 
@@ -127,6 +134,8 @@ function measureDetail(m: Measure): string {
       return `A judge (${modelName(m.judge)}) answers “${m.question}” — counted when it says “${m.target}”`;
     case "rate":
       return `A judge (${modelName(m.judge)}) rates 1–${m.scale}: ${m.rubric}`;
+    case "table":
+      return TABLE_CHECKS[m.check].describe;
   }
 }
 
