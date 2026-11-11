@@ -1,5 +1,7 @@
 import type { LensId } from "../lenses";
 import { starterExperiment, type Experiment, type LabModel } from "../experiment";
+import { fromRoundtable } from "../experiment-table";
+import { DEFAULT_PROTOCOL, DEFAULT_TEMPERATURE, SEED_SEATS, SEED_TASK } from "../roundtable";
 
 /**
  * Ready-to-run experiments, one per audience. Each is a small study someone
@@ -233,6 +235,35 @@ function padding(model: LabModel, now = Date.now()): Experiment {
   };
 }
 
+// --- Groups of agents (Round Table) --------------------------------------------------
+
+/**
+ * The Round Table seed — a confident opener, a colleague who follows the room,
+ * a researcher planted to hold the evidence — run open vs. blind. Every seat
+ * uses the reader's model. Five tables per condition: each table is nine calls,
+ * so 90 in all, inside the free tier's daily allowance.
+ */
+function blindDissent(model: LabModel, now = Date.now()): Experiment {
+  const e = fromRoundtable(
+    {
+      seats: SEED_SEATS.map((s) => ({ ...s, provider: model.provider, model: model.model })),
+      task: SEED_TASK,
+      protocol: DEFAULT_PROTOCOL,
+      temperature: DEFAULT_TEMPERATURE,
+    },
+    now,
+  );
+  return {
+    ...e,
+    ...base(now, "blind-dissent"),
+    title: "Does a blind first round protect dissent?",
+    question:
+      "When three agents decide together, does the one planted to disagree hold their position more often if everyone commits before hearing anyone else?",
+    hypothesis: "With a blind first round, the planted dissenter still disagrees at the end more often than with an open one.",
+    n: 5,
+  };
+}
+
 // --- Registry ---------------------------------------------------------------------
 
 export const TEMPLATES: ExperimentTemplate[] = [
@@ -270,6 +301,13 @@ export const TEMPLATES: ExperimentTemplate[] = [
     blurb: "An AI grader scores the same student answer with and without filler that adds nothing.",
     lenses: ["education"],
     build: padding,
+  },
+  {
+    id: "blind-dissent",
+    title: "Does a blind first round protect dissent?",
+    blurb: "Three agents decide together, one planted to disagree. Does committing before hearing anyone keep the dissent alive?",
+    lenses: ["ux", "policy"],
+    build: blindDissent,
   },
 ];
 

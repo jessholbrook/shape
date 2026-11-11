@@ -70,12 +70,12 @@ export function LabStart({
             </p>
           </Link>
 
-          <button type="button" onClick={onBlank} className={`${CARD} md:col-span-2 lg:col-span-3`}>
+          <button type="button" onClick={onBlank} className={`${CARD} lg:col-span-2`}>
             <div className="flex items-center justify-between w-full">
               <span className={KICKER}>Your own</span>
               <span className="font-mono text-[12px] text-ink group-hover:text-highlight transition-colors">Start →</span>
             </div>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-[1fr_minmax(0,1.2fr)] gap-x-8 gap-y-4 items-center w-full">
+            <div className="mt-4 grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,1.2fr)] gap-x-8 gap-y-4 items-center w-full">
               <div>
                 <h3 className="font-display text-[24px] leading-[1.15] tracking-tight text-ink">
                   Start from <span className="italic">scratch</span>
@@ -119,8 +119,9 @@ function TemplateCard({ template, forYou, onPick }: { template: ExperimentTempla
       <p className="font-sans text-[14px] leading-[1.55] text-ink-muted mt-3">{template.blurb}</p>
       <div className={FOOTER}>
         <div className={FOOTER_LINE}>
-          {design.conditions.length} versions · {design.items.length} items · {design.measures.length}{" "}
-          {design.measures.length === 1 ? "measure" : "measures"}
+          {design.table
+            ? `${design.conditions.length} versions · ${design.table.seats.length} agents · ${design.measures.length} ${design.measures.length === 1 ? "check" : "checks"}`
+            : `${design.conditions.length} versions · ${design.items.length} items · ${design.measures.length} ${design.measures.length === 1 ? "measure" : "measures"}`}
         </div>
       </div>
     </button>

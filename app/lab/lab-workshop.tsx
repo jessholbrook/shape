@@ -32,6 +32,7 @@ import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
 import { INPUT, Label, MONO_INPUT, PANEL, PanelHeader } from "@/components/lab/fields";
 import { ConditionsEditor, ItemsEditor, MeasuresEditor } from "@/components/lab/setup";
+import { TableConditionsEditor, TableMeasuresPicker, TableSetupPanel } from "@/components/lab/table-setup";
 import { Findings, ManifestPanel, ResultsTable, RunList } from "@/components/lab/results";
 import { PowerPlan } from "@/components/lab/power-plan";
 import { SharePanel } from "@/components/lab/share-panel";
@@ -42,8 +43,8 @@ const INITIAL_MODEL: LabModel = { provider: "webllm", model: PROVIDERS.webllm.de
 
 /** Everything that determines what gets run — runs themselves excluded. */
 function designKey(e: Experiment): string {
-  const { base, conditions, items, n, measures } = e;
-  return canonicalJson({ base, conditions, items, n, measures });
+  const { base, table, conditions, items, n, measures } = e;
+  return canonicalJson({ base, table, conditions, items, n, measures });
 }
 
 function runnerFor(provider: ProviderId): Runner {
@@ -102,6 +103,8 @@ export function LabWorkshop() {
       return {
         ...prev,
         base: { ...prev.base, model: next },
+        // A Round Table experiment's model row sets every seat.
+        ...(prev.table ? { table: { ...prev.table, seats: prev.table.seats.map((st) => ({ ...st, provider: next.provider, model: next.model })) } } : {}),
         measures: prev.measures.map((m) =>
           (m.kind === "classify" || m.kind === "rate") && follows(m.judge) ? { ...m, judge: next } : m,
         ),
@@ -164,7 +167,7 @@ export function LabWorkshop() {
 
   // Every provider this run touches — the answering model and each judge.
   const providers = useMemo(() => {
-    const set = new Set<ProviderId>([e.base.model.provider]);
+    const set = new Set<ProviderId>(e.table ? e.table.seats.map((st) => st.provider) : [e.base.model.provider]);
     for (const c of e.conditions) if (c.patch.model) set.add(c.patch.model.provider);
     for (const m of e.measures) if (m.kind === "classify" || m.kind === "rate") set.add(m.judge.provider);
     return [...set];
@@ -172,6 +175,8 @@ export function LabWorkshop() {
   const missing = hydrated ? providers.find((p) => providerNeedsKey(p) && !keys[p]) : undefined;
   const incomplete =
     !e.question.trim() ||
+    e.measures.length === 0 ||
+    (!!e.table && (!e.table.task.proposal.trim() || !e.table.task.brief.trim())) ||
     e.measures.some(
       (m) =>
         (m.kind === "classify" && (!m.question.trim() || m.labels.length < 2)) ||
@@ -309,44 +314,65 @@ export function LabWorkshop() {
         </div>
       </section>
 
-      {/* 02 — Setup */}
-      <section className={PANEL} aria-label="Setup">
-        <PanelHeader num="02" title="Setup" hint="What every condition starts from." />
-        <ProviderModelTempRow
-          provider={e.base.model.provider}
-          model={e.base.model.model}
-          temperature={e.base.temperature}
-          onProviderChange={(provider) => setModel({ provider, model: PROVIDERS[provider].defaultModel })}
-          onModelChange={(model) => setModel({ provider: e.base.model.provider, model })}
-          onTemperatureChange={(temperature) => edit({ base: { ...e.base, temperature } })}
-        />
-        <div>
-          <Label htmlFor="lab-system">System prompt</Label>
-          <textarea id="lab-system" rows={3} value={e.base.system} disabled={locked} onChange={(ev) => edit({ base: { ...e.base, system: ev.target.value } })} className={MONO_INPUT} />
-        </div>
-        <div>
-          <Label htmlFor="lab-user">User message</Label>
-          <textarea id="lab-user" rows={2} value={e.base.userTemplate} disabled={locked} onChange={(ev) => edit({ base: { ...e.base, userTemplate: ev.target.value } })} className={MONO_INPUT} />
-          {vars.length > 0 && (
-            <p className="font-mono text-[11px] text-ink-quiet mt-1.5">
-              Variables: {vars.map((v) => `{{${v}}}`).join(", ")} — filled from the items below.
-            </p>
-          )}
-        </div>
-      </section>
+      {e.table ? (
+        <>
+          <section className={PANEL} aria-label="Model">
+            <PanelHeader num="Model" title="Every seat's model" hint="One model for the whole table, so the comparison is about the room, not the models. Temperature applies to every turn." />
+            <ProviderModelTempRow
+              provider={e.base.model.provider}
+              model={e.base.model.model}
+              temperature={e.table.temperature}
+              onProviderChange={(provider) => setModel({ provider, model: PROVIDERS[provider].defaultModel })}
+              onModelChange={(model) => setModel({ provider: e.base.model.provider, model })}
+              onTemperatureChange={(temperature) => edit({ table: { ...e.table!, temperature } })}
+            />
+          </section>
+          <TableSetupPanel table={e.table} locked={locked} onChange={(table) => edit({ table })} />
+          <TableConditionsEditor conditions={e.conditions} table={e.table} locked={locked} onChange={(conditions) => edit({ conditions })} />
+          <TableMeasuresPicker measures={e.measures} table={e.table} conditions={e.conditions} locked={locked} onChange={(measures) => edit({ measures })} />
+        </>
+      ) : (
+        <>
+        {/* 02 — Setup */}
+        <section className={PANEL} aria-label="Setup">
+          <PanelHeader num="02" title="Setup" hint="What every condition starts from." />
+          <ProviderModelTempRow
+            provider={e.base.model.provider}
+            model={e.base.model.model}
+            temperature={e.base.temperature}
+            onProviderChange={(provider) => setModel({ provider, model: PROVIDERS[provider].defaultModel })}
+            onModelChange={(model) => setModel({ provider: e.base.model.provider, model })}
+            onTemperatureChange={(temperature) => edit({ base: { ...e.base, temperature } })}
+          />
+          <div>
+            <Label htmlFor="lab-system">System prompt</Label>
+            <textarea id="lab-system" rows={3} value={e.base.system} disabled={locked} onChange={(ev) => edit({ base: { ...e.base, system: ev.target.value } })} className={MONO_INPUT} />
+          </div>
+          <div>
+            <Label htmlFor="lab-user">User message</Label>
+            <textarea id="lab-user" rows={2} value={e.base.userTemplate} disabled={locked} onChange={(ev) => edit({ base: { ...e.base, userTemplate: ev.target.value } })} className={MONO_INPUT} />
+            {vars.length > 0 && (
+              <p className="font-mono text-[11px] text-ink-quiet mt-1.5">
+                Variables: {vars.map((v) => `{{${v}}}`).join(", ")} — filled from the items below.
+              </p>
+            )}
+          </div>
+        </section>
 
-      <ConditionsEditor conditions={e.conditions} locked={locked} onChange={(conditions) => edit({ conditions })} />
-      <ItemsEditor items={e.items} vars={vars} locked={locked} onChange={(items) => edit({ items })} />
-      <MeasuresEditor measures={e.measures} locked={locked} defaultJudge={e.base.model} onChange={(measures) => edit({ measures })} />
+        <ConditionsEditor conditions={e.conditions} locked={locked} onChange={(conditions) => edit({ conditions })} />
+        <ItemsEditor items={e.items} vars={vars} locked={locked} onChange={(items) => edit({ items })} />
+        <MeasuresEditor measures={e.measures} locked={locked} defaultJudge={e.base.model} onChange={(measures) => edit({ measures })} />
+        </>
+      )}
 
       {/* 06 — Run */}
       <section className={PANEL} aria-label="Run">
-        <PanelHeader num="06" title="Run it" />
+        <PanelHeader num={e.table ? "05" : "06"} title="Run it" />
         <MissingKeyBanner show={!!missing} providerName={missing ? PROVIDERS[missing].name : ""} action="run this experiment" />
         <WebLLMUnsupportedBanner show={providers.includes("webllm")} />
         <div className="flex flex-wrap items-end gap-5">
           <div>
-            <Label htmlFor="lab-n">Runs per cell</Label>
+            <Label htmlFor="lab-n">{e.table ? "Tables per condition" : "Runs per cell"}</Label>
             <select
               id="lab-n"
               value={Math.min(e.n, maxRuns)}
@@ -362,7 +388,9 @@ export function LabWorkshop() {
             </select>
           </div>
           <p className="font-sans text-[14px] text-ink-muted pb-2" data-testid="lab-preflight">
-            {e.conditions.length} conditions × {Math.max(1, e.items.length)} {e.items.length === 1 ? "item" : "items"} × {Math.min(e.n, maxRuns)} runs →{" "}
+            {e.table
+              ? `${e.conditions.length} conditions × ${Math.min(e.n, maxRuns)} tables, up to ${e.table.seats.length} seats × ${e.table.protocol.rounds} rounds each → `
+              : `${e.conditions.length} conditions × ${Math.max(1, e.items.length)} ${e.items.length === 1 ? "item" : "items"} × ${Math.min(e.n, maxRuns)} runs → `}
             <span className="text-ink">{estimate.calls} calls</span>
             {" · "}
             {estimate.free
@@ -377,13 +405,17 @@ export function LabWorkshop() {
         <PowerPlan experiment={e} n={Math.min(e.n, maxRuns)} maxRunsPerCell={maxRuns} />
         {overQuota && (
           <p className="font-sans text-[13px] text-warning" data-testid="lab-over-quota">
-            This needs {estimate.hostedCalls} free runs and you have {hosted.remaining} left today. Lower the runs per cell,
-            remove a condition or item, or add your own key in Settings.
+            This needs {estimate.hostedCalls} free runs and you have {hosted.remaining} left today.{" "}
+            {e.table
+              ? "Each table is several calls. Lower the tables per condition, remove a condition, or add your own key in Settings."
+              : "Lower the runs per cell, remove a condition or item, or add your own key in Settings."}
           </p>
         )}
         {incomplete && (
           <p className="font-sans text-[13px] text-warning">
-            Fill in the question, and every judge measure&apos;s question or rubric, before running.
+            {e.table
+              ? "Fill in the question and the decision, and pick at least one check, before running."
+              : "Fill in the question, and every judge measure\u2019s question or rubric, before running."}
           </p>
         )}
         <div className="flex flex-wrap items-center gap-4">
@@ -402,7 +434,7 @@ export function LabWorkshop() {
                 Stop
               </button>
               <span className="font-mono text-[12px] tabular-nums text-ink-muted" aria-live="polite">
-                {done} / {e.runs.length} answers
+                {done} / {e.runs.length} {e.table ? "tables" : "answers"}
                 {waiting > 0 && ` · ${waiting} waiting for a free slot`}
               </span>
             </>
@@ -447,7 +479,15 @@ export function LabWorkshop() {
       <MakeClassPanel
         experiment={e}
         title={title.trim() || e.title.trim() || "Untitled experiment"}
-        blockedReason={running ? "Wait for the run to finish." : !e.question.trim() ? "Write the question before making a class." : null}
+        blockedReason={
+          e.table
+            ? "Round Table experiments can't become a class yet: each run is a whole table of calls."
+            : running
+              ? "Wait for the run to finish."
+              : !e.question.trim()
+                ? "Write the question before making a class."
+                : null
+        }
       />
     </div>
   );

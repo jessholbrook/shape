@@ -16,13 +16,16 @@ export function PowerPlan({ experiment, n, maxRunsPerCell }: { experiment: Exper
   const plan = useMemo(() => planFor(experiment, n), [experiment, n]);
   const t = plan.hasRates ? target(plan, points, maxRunsPerCell) : null;
   if (plan.perVersion < 1 || (!plan.hasRates && !plan.hasNumeric)) return null;
+  // A Round Table experiment counts tables, and can't pool through a class yet.
+  const unit = experiment.table ? "tables" : "answers";
+  const perCell = experiment.table ? "tables per condition" : "runs per cell";
 
   return (
     <div className="border-t border-line pt-4 flex flex-col gap-2" data-testid="power-plan">
       <p className={EYEBROW}>What these runs can detect</p>
       <p className="font-sans text-[14px] leading-[1.55] text-ink-muted">
-        Each version gets <span className="text-ink">{plan.perVersion} answers</span> ({n} {n === 1 ? "run" : "runs"}
-        {plan.items > 1 ? ` × ${plan.items} items` : ""}).{" "}
+        Each version gets <span className="text-ink">{plan.perVersion} {unit}</span>
+        {experiment.table ? "." : <> ({n} {n === 1 ? "run" : "runs"}{plan.items > 1 ? ` × ${plan.items} items` : ""}).</>}{" "}
         {plan.hasRates &&
           (plan.detectablePoints === null ? (
             <>
@@ -62,12 +65,14 @@ export function PowerPlan({ experiment, n, maxRunsPerCell }: { experiment: Exper
             </select>
           </div>
           <span data-testid="power-target-text">
-            you&apos;d need about <span className="text-ink">{t.needed} answers per version</span>
+            you&apos;d need about <span className="text-ink">{t.needed} {unit} per version</span>
             {t.needed <= plan.perVersion
               ? " — these runs already have that."
               : t.fits
-                ? ` — set runs per cell to ${t.runsPerCell}.`
-                : ` — ${t.runsPerCell} runs per cell, beyond the lab's ${maxRunsPerCell}. Run it as a class instead: about ${t.runsNeeded} students running this design pool that many.`}
+                ? ` — set ${perCell} to ${t.runsPerCell}.`
+                : experiment.table
+                  ? ` — ${t.runsPerCell} ${perCell}, beyond the lab's ${maxRunsPerCell}. Run the experiment more than once and compare, or test a bigger change.`
+                  : ` — ${t.runsPerCell} runs per cell, beyond the lab's ${maxRunsPerCell}. Run it as a class instead: about ${t.runsNeeded} students running this design pool that many.`}
           </span>
         </div>
       )}

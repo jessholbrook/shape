@@ -15,6 +15,7 @@ import {
   isClear,
   manifestHash,
   plannedCalls,
+  summarize,
   validateExperiment,
   type Experiment,
   type ExperimentRun,
@@ -258,6 +259,9 @@ test("a full experiment: every table runs, is scored from its transcript, and th
   // "Not anchored" only counts tables that agreed: the open tables all did, on Priya's opening; the blind ones never agreed.
   const anchored = a.cells.filter((c) => c.measureId === "m_not-anchored");
   assert.deepEqual(anchored.map((c) => [c.conditionId, c.n, c.excluded]), [["c_base", 8, 0], ["c_flip", 0, 8]]);
+  // With nothing to compare on one side, the finding says so instead of printing an interval.
+  const anchoredCmp = a.comparisons.find((c) => c.measureId === "m_not-anchored")!;
+  assert.match(summarize(done, anchoredCmp), /^Can't compare “not anchored on the opener”: no Blind first round runs were scored on it — the check didn't apply to those tables, n = 0 vs 8\.$/);
 });
 
 test("a table that fails part-way is an errored run with no scores, excluded from the stats", async () => {

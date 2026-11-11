@@ -45,14 +45,21 @@ for (const { t, e } of built) {
     assert.deepEqual(e.conditions[0].patch, {}, "the baseline is the setup as written");
     assert.equal(Object.keys(e.conditions[1].patch).length, 1, "exactly one manipulation");
 
+    assert.ok(e.hypothesis.trim() && e.question.trim());
+    if (e.table) {
+      // A Round Table study: the decision is fixed, so no items; every table is many calls,
+      // so the bar is fitting the free tier's daily allowance on the live site (100).
+      assert.deepEqual(e.items, []);
+      assert.ok(e.table.seats.every((s) => s.provider === MODEL.provider && s.model === MODEL.model), "seats use the reader's model");
+      assert.ok(plannedCalls(e) <= 100, `${t.id} plans ${plannedCalls(e)} calls`);
+      return;
+    }
     assert.ok(e.items.length >= 3, "three items, so one odd input can't carry the result");
     for (const { conditionId, itemId } of expandCells(e)) {
       const call = resolveCall(e, conditionId, itemId);
       const user = call.messages[0].role === "user" ? call.messages[0].content : "";
       assert.doesNotMatch(user + call.system, /\{\{/, `${conditionId}/${itemId} left a variable unfilled`);
     }
-
-    assert.ok(e.hypothesis.trim() && e.question.trim());
     assert.ok(plannedCalls(e) <= 60, `${t.id} plans ${plannedCalls(e)} calls`);
   });
 

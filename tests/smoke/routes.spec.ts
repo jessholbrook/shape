@@ -619,3 +619,36 @@ test("the Educators path points teachers to class setup, and only that path does
   await page.goto("/for/ux", { waitUntil: "networkidle" });
   await expect(page.getByTestId("teach-cta")).toHaveCount(0);
 });
+
+/**
+ * Round Table in the Lab: the ready-made question and "Open as experiment"
+ * both open a table experiment — seats, protocol-only conditions, table
+ * checks, and a preflight that counts every turn — and it can't become a class.
+ */
+test("/lab runs Round Table experiments: the template and Open as experiment both set up a table", async ({ page, context }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+
+  await page.goto("/lab?template=blind-dissent", { waitUntil: "networkidle" });
+  await expect(page.getByTestId("lab-table-seats").getByRole("listitem")).toHaveCount(3);
+  await expect(page.getByTestId("lab-table-seats")).toContainText("Planted: against");
+  await expect(page.getByTestId("lab-table-condition")).toHaveCount(2);
+  await expect(page.getByTestId("lab-table-condition").nth(1)).toContainText("Changes: blind first round.");
+  await expect(page.getByLabel("System prompt", { exact: true })).toHaveCount(0);
+  // 2 conditions × 5 tables × 3 seats × 3 rounds.
+  await expect(page.getByTestId("lab-preflight")).toContainText("90 calls");
+  await expect(page.getByRole("region", { name: "Measures" }).getByRole("checkbox", { name: /planted seat held/ })).toBeChecked();
+
+  // A protocol change in the second condition shows up as what it changes.
+  await page.getByTestId("lab-table-condition").nth(1).getByRole("radio", { name: "At consensus" }).click();
+  await expect(page.getByTestId("lab-table-condition").nth(1)).toContainText("blind first round, stops at consensus");
+
+  await page.goto("/play/roundtable", { waitUntil: "networkidle" });
+  const [lab] = await Promise.all([context.waitForEvent("page"), page.getByRole("button", { name: /Open as experiment/ }).click()]);
+  lab.on("pageerror", (e) => errors.push(String(e)));
+  await lab.waitForLoadState("networkidle");
+  expect(lab.url()).toMatch(/\/lab\?draft=/);
+  await expect(lab.getByTestId("lab-table-seats")).toContainText("Noor");
+  await expect(lab.getByTestId("lab-preflight")).toContainText("180 calls");
+  expect(errors).toEqual([]);
+});
