@@ -492,6 +492,13 @@ export function summarize(e: Experiment, c: Comparison): string {
   const base = e.conditions.find((x) => x.id === c.baselineId)?.label ?? c.baselineId;
   const ns = `n = ${c.nCondition} vs ${c.nBaseline}`;
 
+  // A side with nothing scored has no estimate to compare — an interval
+  // computed against zero runs would read as a real (if vague) result.
+  if (c.nBaseline === 0 || c.nCondition === 0) {
+    const empty = [c.nCondition === 0 ? cond : null, c.nBaseline === 0 ? base : null].filter(Boolean).join(" or ");
+    return `Can't compare “${measure}”: no ${empty} runs were scored on it${e.table ? " — the check didn't apply to those tables" : ""}, ${ns}.`;
+  }
+
   if (c.kind === "binary") {
     const d = c.diff;
     if (!isClear(c)) {

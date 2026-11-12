@@ -25,6 +25,7 @@ import {
   type Turn,
 } from "@/lib/roundtable";
 import { runTable as runTableSession } from "@/lib/roundtable-run";
+import { fromRoundtable } from "@/lib/experiment-table";
 import { suggestTitle, type ProtocolDraft } from "@/lib/drafts";
 import type { Writer } from "@/lib/judge";
 import {
@@ -46,6 +47,7 @@ import { RoundtableTranscript } from "@/components/play/roundtable-transcript";
 import { RoundtableReportPanel } from "@/components/play/roundtable-report";
 import { ReadingPanel } from "@/components/play/reading-panel";
 import { DraftSaveBar } from "@/components/play/draft-save-bar";
+import { OpenAsExperiment } from "@/components/play/open-as-experiment";
 import { MissingKeyBanner } from "@/components/play/missing-key-banner";
 import { ReflectionCard } from "@/components/play/reflection-card";
 import { WebLLMUnsupportedBanner } from "@/components/play/webllm-unsupported-banner";
@@ -405,6 +407,12 @@ export function RoundtableWorkshop() {
         status={saveStatus}
         draftId={draftId}
         onSave={handleSaveDraft}
+      />
+
+      <OpenAsExperiment
+        disabled={running || !task.proposal.trim() || !task.brief.trim()}
+        hint="One table is one story. Run this table many times — open first round against blind — and see how often the room really goes the way it did here."
+        build={() => fromRoundtable({ seats, task, protocol: live, temperature })}
       />
     </div>
   );

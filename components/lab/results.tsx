@@ -1,10 +1,12 @@
 "use client";
 
-import { TABLE_CHECKS } from "@/lib/experiment-table";
 import { useEffect, useMemo, useState } from "react";
+import { TABLE_CHECKS, tableFor } from "@/lib/experiment-table";
+import type { Seat } from "@/lib/roundtable";
 import {
   buildManifest,
   ranAtOf,
+  isBinary,
   isClear,
   manifestHash,
   summarize,
@@ -15,7 +17,8 @@ import {
   type Measure,
   type Runner,
 } from "@/lib/experiment";
-import { EYEBROW, LINK_BUTTON, PANEL, PanelHeader } from "./fields";
+import { EYEBROW, INPUT, LINK_BUTTON, PANEL, PanelHeader } from "./fields";
+import { TableRunDetail } from "./table-setup";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
@@ -222,13 +225,28 @@ export function RunList({
   note?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  // "measureId:yes" / "measureId:no" — show only the runs where a yes/no measure came out that way.
+  const [filter, setFilter] = useState("");
   const condLabel = (id: string) => e.conditions.find((c) => c.id === id)?.label ?? id;
   const itemLabel = (id: string | null) => (id ? e.items.find((i) => i.id === id)?.label ?? id : "");
+  const seatsFor = (conditionId: string): Seat[] | undefined => {
+    if (!e.table) return undefined;
+    try {
+      return tableFor(e, conditionId).seats;
+    } catch {
+      return e.table.seats;
+    }
+  };
+  const binary = e.measures.filter(isBinary);
+  const [fm, fv] = filter.split(":");
+  const shown = filter
+    ? e.runs.filter((r) => r.status === "done" && r.scores[fm] === (fv === "yes"))
+    : e.runs;
   return (
     <section className={PANEL} aria-label="Runs">
       <PanelHeader
         num="Runs"
-        title={`Every answer (${e.runs.length})`}
+        title={`${e.table ? "Every table" : "Every answer"} (${e.runs.length})`}
         action={
           <button type="button" className={LINK_BUTTON} aria-expanded={open} onClick={() => {
               if (!open) onOpen?.();
@@ -240,10 +258,37 @@ export function RunList({
         }
       />
       {open && note}
+      {open && binary.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3">
+          <label htmlFor="lab-run-filter" className={EYEBROW}>
+            Show
+          </label>
+          <select id="lab-run-filter" value={filter} onChange={(ev) => setFilter(ev.target.value)} className={`${INPUT} w-auto`}>
+            <option value="">Every run</option>
+            {binary.map((m) => (
+              <optgroup key={m.id} label={m.label}>
+                <option value={`${m.id}:no`}>Where “{m.label}” is no</option>
+                <option value={`${m.id}:yes`}>Where “{m.label}” is yes</option>
+              </optgroup>
+            ))}
+          </select>
+          {filter && (
+            <span className="font-mono text-[11px] text-ink-muted" data-testid="lab-run-filter-count">
+              {shown.length} of {e.runs.length}
+            </span>
+          )}
+        </div>
+      )}
       {open && (
         <ol className="flex flex-col gap-2">
-          {e.runs.map((r) => (
-            <RunRow key={r.id} run={r} measures={e.measures} heading={[condLabel(r.conditionId), itemLabel(r.itemId), `run ${r.index + 1}`].filter(Boolean).join(" · ")} />
+          {shown.map((r) => (
+            <RunRow
+              key={r.id}
+              run={r}
+              measures={e.measures}
+              seats={seatsFor(r.conditionId)}
+              heading={[condLabel(r.conditionId), itemLabel(r.itemId), `${e.table ? "table" : "run"} ${r.index + 1}`].filter(Boolean).join(" · ")}
+            />
           ))}
         </ol>
       )}
@@ -258,7 +303,7 @@ function scoreText(v: boolean | number | null | undefined): string {
   return String(v);
 }
 
-function RunRow({ run, measures, heading }: { run: ExperimentRun; measures: Measure[]; heading: string }) {
+function RunRow({ run, measures, heading, seats }: { run: ExperimentRun; measures: Measure[]; heading: string; seats?: Seat[] }) {
   return (
     <li className="border border-line rounded-[12px] p-3 bg-canvas/40">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -267,7 +312,11 @@ function RunRow({ run, measures, heading }: { run: ExperimentRun; measures: Meas
           {run.status === "error" ? <span className="text-danger">error — {run.error}</span> : run.status}
         </span>
       </div>
-      {run.text && <p className="font-sans text-[13px] leading-[1.55] text-ink mt-2 whitespace-pre-wrap">{run.text}</p>}
+      {seats && run.turns ? (
+        <TableRunDetail run={run} seats={seats} />
+      ) : (
+        run.text && <p className="font-sans text-[13px] leading-[1.55] text-ink mt-2 whitespace-pre-wrap">{run.text}</p>
+      )}
       {run.status === "done" && (
         <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
           {measures.map((m) => (
